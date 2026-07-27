@@ -196,6 +196,47 @@ export function PrintSettingsTab({ settings, updateSettings, isMobile }) {
               </div>
             )}
 
+            <div className="flex items-center gap-4 py-1.5 group">
+              <Checkbox 
+                checked={!!print.printQrCode} 
+                onCheckedChange={(c) => handleUpdate("printQrCode", !!c)} 
+                className="h-5 w-5 rounded shadow-sm data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 border-slate-300" 
+              />
+              <label className="text-[13px] flex items-center gap-2 cursor-pointer">
+                UPI / E-Way QR Code <span className="text-blue-500 font-normal hover:underline">(Change)</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        handleUpdate("qrCodeUrl", reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                <Info className="h-3.5 w-3.5 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </label>
+            </div>
+            {print.qrCodeUrl && (
+              <div className="flex items-center gap-3 pl-8 mb-2">
+                <div className="border rounded p-1 bg-white w-16 h-16 flex items-center justify-center">
+                  <img src={print.qrCodeUrl} alt="QR Code" className="max-h-full max-w-full object-contain" />
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => handleUpdate("qrCodeUrl", "")} 
+                  className="text-xs text-red-500 hover:underline font-semibold"
+                >
+                  Remove QR
+                </button>
+              </div>
+            )}
+
             {renderCheckInput("printAddress", "address", "Address")}
             {renderCheckInput("printEmail", "email", "Email")}
             {renderCheckInput("printPhone", "phone", "Phone Number")}

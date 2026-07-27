@@ -39,10 +39,14 @@ export function GreenEWay({ invoice, printSet, gstSet, numberToWords }) {
             )}
           </div>
           <div className="w-1/4 flex flex-col justify-center items-center p-2 border-l border-black text-center">
-            <span className="font-bold text-[10px] mb-1">Add Your Qr Here</span>
-            <div className="w-16 h-16 border border-black flex items-center justify-center bg-slate-50">
-              <span className="text-[8px]">QR</span>
-            </div>
+            {(printSet.printQrCode && printSet.qrCodeUrl) ? (
+              <>
+                <span className="font-bold text-[10px] mb-1">Scan to Pay / Verify</span>
+                <div className="w-16 h-16 border border-black flex items-center justify-center bg-slate-50 p-0.5">
+                  <img src={printSet.qrCodeUrl} alt="QR Code" className="w-full h-full object-contain" />
+                </div>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -123,10 +127,18 @@ export function GreenEWay({ invoice, printSet, gstSet, numberToWords }) {
               const rateAfterDisc = r * (1 - d / 100);
               const taxable = q * rateAfterDisc;
               
-              const sellerStateStr = printSet?.state || "";
-              const customerStateStr = meta?.billedToState || "";
-              const isInterstate = sellerStateStr && customerStateStr &&
-                !(sellerStateStr.toLowerCase().replace(/[^a-z]/g, '') === customerStateStr.toLowerCase().replace(/[^a-z]/g, ''));
+              const sellerGstin = gstSet?.gstin || "";
+              const customerGstin = meta?.billedToGstin || invoice.shippingDetails?.shippingGstin || "";
+              let isInterstate = false;
+              
+              if (sellerGstin.length >= 2 && customerGstin.length >= 2) {
+                isInterstate = sellerGstin.substring(0, 2) !== customerGstin.substring(0, 2);
+              } else {
+                const sellerStateStr = printSet?.state || invoice.sellerDetails?.state || "";
+                const customerStateStr = meta?.billedToState || "";
+                isInterstate = Boolean(sellerStateStr && customerStateStr &&
+                  (sellerStateStr.toLowerCase().replace(/[^a-z]/g, '') !== customerStateStr.toLowerCase().replace(/[^a-z]/g, '')));
+              }
 
               const cgst = isInterstate ? 0 : g / 2;
               const sgst = isInterstate ? 0 : g / 2;
@@ -169,10 +181,18 @@ export function GreenEWay({ invoice, printSet, gstSet, numberToWords }) {
           </thead>
           <tbody className="bg-white">
             {(() => {
-              const sellerStateStr = printSet?.state || "";
-              const customerStateStr = meta?.billedToState || "";
-              const isInterstate = sellerStateStr && customerStateStr &&
-                !(sellerStateStr.toLowerCase().replace(/[^a-z]/g, '') === customerStateStr.toLowerCase().replace(/[^a-z]/g, ''));
+              const sellerGstin = gstSet?.gstin || "";
+              const customerGstin = meta?.billedToGstin || invoice.shippingDetails?.shippingGstin || "";
+              let isInterstate = false;
+              
+              if (sellerGstin.length >= 2 && customerGstin.length >= 2) {
+                isInterstate = sellerGstin.substring(0, 2) !== customerGstin.substring(0, 2);
+              } else {
+                const sellerStateStr = printSet?.state || invoice.sellerDetails?.state || "";
+                const customerStateStr = meta?.billedToState || "";
+                isInterstate = Boolean(sellerStateStr && customerStateStr &&
+                  (sellerStateStr.toLowerCase().replace(/[^a-z]/g, '') !== customerStateStr.toLowerCase().replace(/[^a-z]/g, '')));
+              }
 
               const formatSummaryAmt = (val) => {
                 const num = Number(val) || 0;
