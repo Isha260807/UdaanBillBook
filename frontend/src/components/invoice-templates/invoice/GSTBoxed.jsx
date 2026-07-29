@@ -158,44 +158,43 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
           <thead>
             <tr className={`bg-slate-50 border-b border-slate-800 font-bold uppercase divide-x divide-slate-800 text-left ${activeColor.text}`}>
               {activeColsInOrder.map((key) => {
-                if (key === "slNo") return <th key={key} className="p-1.5 text-center w-8">{colNames.slNo || "Sr."}</th>;
-                if (key === "itemName") return <th key={key} className="p-1.5 min-w-[80px]">{colNames.itemName || "Product Description"}</th>;
-                if (key === "itemCode") return <th key={key} className="p-1.5 text-center w-16">{colNames.itemCode || "Item Code"}</th>;
-                if (key === "hsnSac") return <th key={key} className="p-1.5 text-center w-16">{colNames.hsnSac || "HSN/SAC"}</th>;
-                if (key === "batchNo") return <th key={key} className="p-1.5 text-center w-16">{colNames.batchNo || "Batch No."}</th>;
-                if (key === "expDate") return <th key={key} className="p-1.5 text-center w-16">{colNames.expDate || "Exp. Date"}</th>;
-                if (key === "mfgDate") return <th key={key} className="p-1.5 text-center w-16">{colNames.mfgDate || "Mfg. Date"}</th>;
-                if (key === "mrp") return <th key={key} className="p-1.5 text-right w-16">{colNames.mrp || "MRP"}</th>;
-                if (key === "size") return <th key={key} className="p-1.5 text-center w-12">{colNames.size || "Size"}</th>;
-                if (key === "modelNo") return <th key={key} className="p-1.5 text-center w-16">{colNames.modelNo || "Model No."}</th>;
-                if (key === "description") return <th key={key} className="p-1.5 min-w-[80px]">{colNames.description || "Description"}</th>;
-                if (key === "count") return <th key={key} className="p-1.5 text-center w-12">{colNames.count || "Count"}</th>;
-                if (key === "colour") return <th key={key} className="p-1.5 text-center w-14">{colNames.colour || "Colour"}</th>;
-                if (key === "material") return <th key={key} className="p-1.5 text-center w-16">{colNames.material || "Material"}</th>;
-                if (key === "brand") return <th key={key} className="p-1.5 text-center w-16">{colNames.brand || "Brand"}</th>;
-                if (key === "serialNo") return <th key={key} className="p-1.5 text-center w-20">{colNames.serialNo || "Serial No."}</th>;
-                if (key === "challanNo") return <th key={key} className="p-1.5 text-center w-20">{colNames.challanNo || "Challan No."}</th>;
-                if (key === "quantity") return <th key={key} className="p-1.5 text-center w-10">{colNames.quantity || "QTY"}</th>;
-                if (key === "unit") return <th key={key} className="p-1.5 text-center w-12">{colNames.unit || "Unit"}</th>;
-                if (key === "priceUnit") return <th key={key} className="p-1.5 text-right w-16">{colNames.priceUnit || "Rate"}</th>;
-                if (key === "discount") return <th key={key} className="p-1.5 text-right w-16">{colNames.discount || "Discount"}</th>;
-                if (key === "discountPercent") return <th key={key} className="p-1.5 text-right w-16">{colNames.discountPercent || "Discount %"}</th>;
-                if (key === "taxablePriceUnit") return <th key={key} className="p-1.5 text-right w-18">{colNames.taxablePriceUnit || "Taxable Price/Unit"}</th>;
-                if (key === "taxableValue") return <th key={key} className="p-1.5 text-right w-18">Taxable Value</th>;
+                const rowSpanAttr = printSet.taxDetails ? 2 : 1;
+                if (key === "slNo") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-8">{colNames.slNo || "Sr."}</th>;
+                if (key === "itemName") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 min-w-[80px]">{colNames.itemName || "Product Description"}</th>;
+                if (key === "itemCode") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-16">{colNames.itemCode || "Item Code"}</th>;
+                if (key === "hsnSac") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-16">{colNames.hsnSac || "HSN/SAC"}</th>;
+                if (key === "batchNo") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-16">{colNames.batchNo || "Batch No."}</th>;
+                if (key === "expDate") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-16">{colNames.expDate || "Exp. Date"}</th>;
+                if (key === "mfgDate") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-16">{colNames.mfgDate || "Mfg. Date"}</th>;
+                if (key === "mrp") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-right w-16">{colNames.mrp || "MRP"}</th>;
+                if (key === "size") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-12">{colNames.size || "Size"}</th>;
+                if (key === "modelNo") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-16">{colNames.modelNo || "Model No."}</th>;
+                if (key === "description") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 min-w-[80px]">{colNames.description || "Description"}</th>;
+                if (key === "count") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-12">{colNames.count || "Count"}</th>;
+                if (key === "colour") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-14">{colNames.colour || "Colour"}</th>;
+                if (key === "material") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-16">{colNames.material || "Material"}</th>;
+                if (key === "brand") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-16">{colNames.brand || "Brand"}</th>;
+                if (key === "serialNo") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-20">{colNames.serialNo || "Serial No."}</th>;
+                if (key === "challanNo") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-20">{colNames.challanNo || "Challan No."}</th>;
+                if (key === "quantity") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-10">{colNames.quantity || "QTY"}</th>;
+                if (key === "unit") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-center w-12">{colNames.unit || "Unit"}</th>;
+                if (key === "priceUnit") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-right w-16">{colNames.priceUnit || "Rate"}</th>;
+                if (key === "discount") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-right w-16">{colNames.discount || "Discount"}</th>;
+                if (key === "discountPercent") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-right w-16">{colNames.discountPercent || "Discount %"}</th>;
+                if (key === "taxablePriceUnit") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-right w-18">{colNames.taxablePriceUnit || "Taxable Price/Unit"}</th>;
+                if (key === "taxableValue") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-right w-18">Taxable Value</th>;
                 if (key === "cgst") return <th key={key} className="p-1.5 text-center w-28" colSpan="2">CGST</th>;
                 if (key === "sgst") return <th key={key} className="p-1.5 text-center w-28" colSpan="2">SGST</th>;
-                if (key === "amount") return <th key={key} className="p-1.5 text-right w-20">{colNames.amount || "Total"}</th>;
+                if (key === "amount") return <th key={key} rowSpan={rowSpanAttr} className="p-1.5 text-right w-20">{colNames.amount || "Total"}</th>;
                 return null;
               })}
             </tr>
             {printSet.taxDetails && (
               <tr className="bg-slate-100 border-b border-slate-800 text-[8px] font-bold text-center divide-x divide-slate-800">
-                <td colSpan={colSpanBeforeTax}></td>
                 <td className="p-1 w-10">Rate</td>
                 <td className="p-1 w-18">Amount</td>
                 <td className="p-1 w-10">Rate</td>
                 <td className="p-1 w-18">Amount</td>
-                {cols.amount && <td></td>}
               </tr>
             )}
           </thead>
@@ -248,7 +247,7 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
                     if (key === "priceUnit") return <td key={key} className="p-2 text-right">{formatAmt(r, printSet)}</td>;
                     if (key === "discount") return <td key={key} className="p-2 text-right">{formatAmt(dAmount, printSet)}</td>;
                     if (key === "discountPercent") return <td key={key} className="p-2 text-right">{d}%</td>;
-                    if (key === "taxablePriceUnit") return <td key={key} className="p-2 text-right">{formatAmt(rateAfterDisc / (1 + g/100), printSet)}</td>;
+                    if (key === "taxablePriceUnit") return <td key={key} className="p-2 text-right">{formatAmt(isExcl ? rateAfterDisc : (rateAfterDisc / (1 + g/100)), printSet)}</td>;
                     if (key === "taxableValue") return <td key={key} className="p-2 text-right">{formatAmt(taxableVal, printSet)}</td>;
                     if (key === "cgst") return (
                       <React.Fragment key={key}>
@@ -288,7 +287,10 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
                   </React.Fragment>
                 );
                 if (key === "amount") return <td key={key} className="p-2 text-right font-extrabold text-emerald-700">{formatAmt(totals.grand, printSet)}</td>;
-                if (key === "cgst" || key === "sgst") return null;
+                
+                const validKeys = ["slNo", "itemName", "itemCode", "hsnSac", "batchNo", "expDate", "mfgDate", "mrp", "size", "modelNo", "description", "count", "colour", "material", "brand", "serialNo", "challanNo", "quantity", "unit", "priceUnit", "discount", "discountPercent", "taxablePriceUnit", "taxableValue", "cgst", "sgst", "amount"];
+                if (!validKeys.includes(key)) return null;
+
                 return <td key={key}></td>;
               })}
             </tr>
@@ -317,8 +319,16 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
           <table className="w-full font-mono">
             <tbody>
               <tr className="py-0.5 flex justify-between"><span>Subtotal</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></tr>
-              <tr className="py-0.5 flex justify-between"><span>CGST</span><span>{formatAmt(totals.gstAmount / 2, printSet)}</span></tr>
-              <tr className="py-0.5 flex justify-between"><span>SGST</span><span>{formatAmt(totals.gstAmount / 2, printSet)}</span></tr>
+              {(() => {
+                const uniqueGst = [...new Set(lines.map(l => Number(l.gst) || 0))];
+                const gstLabel = uniqueGst.length === 1 && uniqueGst[0] > 0 ? ` (${uniqueGst[0] / 2}%)` : '';
+                return (
+                  <>
+                    <tr className="py-0.5 flex justify-between"><span>CGST{gstLabel}</span><span>{formatAmt(totals.gstAmount / 2, printSet)}</span></tr>
+                    <tr className="py-0.5 flex justify-between"><span>SGST{gstLabel}</span><span>{formatAmt(totals.gstAmount / 2, printSet)}</span></tr>
+                  </>
+                );
+              })()}
               <tr className="py-0.5 flex justify-between border-t font-semibold"><span>Total GST</span><span>{formatAmt(totals.gstAmount, printSet)}</span></tr>
               <tr className={`py-1 flex justify-between font-extrabold border-t-2 border-slate-900 pt-1 ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}><span className="uppercase">Total</span><span>{formatAmt(totals.grand, printSet)}</span></tr>
               {printSet.receivedAmount && (

@@ -264,12 +264,7 @@ aside nav::-webkit-scrollbar,
   }
 }
 
-@media (min-width: 768px) {
-  .invoice-preview-scaler {
-    transform: none !important;
-    width: 100% !important;
-  }
-}
+
 
 /* Print Stylesheet for clean invoice/page printing */
 @media print {

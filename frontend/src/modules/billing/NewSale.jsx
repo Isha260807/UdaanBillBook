@@ -340,7 +340,7 @@ export default function NewSale() {
     const scaler = invoiceScalerRef.current;
     if (!wrapper || !scaler) return;
 
-    const INVOICE_NATURAL_WIDTH = 480; // min-width of the invoice content
+    const INVOICE_NATURAL_WIDTH = 800; // min-width of the invoice content
 
     const updateScale = () => {
       const containerWidth = wrapper.clientWidth;
@@ -1392,8 +1392,7 @@ export default function NewSale() {
                     <div className="space-y-1">
                       <Label className="text-xs">Date of Supply</Label>
                       <Input 
-                        type="text"
-                        placeholder="dd/mm/yyyy"
+                        type="date"
                         value={dateOfSupply} 
                         onChange={(e) => setDateOfSupply(e.target.value)} 
                         className="h-9 rounded-lg"
@@ -2073,7 +2072,7 @@ export default function NewSale() {
           {/* Responsive invoice preview: scales down on mobile to fit screen */}
           <div ref={invoiceWrapperRef} className="invoice-preview-wrapper w-full mx-auto" style={{ maxWidth: '210mm' }}>
             <div ref={invoiceScalerRef} className="invoice-preview-scaler">
-              <div className="bg-white shadow-xl rounded-xl border border-slate-300 w-full p-3 sm:p-6 text-[11px] text-slate-800 leading-normal relative overflow-hidden" style={{ minWidth: '480px' }}>
+              <div className="bg-white shadow-xl rounded-xl border border-slate-300 w-full p-3 sm:p-6 text-[11px] text-slate-800 leading-normal relative overflow-hidden" style={{ minWidth: '800px' }}>
             <InvoiceTemplateRenderer
               invoice={{
                 customer,
