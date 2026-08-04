@@ -16,7 +16,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useMockAuth } from "@/lib/auth-store";
@@ -164,40 +164,14 @@ export function BillingDashboard() {
   const [selectedPreviewInv, setSelectedPreviewInv] = useState(null);
 
   const downloadOne = (inv) => {
-    downloadInvoicePdf({
-      number: inv.invoiceNumber || inv.id,
-      date: inv.date ? new Date(inv.date).toLocaleDateString("en-IN") : new Date().toLocaleDateString("en-IN"),
-      business: {
-        name: inv.sellerDetails?.companyName || user?.businessName || "Udaan Business",
-        address: inv.sellerDetails?.address || user?.businessAddress || "",
-        gstin: inv.sellerDetails?.gstin || "",
-        phone: inv.sellerDetails?.phone || user?.phone || "",
-        email: inv.sellerDetails?.email || user?.email || "",
-      },
-      party: {
-        name: inv.partyName || inv.party || "Customer",
-        phone: inv.shippingDetails?.phone || "",
-        address: inv.shippingDetails?.address || "",
-        gstin: inv.shippingDetails?.gstin || "",
-        state: inv.shippingDetails?.state || "Delhi",
-        stateCode: "07"
-      },
-      lines: Array.isArray(inv.items) && inv.items.length > 0 ? inv.items.map(it => ({
-        name: it.name || "Item",
-        hsnSac: it.hsnSac || "",
-        qty: Number(it.qty) || 1,
-        rate: Number(it.rate) || 0,
-        gst: Number(it.gst) || 0
-      })) : [],
-      bank: {
-        accountHolder: inv.bankDetails?.accountHolder || user?.businessName || "",
-        accountNumber: inv.bankDetails?.accountNumber || "",
-        ifsc: inv.bankDetails?.ifsc || "",
-        name: inv.bankDetails?.bankName || "",
-        branch: inv.bankDetails?.branchName || "",
-      }
-    });
-    toast.success(`${inv.invoiceNumber || inv.id} downloaded`);
+    setSelectedPreviewInv(inv);
+    setPreviewModalOpen(true);
+    setTimeout(async () => {
+      await downloadInvoicePdf(inv, {
+        templateName: inv.invoiceTemplate || inv.templateName || "GST Boxed"
+      });
+      toast.success(`${inv.invoiceNumber || inv.id} downloaded successfully`);
+    }, 150);
   };
 
   const shareWA = (inv) => {
@@ -614,9 +588,12 @@ export function BillingDashboard() {
       <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-6">
           <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
-            <DialogTitle className="text-lg font-bold">
-              Invoice Preview — {selectedPreviewInv?.invoiceNumber}
-            </DialogTitle>
+            <div>
+              <DialogTitle className="text-lg font-bold">
+                Invoice Preview — {selectedPreviewInv?.invoiceNumber}
+              </DialogTitle>
+              <DialogDescription className="sr-only">Invoice details preview and PDF export</DialogDescription>
+            </div>
             {selectedPreviewInv && (
               <Button 
                 size="sm" 
@@ -629,10 +606,10 @@ export function BillingDashboard() {
           </DialogHeader>
           <div className="pt-4 flex justify-center bg-slate-100 p-4 rounded-xl overflow-x-auto">
             {selectedPreviewInv && (
-              <div className="w-full max-w-3xl bg-white p-4 rounded-xl shadow-sm">
+              <div id="invoice-print-area" className="w-full max-w-3xl bg-white p-4 rounded-xl shadow-sm">
                 <InvoiceTemplateRenderer 
                   invoice={selectedPreviewInv} 
-                  templateName="GST Boxed" 
+                  templateName={selectedPreviewInv.invoiceTemplate || selectedPreviewInv.templateName || "GST Boxed"} 
                   printSettings={{
                     printCompanyName: true,
                     companyName: selectedPreviewInv.sellerDetails?.companyName || user?.businessName,
@@ -642,7 +619,12 @@ export function BillingDashboard() {
                     phone: selectedPreviewInv.sellerDetails?.phone || user?.phone,
                     printEmail: true,
                     email: selectedPreviewInv.sellerDetails?.email || user?.email,
-                    printGstin: true
+                    printGstin: true,
+                    logoUrl: selectedPreviewInv.sellerDetails?.logoUrl || "",
+                    currentBalanceParty: true,
+                    printTermsAndConditions: true,
+                    amountInWords: "Rupees",
+                    ...selectedPreviewInv.printSettings
                   }}
                   gstSettings={{
                     gstin: selectedPreviewInv.sellerDetails?.gstin || ""
@@ -653,6 +635,37 @@ export function BillingDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Hidden Offscreen Container for Instant 100% Exact PDF Download */}
+      {selectedPreviewInv && !previewModalOpen && (
+        <div style={{ position: "fixed", left: "-9999px", top: 0, width: "800px", background: "#ffffff", zIndex: -9999 }} aria-hidden="true">
+          <div id="invoice-print-area" className="w-full bg-white p-4">
+            <InvoiceTemplateRenderer 
+              invoice={selectedPreviewInv} 
+              templateName={selectedPreviewInv.invoiceTemplate || selectedPreviewInv.templateName || "GST Boxed"} 
+              printSettings={{
+                printCompanyName: true,
+                companyName: selectedPreviewInv.sellerDetails?.companyName || user?.businessName,
+                printAddress: true,
+                address: selectedPreviewInv.sellerDetails?.address || user?.businessAddress,
+                printPhone: true,
+                phone: selectedPreviewInv.sellerDetails?.phone || user?.phone,
+                printEmail: true,
+                email: selectedPreviewInv.sellerDetails?.email || user?.email,
+                printGstin: true,
+                logoUrl: selectedPreviewInv.sellerDetails?.logoUrl || "",
+                currentBalanceParty: true,
+                printTermsAndConditions: true,
+                amountInWords: "Rupees",
+                ...selectedPreviewInv.printSettings
+              }}
+              gstSettings={{
+                gstin: selectedPreviewInv.sellerDetails?.gstin || ""
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

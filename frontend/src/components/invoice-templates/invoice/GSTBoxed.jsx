@@ -56,9 +56,9 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
       style={{ paddingTop: `${Number(printSet.extraSpaceTop || 0)}px` }}
     >
       <div className="border-b border-slate-800 p-3 text-center space-y-1 bg-white relative min-h-[80px] flex flex-col justify-center">
-        {printSet.logoUrl ? (
+        {(printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
           <div className="absolute left-4 top-2">
-            <img src={printSet.logoUrl} alt="Logo" className="h-12 w-auto object-contain" />
+            <img src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} alt="Logo" className="h-12 w-auto object-contain" />
           </div>
         ) : showUdaanLogo ? (
           <div className="absolute left-4 top-2">
@@ -316,35 +316,33 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
           </div>
         </div>
         <div className="p-2 flex justify-end">
-          <table className="w-full font-mono">
-            <tbody>
-              <tr className="py-0.5 flex justify-between"><span>Subtotal</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></tr>
-              {(() => {
-                const uniqueGst = [...new Set(lines.map(l => Number(l.gst) || 0))];
-                const gstLabel = uniqueGst.length === 1 && uniqueGst[0] > 0 ? ` (${uniqueGst[0] / 2}%)` : '';
-                return (
-                  <>
-                    <tr className="py-0.5 flex justify-between"><span>CGST{gstLabel}</span><span>{formatAmt(totals.gstAmount / 2, printSet)}</span></tr>
-                    <tr className="py-0.5 flex justify-between"><span>SGST{gstLabel}</span><span>{formatAmt(totals.gstAmount / 2, printSet)}</span></tr>
-                  </>
-                );
-              })()}
-              <tr className="py-0.5 flex justify-between border-t font-semibold"><span>Total GST</span><span>{formatAmt(totals.gstAmount, printSet)}</span></tr>
-              <tr className={`py-1 flex justify-between font-extrabold border-t-2 border-slate-900 pt-1 ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}><span className="uppercase">Total</span><span>{formatAmt(totals.grand, printSet)}</span></tr>
-              {printSet.receivedAmount && (
-                <tr className={`py-0.5 flex justify-between text-slate-600 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
-                  <span>Received</span>
-                  <span>{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
-                </tr>
-              )}
-              {printSet.balanceAmount && (
-                <tr className={`py-0.5 flex justify-between text-slate-600 font-bold border-t border-dashed mt-0.5 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
-                  <span>Balance</span>
-                  <span>{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <div className="w-full font-mono">
+            <div className="py-0.5 flex justify-between"><span>Subtotal</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></div>
+            {(() => {
+              const uniqueGst = [...new Set(lines.map(l => Number(l.gst) || 0))];
+              const gstLabel = uniqueGst.length === 1 && uniqueGst[0] > 0 ? ` (${uniqueGst[0] / 2}%)` : '';
+              return (
+                <>
+                  <div className="py-0.5 flex justify-between"><span>CGST{gstLabel}</span><span>{formatAmt(totals.gstAmount / 2, printSet)}</span></div>
+                  <div className="py-0.5 flex justify-between"><span>SGST{gstLabel}</span><span>{formatAmt(totals.gstAmount / 2, printSet)}</span></div>
+                </>
+              );
+            })()}
+            <div className="py-0.5 flex justify-between border-t font-semibold"><span>Total GST</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
+            <div className={`py-1 flex justify-between font-extrabold border-t-2 border-slate-900 pt-1 ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}><span className="uppercase">Total</span><span>{formatAmt(totals.grand, printSet)}</span></div>
+            {printSet.receivedAmount && (
+              <div className={`py-0.5 flex justify-between text-slate-600 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
+                <span>Received</span>
+                <span>{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
+              </div>
+            )}
+            {printSet.balanceAmount && (
+              <div className={`py-0.5 flex justify-between text-slate-600 font-bold border-t border-dashed mt-0.5 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
+                <span>Balance</span>
+                <span>{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

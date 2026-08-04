@@ -17,9 +17,9 @@ export function normalizeInvoice(inv) {
   };
   const meta = {
     reverseCharge: inv.reverseCharge || "No",
-    challanNo: inv.challanNo || inv.transportDetails?.challanNo || "",
-    vehicleNo: inv.vehicleNo || inv.transportDetails?.vehicleNumber || "",
-    dateOfSupply: inv.dateOfSupply || "",
+    challanNo: inv.challanNo || inv.transportDetails?.challanNo || inv.transportDetails?.lrNumber || "",
+    vehicleNo: inv.vehicleNo || inv.transportDetails?.vehicleNo || inv.transportDetails?.vehicleNumber || "",
+    dateOfSupply: inv.dateOfSupply || inv.transportDetails?.dateOfSupply || (inv.transportDetails?.lrDate ? String(inv.transportDetails.lrDate).split('T')[0] : ""),
     placeOfSupply: inv.placeOfSupply || inv.shippingDetails?.placeOfDelivery || "Delhi",
     billedToAddress: inv.billedToAddress || inv.shippingDetails?.shipToAddress || inv.party?.address || inv.partyAddress || "",
     billedToGstin: inv.billedToGstin || inv.shippingDetails?.shipToGSTIN || inv.party?.gstin || "",
@@ -66,16 +66,23 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
     printPhone: true,
     printEmail: true,
     printGstin: true,
+    printSignatureText: true,
+    printTermsAndConditions: true,
+    taxDetails: printSettings?.taxDetails !== false,
     ...printSettings,
     companyName: invoice.sellerDetails?.companyName || printSettings?.companyName || user?.businessName || "",
     address: invoice.sellerDetails?.address || printSettings?.address || user?.businessAddress || "",
     phone: invoice.sellerDetails?.phone || printSettings?.phone || user?.phone || "",
     email: invoice.sellerDetails?.email || printSettings?.email || user?.email || "",
+    logoUrl: invoice.logoUrl || invoice.sellerDetails?.logoUrl || printSettings?.logoUrl || "",
+    signatureText: invoice.signatureText || invoice.sellerDetails?.signatureText || printSettings?.signatureText || "Authorized Signatory",
+    signatureUrl: invoice.signatureUrl || invoice.sellerDetails?.signatureUrl || printSettings?.signatureUrl || "",
+    signatureImgUrl: invoice.signatureImgUrl || invoice.sellerDetails?.signatureImgUrl || printSettings?.signatureImgUrl || "",
   };
 
   const effectiveGstSet = {
     ...gstSettings,
-    gstin: invoice.sellerDetails?.gstin || gstSettings?.gstin || ""
+    gstin: invoice.sellerDetails?.gstin || gstSettings?.gstin || printSettings?.gstinOnSale || ""
   };
 
   const colors = [
@@ -113,11 +120,12 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
     return TEMPLATES[documentType] || TEMPLATES.INVOICE;
   };
 
+  const resolvedTemplateName = templateName || invoice?.invoiceTemplate || invoice?.templateName || "GST Boxed";
   const availableTemplates = getDocTypeTemplates();
-  const templateConfig = availableTemplates[templateName] || Object.values(availableTemplates)[0];
+  const templateConfig = availableTemplates[resolvedTemplateName] || availableTemplates["GST Boxed"] || Object.values(availableTemplates)[0];
   
   if (!templateConfig || !templateConfig.component) {
-    return <div className="p-4 text-red-500">Template not found: {templateName}</div>;
+    return <div className="p-4 text-red-500">Template not found: {resolvedTemplateName}</div>;
   }
 
   const TemplateComponent = templateConfig.component;

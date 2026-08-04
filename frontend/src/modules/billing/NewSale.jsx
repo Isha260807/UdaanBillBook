@@ -685,30 +685,50 @@ export default function NewSale() {
       gstAmount: totals.gstAmount,
       roundOff: totals.roundOff,
       grandTotal: totals.grand,
+      invoiceTemplate: invoiceTemplate || "GST Boxed",
+      themeColor: themeColor || "slate",
       status: status,
       receivedAmount: receivedAmount,
       paymentMethod: status === "Unpaid" ? "Cash" : paymentMethod,
       paymentDetails: status === "Unpaid" ? {} : paymentDetails,
-      transportDetails,
+      transportDetails: {
+        ...transportDetails,
+        vehicleNumber: vehicleNo || transportDetails?.vehicleNumber || "",
+        lrNumber: challanNo || transportDetails?.lrNumber || "",
+        dateOfSupply: dateOfSupply || transportDetails?.dateOfSupply || ""
+      },
       shippingDetails,
+      challanNo: challanNo || "",
+      vehicleNo: vehicleNo || "",
+      dateOfSupply: dateOfSupply || "",
+      reverseCharge: reverseCharge || "No",
+      terms: terms || "",
+      logoUrl: logoUrl || printSet?.logoUrl || "",
+      signatureText: signatureText || printSet?.signatureText || "Authorized Signatory",
+      signatureUrl: signatureUrl || printSet?.signatureUrl || "",
+      signatureImgUrl: signatureImgUrl || printSet?.signatureImgUrl || "",
       billedToAddress: shippingDetails?.shipToAddress || billedToAddress || "",
       billedToGstin: shippingDetails?.shipToGSTIN || billedToGstin || "",
       billedToMobile: shippingDetails?.phone || billedToMobile || "",
       billedToState: shippingDetails?.state || billedToState || "Delhi",
       billingName: customer || "Walk-in Customer",
       sellerDetails: {
-        companyName: sellerName || user?.businessName || "",
-        address: sellerAddress || user?.businessAddress || "",
-        phone: sellerPhone || user?.phone || "",
-        email: sellerEmail || user?.email || "",
-        gstin: sellerGstin || ""
+        companyName: sellerName || printSet?.companyName || user?.businessName || "",
+        address: sellerAddress || printSet?.address || user?.businessAddress || "",
+        phone: sellerPhone || printSet?.phone || user?.phone || "",
+        email: sellerEmail || printSet?.email || user?.email || "",
+        gstin: sellerGstin || printSet?.gstinOnSale || gstSet?.gstin || "",
+        logoUrl: logoUrl || printSet?.logoUrl || "",
+        signatureText: signatureText || printSet?.signatureText || "Authorized Signatory",
+        signatureUrl: signatureUrl || printSet?.signatureUrl || "",
+        signatureImgUrl: signatureImgUrl || printSet?.signatureImgUrl || ""
       },
       bankDetails: {
-        accountHolder: sellerName || user?.businessName || "",
-        accountNumber: paymentDetails?.accountNumber || "",
-        ifsc: paymentDetails?.ifsc || "",
-        bankName: paymentDetails?.bankName || "",
-        branchName: paymentDetails?.branchName || ""
+        accountHolder: bankDetails?.accountHolder || sellerName || printSet?.companyName || user?.businessName || "",
+        accountNumber: bankDetails?.accountNumber || printSet?.bankAccount || paymentDetails?.accountNumber || "",
+        ifsc: bankDetails?.ifsc || printSet?.bankIfsc || paymentDetails?.ifsc || "",
+        bankName: bankDetails?.bankName || printSet?.bankName || paymentDetails?.bankName || "",
+        branchName: bankDetails?.branchName || printSet?.bankBranch || paymentDetails?.branchName || ""
       }
     };
 
@@ -1355,10 +1375,11 @@ export default function NewSale() {
                         <Label className="text-xs">Party Current Balance (₹)</Label>
                         <Input 
                           type="number"
-                          value={partyBalance} 
-                          onChange={(e) => setPartyBalance(Number(e.target.value) || 0)} 
+                          value={partyBalance === 0 ? "" : partyBalance} 
+                          onChange={(e) => setPartyBalance(e.target.value === "" ? 0 : Number(e.target.value))} 
                           placeholder="e.g. 15000" 
                           className="h-9 rounded-lg"
+                          onFocus={(e) => e.target.select()}
                         />
                       </div>
                     )}
@@ -1530,6 +1551,7 @@ export default function NewSale() {
                           onChange={(e) => updateLine(i, 'rate', e.target.value === "" ? 0 : Number(e.target.value))} 
                           placeholder="0.00"
                           className="h-9 bg-white text-xs text-right rounded-lg border-slate-200" 
+                          onFocus={(e) => e.target.select()}
                         />
                       </div>
 
@@ -1571,7 +1593,7 @@ export default function NewSale() {
                       {/* Discount */}
                       <div className="col-span-4 sm:col-span-2">
                         <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Discount %</Label>
-                        <Input type="number" min={0} max={100} value={l.discount} onChange={(e) => updateLine(i, 'discount', Number(e.target.value) || 0)} className="h-9 bg-white text-xs text-center rounded-lg border-slate-200" />
+                        <Input type="number" min={0} max={100} value={l.discount === 0 ? "" : l.discount} onChange={(e) => updateLine(i, 'discount', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" className="h-9 bg-white text-xs text-center rounded-lg border-slate-200" onFocus={(e) => e.target.select()} />
                       </div>
 
                       {/* GST Rate */}
@@ -1942,9 +1964,11 @@ export default function NewSale() {
                       min={0}
                       max={totals.grand}
                       disabled={status === "Paid"}
-                      value={receivedAmount}
-                      onChange={(e) => setReceivedAmount(Number(e.target.value) || 0)}
+                      value={receivedAmount === 0 ? "" : receivedAmount}
+                      onChange={(e) => setReceivedAmount(e.target.value === "" ? 0 : Number(e.target.value))}
+                      placeholder="0"
                       className="h-9 rounded-lg text-right font-bold bg-slate-50 border-slate-200 focus-visible:bg-white"
+                      onFocus={(e) => e.target.select()}
                     />
                   </div>
                 )}

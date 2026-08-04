@@ -332,6 +332,7 @@ export function NewInvoiceDialog({
       invoiceNumber: invoiceNumber,
       party: selectedPartyId || null,
       partyName: party || "Walk-in Customer",
+      billingName: party || "Walk-in Customer",
       type: "Sale",
       date: parsedDate,
       items: lines.filter(l => l.name.trim() && l.qty > 0).map(l => ({
@@ -349,8 +350,35 @@ export function NewInvoiceDialog({
       gstAmount: totals.tax,
       roundOff: totals.grand - totals.originalGrand,
       grandTotal: totals.grand,
+      invoiceTemplate: "GST Boxed",
+      themeColor: "slate",
       status: receivedAmount >= totals.grand ? "Paid" : (receivedAmount > 0 ? "Partial" : "Unpaid"),
-      receivedAmount: receivedAmount
+      receivedAmount: receivedAmount,
+      billedToAddress: partyAddress || "",
+      billedToGstin: partyGstin || "",
+      billedToMobile: phone || "",
+      billedToState: partyState || "Delhi",
+      sellerDetails: {
+        companyName: businessName || "",
+        address: businessAddress || "",
+        phone: businessPhone || "",
+        email: businessEmail || "",
+        gstin: businessGstin || "",
+        logoUrl: settings?.printSettings?.logoUrl || "",
+      },
+      logoUrl: settings?.printSettings?.logoUrl || "",
+      bankDetails: {
+        accountHolder: bankAccountHolder || "",
+        accountNumber: bankAccountNumber || "",
+        ifsc: bankIfsc || "",
+        bankName: bankName || "",
+        branchName: bankBranch || "",
+      },
+      transportDetails: {
+        vehicleNumber: vehicleNo || "",
+        lrNumber: challanNo || "",
+      },
+      terms: terms || "",
     };
 
     setPendingSave(payload);
@@ -737,7 +765,7 @@ export function NewInvoiceDialog({
               )}
               <div className="space-y-1 sm:space-y-1.5">
                 <Label htmlFor="inv-received">Received Amount (₹)</Label>
-                <Input id="inv-received" type="number" min={0} value={receivedAmount} onChange={(e) => setReceivedAmount(Number(e.target.value) || 0)} className="h-12 sm:h-10 rounded-xl text-sm bg-gray-50 border-gray-200 focus:bg-white" />
+                <Input id="inv-received" type="number" min={0} value={receivedAmount === 0 ? "" : receivedAmount} onChange={(e) => setReceivedAmount(e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" className="h-12 sm:h-10 rounded-xl text-sm bg-gray-50 border-gray-200 focus:bg-white" onFocus={(e) => e.target.select()} />
               </div>
             </div>
             </div>

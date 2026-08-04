@@ -113,7 +113,11 @@ const sentInvoiceSchema = new mongoose.Schema({
     address: String,
     phone: String,
     email: String,
-    gstin: String
+    gstin: String,
+    logoUrl: String,
+    signatureText: String,
+    signatureUrl: String,
+    signatureImgUrl: String
   },
   bankDetails: {
     accountHolder: String,
@@ -126,7 +130,30 @@ const sentInvoiceSchema = new mongoose.Schema({
   billedToGstin: String,
   billedToMobile: String,
   billedToState: String,
-  billingName: String
+  billingName: String,
+  invoiceTemplate: {
+    type: String,
+    default: 'GST Boxed'
+  },
+  themeColor: {
+    type: String,
+    default: 'slate'
+  },
+  logoUrl: String,
+  signatureText: String,
+  signatureUrl: String,
+  signatureImgUrl: String,
+  terms: String,
+  reverseCharge: String,
+  challanNo: String,
+  vehicleNo: String,
+  dateOfSupply: String,
+  placeOfSupply: String,
+  partyBalance: String,
+  description: String,
+  acknowledgement: String,
+  receivedBy: String,
+  deliveredBy: String
 }, {
   timestamps: true
 });

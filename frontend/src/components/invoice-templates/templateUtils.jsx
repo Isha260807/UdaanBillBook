@@ -7,34 +7,35 @@ export function getTemplateColumns(printSet) {
     hsnSac: true,
     quantity: true,
     priceUnit: true,
+    discount: true,
     amount: true
   };
   
   const colNames = printSet.tableColumnNames && Object.keys(printSet.tableColumnNames).length > 0 ? printSet.tableColumnNames : {
-    slNo: "Sr.",
-    itemName: "Product Description",
-    itemCode: "Item Code",
+    slNo: "#",
+    itemName: "ITEM NAME",
+    itemCode: "ITEM CODE",
     hsnSac: "HSN/SAC",
-    batchNo: "Batch No.",
-    expDate: "Exp. Date",
-    mfgDate: "Mfg. Date",
+    batchNo: "BATCH NO.",
+    expDate: "EXP. DATE",
+    mfgDate: "MFG. DATE",
     mrp: "MRP",
-    size: "Size",
-    modelNo: "Model No.",
-    description: "Description",
-    count: "Count",
-    colour: "Colour",
-    material: "Material",
-    brand: "Brand",
-    serialNo: "Serial No.",
-    challanNo: "Challan No.",
-    quantity: "QTY",
-    unit: "Unit",
-    priceUnit: "Rate",
-    discount: "Discount",
-    discountPercent: "Discount %",
-    taxablePriceUnit: "Taxable Price",
-    amount: "Total"
+    size: "SIZE",
+    modelNo: "MODEL NO.",
+    description: "DESCRIPTION",
+    count: "COUNT",
+    colour: "COLOUR",
+    material: "MATERIAL",
+    brand: "BRAND",
+    serialNo: "SERIAL NO.",
+    challanNo: "CHALLAN NO.",
+    quantity: "QUANTITY",
+    unit: "UNIT",
+    priceUnit: "PRICE/UNIT",
+    discount: "DISCOUNT",
+    discountPercent: "DISCOUNT %",
+    taxablePriceUnit: "TAXABLE PRICE",
+    amount: "AMOUNT"
   };
 
   const order = printSet.columnOrder || [
@@ -125,24 +126,24 @@ export function renderCommonFooter(invoice, printSet, themeClasses = {}) {
         <div className={`italic text-center w-full space-y-1 mb-2 ${textClass}`}>
           <span>Certified that the particulars given above are true and correct</span>
         </div>
-        {printSet.printSignatureText && (
+        {(printSet.printSignatureText !== false || invoice.signatureUrl || invoice.signatureImgUrl || printSet.signatureUrl || printSet.signatureImgUrl) && (
           <div className="text-center w-full relative flex flex-col items-center">
             <span className={`font-bold uppercase block ${titleClass}`}>
-              For, {printSet.companyName || "KESHAV TRAVELS"}
+              For, {printSet.companyName || invoice.sellerDetails?.companyName || "UDAAN BILLBOOK"}
             </span>
             <div className="flex flex-col items-center justify-center my-1 min-h-[40px]">
-              {printSet.signatureUrl && (
-                <img src={printSet.signatureUrl} alt="Seal" className="h-10 max-h-12 object-contain" />
+              {(invoice.signatureUrl || printSet.signatureUrl) && (
+                <img src={invoice.signatureUrl || printSet.signatureUrl} alt="Seal" className="h-10 max-h-12 object-contain" />
               )}
-              {printSet.signatureImgUrl && (
-                <img src={printSet.signatureImgUrl} alt="Signature" className="h-8 max-h-10 object-contain mt-1" />
+              {(invoice.signatureImgUrl || printSet.signatureImgUrl) && (
+                <img src={invoice.signatureImgUrl || printSet.signatureImgUrl} alt="Signature" className="h-8 max-h-10 object-contain mt-1" />
               )}
-              {!printSet.signatureUrl && !printSet.signatureImgUrl && (
+              {!(invoice.signatureUrl || printSet.signatureUrl) && !(invoice.signatureImgUrl || printSet.signatureImgUrl) && (
                 <div className="h-8" />
               )}
             </div>
             <span className={`block pt-1 border-t w-32 mx-auto text-center ${textClass}`}>
-              {printSet.signatureText || "Authorised Signatory"}
+              {invoice.signatureText || printSet.signatureText || "Authorised Signatory"}
             </span>
           </div>
         )}

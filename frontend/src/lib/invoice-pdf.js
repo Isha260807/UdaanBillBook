@@ -1,3 +1,4 @@
+import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -59,40 +60,109 @@ function numberToIndianWords(num) {
   return str + " Only";
 }
 
-export function downloadInvoicePdf(rawDocData, options = {}) {
+export async function downloadInvoicePdf(rawDocData, options = {}) {
+  const invNumber = rawDocData?.number || rawDocData?.invoiceNumber || "Invoice";
+  const printArea = document.getElementById("invoice-print-area");
+
+  if (printArea) {
+    try {
+      // Preload images inside printArea
+      const imgs = Array.from(printArea.querySelectorAll("img"));
+      await Promise.all(
+        imgs.map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
+
+      const canvas = await html2canvas(printArea, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: true,
+        backgroundColor: "#ffffff",
+        imageTimeout: 15000,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      let heightLeft = pdfHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+
+      if (options.preview) {
+        const blobUrl = pdf.output("bloburl");
+        window.open(blobUrl, "_blank");
+      } else {
+        pdf.save(`${invNumber}.pdf`);
+      }
+      return;
+    } catch (err) {
+      console.error("html2canvas PDF generation error:", err);
+    }
+  }
   const data = {
     number: rawDocData?.number || rawDocData?.invoiceNumber || "-",
-    date: rawDocData?.date || "-",
+    date: rawDocData?.date ? (typeof rawDocData.date === 'string' && rawDocData.date.includes('T') ? rawDocData.date.split('T')[0] : String(rawDocData.date)) : "-",
     business: {
-      name: rawDocData?.business?.name || "-",
-      address: rawDocData?.business?.address || "-",
-      phone: rawDocData?.business?.phone || "-",
-      email: rawDocData?.business?.email || "-",
-      gstin: rawDocData?.business?.gstin || "-",
+      name: rawDocData?.business?.name || rawDocData?.sellerDetails?.companyName || "-",
+      address: rawDocData?.business?.address || rawDocData?.sellerDetails?.address || "-",
+      phone: rawDocData?.business?.phone || rawDocData?.sellerDetails?.phone || "-",
+      email: rawDocData?.business?.email || rawDocData?.sellerDetails?.email || "-",
+      gstin: rawDocData?.business?.gstin || rawDocData?.sellerDetails?.gstin || "-",
       pan: rawDocData?.business?.pan || "-",
     },
     party: {
-      name: rawDocData?.party?.name || "-",
-      phone: rawDocData?.party?.phone || "-",
-      address: rawDocData?.party?.address || "-",
+      name: rawDocData?.party?.name || (typeof rawDocData?.party === 'string' ? rawDocData.party : null) || rawDocData?.partyName || rawDocData?.billingName || "-",
+      phone: rawDocData?.party?.phone || rawDocData?.billedToMobile || rawDocData?.shippingDetails?.phone || "-",
+      address: rawDocData?.party?.address || rawDocData?.billedToAddress || rawDocData?.shippingDetails?.address || "-",
       email: rawDocData?.party?.email || "-",
-      gstin: rawDocData?.party?.gstin || "-",
-      state: rawDocData?.party?.state || "-",
-      stateCode: rawDocData?.party?.stateCode || "-",
+      gstin: rawDocData?.party?.gstin || rawDocData?.billedToGstin || rawDocData?.shippingDetails?.gstin || "-",
+      state: rawDocData?.party?.state || rawDocData?.billedToState || rawDocData?.shippingDetails?.state || "-",
+      stateCode: rawDocData?.party?.stateCode || "07",
     },
     reverseCharge: rawDocData?.reverseCharge || "No",
-    challanNo: rawDocData?.challanNo || "-",
-    vehicleNo: rawDocData?.vehicleNo || "-",
+    challanNo: rawDocData?.challanNo || rawDocData?.transportDetails?.lrNumber || "-",
+    vehicleNo: rawDocData?.vehicleNo || rawDocData?.transportDetails?.vehicleNumber || "-",
     dateOfSupply: rawDocData?.dateOfSupply || "-",
-    placeOfSupply: rawDocData?.placeOfSupply || "-",
+    placeOfSupply: rawDocData?.placeOfSupply || rawDocData?.shippingDetails?.placeOfDelivery || "-",
     taxInclusive: rawDocData?.taxInclusive !== undefined ? rawDocData.taxInclusive : true,
-    lines: Array.isArray(rawDocData?.lines) && rawDocData.lines.length > 0 ? rawDocData.lines : [],
+    lines: (Array.isArray(rawDocData?.lines) && rawDocData.lines.length > 0) 
+      ? rawDocData.lines 
+      : (Array.isArray(rawDocData?.items) ? rawDocData.items.map(it => ({
+          name: it.name || "Item",
+          hsnSac: it.hsnSac || "",
+          qty: Number(it.qty) || 1,
+          rate: Number(it.rate) || 0,
+          gst: Number(it.gst) || 0
+        })) : []),
     bank: {
-      accountHolder: rawDocData?.bank?.accountHolder || "-",
-      accountNumber: rawDocData?.bank?.accountNumber || "-",
-      ifsc: rawDocData?.bank?.ifsc || "-",
-      name: rawDocData?.bank?.name || "-",
-      branch: rawDocData?.bank?.branch || "-",
+      accountHolder: rawDocData?.bank?.accountHolder || rawDocData?.bankDetails?.accountHolder || "-",
+      accountNumber: rawDocData?.bank?.accountNumber || rawDocData?.bankDetails?.accountNumber || "-",
+      ifsc: rawDocData?.bank?.ifsc || rawDocData?.bankDetails?.ifsc || "-",
+      name: rawDocData?.bank?.name || rawDocData?.bankDetails?.bankName || "-",
+      branch: rawDocData?.bank?.branch || rawDocData?.bankDetails?.branchName || "-",
     },
     terms: rawDocData?.terms || "1. Goods once sold will not be taken back.\n2. Subject to local jurisdiction.",
   };
@@ -242,14 +312,15 @@ export function downloadInvoicePdf(rawDocData, options = {}) {
     const cgstAmount = fmtNum(gstAmount / 2);
     const sgstRate = `${(gst / 2).toFixed(1)}%`;
     const sgstAmount = fmtNum(gstAmount / 2);
+    const discount = Number(l.discount) || 0;
     
     return [
       String(i + 1),
       l.name || "",
       l.hsnSac || "",
       String(qty),
-      l.unit || "1",
       fmtNum(rate),
+      fmtNum(discount),
       fmtNum(taxableValue),
       cgstRate,
       cgstAmount,
@@ -294,7 +365,7 @@ export function downloadInvoicePdf(rawDocData, options = {}) {
   // Add the summary row at the end of body
   rows.push([
     "",
-    "Total Quantity",
+    "Total Summary",
     "",
     String(totalQty),
     "",
@@ -309,16 +380,16 @@ export function downloadInvoicePdf(rawDocData, options = {}) {
 
   const head = [
     [
-      { content: 'Sr.\nNo.', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-      { content: 'Name of product', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: '#', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'ITEM NAME', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
       { content: 'HSN/SAC', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-      { content: 'QTY', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-      { content: 'Unit', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-      { content: 'Rate', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
-      { content: 'Taxable\nValue', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'QUANTITY', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'PRICE/UNIT', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'DISCOUNT', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'TAXABLE\nVALUE', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
       { content: 'CGST', colSpan: 2, styles: { halign: 'center' } },
       { content: 'SGST', colSpan: 2, styles: { halign: 'center' } },
-      { content: 'Total', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } }
+      { content: 'AMOUNT', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } }
     ],
     [
       { content: 'Rate', styles: { halign: 'center' } },

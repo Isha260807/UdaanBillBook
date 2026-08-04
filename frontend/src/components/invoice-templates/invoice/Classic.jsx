@@ -199,38 +199,36 @@ export function ClassicTemplate({ invoice, printSet, gstSet, activeColor, number
         </div>
 
         <div className="flex justify-end font-sans text-[10px]">
-          <table className="w-64 space-y-2">
-            <tbody>
-              <tr className="flex justify-between py-1 border-b border-slate-100">
-                <span className="text-slate-500">Gross Total</span>
-                <span className="font-mono">{formatAmt(totals.taxableAmount, printSet)}</span>
-              </tr>
-              <tr className="flex justify-between py-1 border-b border-slate-100">
-                <span className="text-slate-500">CGST Amount</span>
-                <span className="font-mono">{formatAmt(totals.gstAmount / 2, printSet)}</span>
-              </tr>
-              <tr className="flex justify-between py-1 border-b border-slate-100">
-                <span className="text-slate-500">SGST Amount</span>
-                <span className="font-mono">{formatAmt(totals.gstAmount / 2, printSet)}</span>
-              </tr>
-              <tr className="flex justify-between py-2 border-b border-slate-200 font-bold text-slate-900">
-                <span>Net Payable (Inc Tax)</span>
-                <span className={`font-mono ${activeColor.text}`}>{formatAmt(totals.grand, printSet)}</span>
-              </tr>
-              {printSet.receivedAmount && (
-                <tr className="flex justify-between py-1 border-b border-slate-100">
-                  <span className="text-slate-500">Received Amount</span>
-                  <span className="font-mono">{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
-                </tr>
-              )}
-              {printSet.balanceAmount && (
-                <tr className="flex justify-between py-1 font-bold text-slate-900">
-                  <span>Balance Amount</span>
-                  <span className="font-mono">{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <div className="w-64 space-y-2">
+            <div className="flex justify-between py-1 border-b border-slate-100">
+              <span className="text-slate-500">Gross Total</span>
+              <span className="font-mono">{formatAmt(totals.taxableAmount, printSet)}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-100">
+              <span className="text-slate-500">CGST Amount</span>
+              <span className="font-mono">{formatAmt(totals.gstAmount / 2, printSet)}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-100">
+              <span className="text-slate-500">SGST Amount</span>
+              <span className="font-mono">{formatAmt(totals.gstAmount / 2, printSet)}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-slate-200 font-bold text-slate-900">
+              <span>Net Payable (Inc Tax)</span>
+              <span className={`font-mono ${activeColor.text}`}>{formatAmt(totals.grand, printSet)}</span>
+            </div>
+            {printSet.receivedAmount && (
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500">Received Amount</span>
+                <span className="font-mono">{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
+              </div>
+            )}
+            {printSet.balanceAmount && (
+              <div className="flex justify-between py-1 font-bold text-slate-900">
+                <span>Balance Amount</span>
+                <span className="font-mono">{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

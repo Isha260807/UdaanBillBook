@@ -15,13 +15,13 @@ export function InvoiceProvider({ children }) {
     setLoading(true);
     try {
       const res = await api.get("/invoices");
-      // Normalize invoices from backend
+      // Normalize invoices from backend while preserving full invoice data
       const normalized = (res.data || []).map(inv => ({
-        _id: inv._id,
+        ...inv,
         id: inv.invoiceNumber || (inv._id ? `INV-${inv._id.substring(18).toUpperCase()}` : ''),
         invoiceNumber: inv.invoiceNumber || (inv._id ? `INV-${inv._id.substring(18).toUpperCase()}` : ''),
-        party: inv.partyName || (inv.party && inv.party.name) || "Walk-in Customer",
-        partyName: inv.partyName || (inv.party && inv.party.name) || "Walk-in Customer",
+        party: inv.partyName || (inv.party && inv.party.name) || inv.billingName || "Walk-in Customer",
+        partyName: inv.partyName || (inv.party && inv.party.name) || inv.billingName || "Walk-in Customer",
         date: new Date(inv.date).toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' }),
         dateRaw: inv.date,
         amount: inv.grandTotal || 0,
