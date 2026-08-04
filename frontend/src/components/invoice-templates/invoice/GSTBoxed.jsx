@@ -57,12 +57,17 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
     >
       <div className="border-b border-slate-800 p-3 text-center space-y-1 bg-white relative min-h-[80px] flex flex-col justify-center">
         {(printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
-          <div className="absolute left-4 top-2">
-            <img src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} alt="Logo" className="h-12 w-auto object-contain" />
+          <div className="absolute left-4 top-2 max-h-12 max-w-[120px] overflow-hidden flex items-center justify-center">
+            <img 
+              src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} 
+              alt="Logo" 
+              className="max-h-12 max-w-[120px] object-contain" 
+              style={{ maxHeight: '48px', maxWidth: '120px', width: 'auto', height: 'auto' }} 
+            />
           </div>
         ) : showUdaanLogo ? (
-          <div className="absolute left-4 top-2">
-            <img src="/udaan-logo-removebg-preview.png" alt="Udaan Logo" className="h-10 w-auto object-contain opacity-90 grayscale" />
+          <div className="absolute left-4 top-2 max-h-12 max-w-[120px] overflow-hidden flex items-center justify-center">
+            <img src="/udaan-logo-removebg-preview.png" alt="Udaan Logo" className="max-h-10 max-w-[100px] object-contain opacity-90 grayscale" style={{ maxHeight: '40px', maxWidth: '100px' }} />
           </div>
         ) : null}
         {printSet.printCompanyName && (

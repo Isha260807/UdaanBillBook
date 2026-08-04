@@ -9,8 +9,8 @@ export function MinimalTemplate({ invoice, printSet, gstSet, activeColor, number
       {/* Top compact line info */}
       <div className="flex justify-between border-b pb-2 border-slate-200">
         <div>
-          {printSet.logoUrl ? (
-            <img src={printSet.logoUrl} alt="Logo" className="h-8 w-auto object-contain mb-1" />
+          {(printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
+            <img src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} alt="Logo" className="max-h-12 max-w-[120px] object-contain mb-1" style={{ maxHeight: '48px', maxWidth: '120px', width: 'auto', height: 'auto' }} />
           ) : showUdaanLogo ? (
             <img src="/udaan-logo-removebg-preview.png" alt="Udaan Logo" className="h-6 w-auto object-contain opacity-90 grayscale mb-1" />
           ) : null}

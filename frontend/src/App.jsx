@@ -125,9 +125,6 @@ function RootRedirect() {
   if (!user) return <Navigate to="/login" replace />;
   
   const role = user.role?.toLowerCase();
-  if (role === "admin") {
-    return <Navigate to="/admin" replace />;
-  }
   if (role === "staff" || role === "viewer") {
     return <Navigate to="/staff/dashboard" replace />;
   }

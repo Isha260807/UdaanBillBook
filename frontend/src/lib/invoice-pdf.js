@@ -66,23 +66,27 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
 
   if (printArea) {
     try {
-      // Preload images inside printArea
+      // 1. Ensure all <img> tags are fully loaded in DOM
       const imgs = Array.from(printArea.querySelectorAll("img"));
       await Promise.all(
         imgs.map((img) => {
-          if (img.complete) return Promise.resolve();
+          if (img.complete && img.naturalWidth !== 0) return Promise.resolve();
           return new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
+            const tempImg = new Image();
+            tempImg.crossOrigin = "anonymous";
+            tempImg.onload = resolve;
+            tempImg.onerror = resolve;
+            tempImg.src = img.src;
           });
         })
       );
 
+      // 2. Capture printArea via html2canvas
       const canvas = await html2canvas(printArea, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        logging: true,
+        logging: false,
         backgroundColor: "#ffffff",
         imageTimeout: 15000,
       });
@@ -120,6 +124,7 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
       return;
     } catch (err) {
       console.error("html2canvas PDF generation error:", err);
+      return;
     }
   }
   const data = {
@@ -536,4 +541,42 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
   } else {
     doc.save(`${data.number}.pdf`);
   }
+}
+
+export function printInvoiceHtml() {
+  const printArea = document.getElementById("invoice-print-area");
+  if (!printArea) {
+    toast.error("Invoice area not found");
+    return;
+  }
+  const printContent = printArea.innerHTML;
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) return;
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Print Invoice</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          @page { size: A4; margin: 4mm; }
+          body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #ffffff !important; font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; padding: 0; }
+          img { max-width: 100% !important; height: auto !important; }
+        </style>
+      </head>
+      <body class="bg-white p-2">
+        <div class="max-w-4xl mx-auto p-1">
+          ${printContent}
+        </div>
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 400);
+          };
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }

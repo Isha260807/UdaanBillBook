@@ -94,7 +94,7 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
     { id: "rose", raw: "#e11d48", class: "text-rose-700", bgClass: "bg-rose-700" }
   ];
 
-  const themeColor = effectivePrintSet?.themeColor || "slate";
+  const themeColor = effectivePrintSet?.themeColor || invoice?.themeColor || "slate";
   const activeColor = colors.find(c => c.id === themeColor) || colors[0];
 
   const aToWords = (amount) => {

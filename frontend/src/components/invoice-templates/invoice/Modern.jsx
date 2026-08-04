@@ -9,8 +9,8 @@ export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberT
       {/* Colored Header Block */}
       <div className={`p-6 text-white ${activeColor.bgClass} flex flex-col sm:flex-row justify-between items-center gap-4 relative overflow-hidden`}>
         <div className="space-y-1 text-center sm:text-left flex flex-col sm:flex-row items-center gap-3 z-10">
-          {printSet.logoUrl ? (
-            <img src={printSet.logoUrl} alt="Logo" className="h-12 w-auto object-contain bg-white/20 p-1 rounded-md" />
+          {(printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
+            <img src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} alt="Logo" className="max-h-12 max-w-[120px] object-contain bg-white/20 p-1 rounded-md" style={{ maxHeight: '48px', maxWidth: '120px', width: 'auto', height: 'auto' }} />
           ) : showUdaanLogo ? (
             <img src="/udaan-logo-removebg-preview.png" alt="Udaan Logo" className="h-10 w-auto object-contain opacity-90 grayscale bg-white/20 p-1 rounded-md" />
           ) : null}

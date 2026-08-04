@@ -11,8 +11,8 @@ export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, n
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
         <div>
-          {printSet.logoUrl ? (
-            <img src={printSet.logoUrl} alt="Logo" className="h-10 w-auto object-contain mb-2" />
+          {(printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
+            <img src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} alt="Logo" className="max-h-12 max-w-[120px] object-contain mb-2" style={{ maxHeight: '48px', maxWidth: '120px', width: 'auto', height: 'auto' }} />
           ) : showUdaanLogo ? (
             <img src="/udaan-logo-removebg-preview.png" alt="Udaan Logo" className="h-8 w-auto object-contain opacity-90 grayscale mb-2" />
           ) : null}

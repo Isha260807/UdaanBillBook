@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useMockAuth } from "@/lib/auth-store";
-import { downloadInvoicePdf } from "@/lib/invoice-pdf";
+import { downloadInvoicePdf, printInvoiceHtml } from "@/lib/invoice-pdf";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import api from "@/lib/api";
 import { validateUtr, validateUpi } from "@/lib/validation";
@@ -163,15 +163,23 @@ export function BillingDashboard() {
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [selectedPreviewInv, setSelectedPreviewInv] = useState(null);
 
-  const downloadOne = (inv) => {
-    setSelectedPreviewInv(inv);
+  const downloadOne = async (inv) => {
+    let targetInv = inv;
+    if (inv?._id) {
+      try {
+        const res = await api.get(`/invoices/${inv._id}`);
+        if (res.data) {
+          targetInv = { ...inv, ...res.data };
+        }
+      } catch (e) {
+        console.warn("API GET invoice details warning:", e);
+      }
+    }
+    setSelectedPreviewInv(targetInv);
     setPreviewModalOpen(true);
-    setTimeout(async () => {
-      await downloadInvoicePdf(inv, {
-        templateName: inv.invoiceTemplate || inv.templateName || "GST Boxed"
-      });
-      toast.success(`${inv.invoiceNumber || inv.id} downloaded successfully`);
-    }, 150);
+    setTimeout(() => {
+      printInvoiceHtml();
+    }, 250);
   };
 
   const shareWA = (inv) => {
@@ -181,8 +189,19 @@ export function BillingDashboard() {
     window.open(`https://wa.me/?text=${msg}`, "_blank");
   };
 
-  const previewOne = (inv) => {
-    setSelectedPreviewInv(inv);
+  const previewOne = async (inv) => {
+    let targetInv = inv;
+    if (inv?._id) {
+      try {
+        const res = await api.get(`/invoices/${inv._id}`);
+        if (res.data) {
+          targetInv = { ...inv, ...res.data };
+        }
+      } catch (e) {
+        console.warn("API GET invoice details warning:", e);
+      }
+    }
+    setSelectedPreviewInv(targetInv);
     setPreviewModalOpen(true);
   };
 
@@ -597,10 +616,10 @@ export function BillingDashboard() {
             {selectedPreviewInv && (
               <Button 
                 size="sm" 
-                onClick={() => downloadOne(selectedPreviewInv)} 
-                className="bg-emerald-600 hover:bg-emerald-700 rounded-xl"
+                onClick={() => printInvoiceHtml()} 
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium px-4 mr-6"
               >
-                <FileDown className="mr-1.5 h-4 w-4" /> Download PDF
+                <FileDown className="mr-1.5 h-4 w-4" /> Print / Save PDF
               </Button>
             )}
           </DialogHeader>
