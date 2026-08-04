@@ -196,9 +196,6 @@ export function MainDashboard() {
             <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl shrink-0" onClick={() => setIsGstCalculatorOpen(true)} title="GST Calculator">
               <Calculator className="h-4 w-4" />
             </Button>
-            <Button size="sm" className="rounded-xl px-3 sm:px-4 text-xs sm:text-sm font-semibold shrink-0" onClick={() => setSearchParams({ "create-invoice": "true" })}>
-              <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span>New Invoice</span>
-            </Button>
           </div>
         }
       />
