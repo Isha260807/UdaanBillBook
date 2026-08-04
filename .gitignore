@@ -14,3 +14,6 @@ backend/config/udaanbillbook-74ded-firebase-adminsdk-fbsvc-2d80632f2a.json
 
 backend/node_modules
 frontend/node_modules
+
+*.log
+Backend/auth_debug.log
