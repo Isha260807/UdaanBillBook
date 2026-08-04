@@ -561,7 +561,7 @@ export function printInvoiceHtml() {
         <style>
           @page { size: A4; margin: 4mm; }
           body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #ffffff !important; font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; padding: 0; }
-          img { max-width: 100% !important; height: auto !important; }
+          img { max-width: 100% !important; }
         </style>
       </head>
       <body class="bg-white p-2">

@@ -11350,3 +11350,192 @@
 [2026-08-04T10:34:21.543Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices/6a71c029ab1445ce7d1e6d30
 [2026-08-04T10:34:21.545Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
 [2026-08-04T10:34:21.570Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:36:13.161Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T10:36:13.163Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:36:13.166Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:36:13.167Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:36:13.198Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:36:13.201Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:36:13.341Z] Received token: eyJhbGciOiJIUzI... for path: /api/reports/dashboard
+[2026-08-04T10:36:13.342Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:36:13.359Z] Received token: eyJhbGciOiJIUzI... for path: /api/notifications/register-token
+[2026-08-04T10:36:13.361Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:36:13.370Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:36:13.388Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:36:15.168Z] Received token: eyJhbGciOiJIUzI... for path: /api/reports/dashboard
+[2026-08-04T10:36:15.170Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:36:15.225Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:36:20.458Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T10:36:20.459Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:36:20.491Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:36:20.571Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T10:36:20.572Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:36:20.598Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:30.407Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T10:42:30.412Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:30.443Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:30.486Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:42:30.493Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:30.518Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:30.723Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:42:30.725Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:30.752Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:33.041Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:42:33.045Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:33.073Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:34.839Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:42:34.841Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:34.877Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:38.871Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T10:42:38.873Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:38.877Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:42:38.880Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:38.901Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:38.906Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:38.969Z] Received token: eyJhbGciOiJIUzI... for path: /api/notifications/register-token
+[2026-08-04T10:42:38.970Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:38.997Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:43.655Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices/6a71c216ab1445ce7d1e6d73
+[2026-08-04T10:42:43.656Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:43.690Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:54.861Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T10:42:54.862Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:54.865Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:42:54.867Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:54.889Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:54.894Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:54.912Z] Received token: eyJhbGciOiJIUzI... for path: /api/notifications/register-token
+[2026-08-04T10:42:54.914Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:54.941Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:42:59.683Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices/6a71c216ab1445ce7d1e6d73
+[2026-08-04T10:42:59.686Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:42:59.714Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:45:19.265Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T10:45:19.266Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:45:19.300Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:45:19.383Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T10:45:19.386Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:45:19.411Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:45:43.800Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:45:43.802Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:45:43.827Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:45:45.417Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:45:45.420Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:45:45.446Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:45:52.516Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices/6a71c216ab1445ce7d1e6d73
+[2026-08-04T10:45:52.520Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:45:52.556Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:46:14.757Z] Received token: eyJhbGciOiJIUzI... for path: /api/reports/dashboard
+[2026-08-04T10:46:14.759Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:46:14.785Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:46:16.033Z] Received token: eyJhbGciOiJIUzI... for path: /api/reports/dashboard
+[2026-08-04T10:46:16.035Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:46:16.065Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:46:16.577Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T10:46:16.580Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:46:16.677Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:46:16.875Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T10:46:16.877Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:46:16.939Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:57:24.349Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T10:57:24.387Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:57:24.485Z] Received token: eyJhbGciOiJIUzI... for path: /api/notifications/register-token
+[2026-08-04T10:57:24.488Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:57:24.493Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T10:57:24.494Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:57:24.497Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T10:57:24.498Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:57:24.724Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:57:24.759Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:57:24.860Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T10:57:24.863Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T10:57:24.891Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:57:24.901Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T10:57:24.944Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:01:09.917Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T11:01:09.921Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:01:09.950Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:01:09.998Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:01:10.000Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:01:10.030Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:01:10.339Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:01:10.341Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:01:10.368Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:01:11.164Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:01:11.166Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:01:11.198Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:01:12.780Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:01:12.783Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:01:12.812Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:01:14.150Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices/6a71c676ab1445ce7d1e6dee
+[2026-08-04T11:01:14.152Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:01:14.181Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:05:53.952Z] Received token: eyJhbGciOiJIUzI... for path: /api/reports/dashboard
+[2026-08-04T11:05:53.961Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:05:54.001Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:05:55.853Z] Received token: eyJhbGciOiJIUzI... for path: /api/reports/dashboard
+[2026-08-04T11:05:55.855Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:05:55.882Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:06:08.771Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T11:06:08.773Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:06:08.803Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:06:08.883Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T11:06:08.884Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:06:08.923Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:29:08.212Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T11:29:08.241Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:29:08.314Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T11:29:08.315Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:29:08.317Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:29:08.319Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:29:08.363Z] Received token: eyJhbGciOiJIUzI... for path: /api/notifications/register-token
+[2026-08-04T11:29:08.366Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:35:33.967Z] JWT Verification error: getaddrinfo ENOTFOUND ac-jnetc3j-shard-00-00.kr6hotv.mongodb.net
+[2026-08-04T11:35:33.989Z] JWT Verification error: getaddrinfo ENOTFOUND ac-jnetc3j-shard-00-00.kr6hotv.mongodb.net
+[2026-08-04T11:35:34.098Z] JWT Verification error: getaddrinfo ENOTFOUND ac-jnetc3j-shard-00-00.kr6hotv.mongodb.net
+[2026-08-04T11:35:34.105Z] JWT Verification error: getaddrinfo ENOTFOUND ac-jnetc3j-shard-00-00.kr6hotv.mongodb.net
+[2026-08-04T11:35:41.639Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T11:35:41.643Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:35:41.656Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T11:35:41.659Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:35:41.661Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:35:41.663Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:35:41.896Z] Received token: eyJhbGciOiJIUzI... for path: /api/notifications/register-token
+[2026-08-04T11:35:41.898Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:35:42.165Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:35:42.172Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:35:42.267Z] Received token: eyJhbGciOiJIUzI... for path: /api/settings/invoice-templates
+[2026-08-04T11:35:42.269Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:35:42.300Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:35:42.360Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:35:42.409Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:58:35.211Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T11:58:35.253Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:58:35.344Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:58:35.434Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:58:35.436Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:58:35.471Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:58:35.896Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:58:35.898Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:58:35.932Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:58:37.063Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:58:37.065Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:58:37.108Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:58:38.268Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:58:38.271Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:58:38.307Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:58:39.720Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices/6a71d3ebab1445ce7d1e6e3b
+[2026-08-04T11:58:39.724Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:58:39.768Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:59:54.400Z] Received token: eyJhbGciOiJIUzI... for path: /api/auth/me
+[2026-08-04T11:59:54.408Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:59:54.424Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices
+[2026-08-04T11:59:54.426Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:59:54.458Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:59:54.467Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:59:54.547Z] Received token: eyJhbGciOiJIUzI... for path: /api/notifications/register-token
+[2026-08-04T11:59:54.550Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:59:54.594Z] Authenticated user: admin@udaan.com (Role: admin)
+[2026-08-04T11:59:58.499Z] Received token: eyJhbGciOiJIUzI... for path: /api/invoices/6a71d3ebab1445ce7d1e6e3b
+[2026-08-04T11:59:58.502Z] Token decoded successfully. User ID: 6a44eb38aa1a6297f54296e7
+[2026-08-04T11:59:58.542Z] Authenticated user: admin@udaan.com (Role: admin)
