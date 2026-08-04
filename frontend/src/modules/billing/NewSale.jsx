@@ -14,6 +14,7 @@ import { useMockAuth } from "@/lib/auth-store";
 import { InvoiceTemplateRenderer } from "@/components/invoice-templates/InvoiceTemplateRenderer";
 import { usePlatformSettings } from "@/lib/platform-settings";
 import { TransportDetailsDrawer } from "@/components/TransportDetailsDrawer";
+import { printInvoiceHtml } from "@/lib/invoice-pdf";
 
 function TemplatePreviewMini({ previewColor, previewStyle }) {
   const base = "h-8 w-12 rounded border border-slate-300 bg-white flex flex-col p-0.5 space-y-0.5 mb-1.5 overflow-hidden";
@@ -861,7 +862,7 @@ export default function NewSale() {
             <span className="hidden sm:inline">{activePane === "form" ? "View Preview" : "View Form"}</span>
             <span className="sm:hidden">{activePane === "form" ? "Preview" : "Form"}</span>
           </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 text-slate-600 rounded-xl" onClick={() => window.print()} title="Print Invoice">
+          <Button size="icon" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 text-slate-600 rounded-xl" onClick={() => printInvoiceHtml()} title="Print Invoice">
             <Printer className="h-4 w-4" />
           </Button>
         </div>
@@ -2371,6 +2372,12 @@ export default function NewSale() {
                 onClick={() => setInvoiceTemplate("Green E-Way")}
               >
                 Green E-Way
+              </button>
+              <button 
+                className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${invoiceTemplate === 'Official E-Way' ? 'bg-white shadow-sm text-slate-900 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
+                onClick={() => setInvoiceTemplate("Official E-Way")}
+              >
+                Official E-Way
               </button>
               <button 
                 className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${invoiceTemplate === 'Minimal E-Way' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}

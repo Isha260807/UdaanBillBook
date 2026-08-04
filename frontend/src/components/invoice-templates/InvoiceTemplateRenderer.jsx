@@ -121,8 +121,8 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
   };
 
   const resolvedTemplateName = templateName || invoice?.invoiceTemplate || invoice?.templateName || "GST Boxed";
-  const availableTemplates = getDocTypeTemplates();
-  const templateConfig = availableTemplates[resolvedTemplateName] || availableTemplates["GST Boxed"] || Object.values(availableTemplates)[0];
+  const allTemplates = { ...TEMPLATES.INVOICE, ...TEMPLATES.EWAY, ...(TEMPLATES[documentType] || {}) };
+  const templateConfig = allTemplates[resolvedTemplateName] || TEMPLATES.INVOICE[resolvedTemplateName] || TEMPLATES.INVOICE["GST Boxed"] || Object.values(allTemplates)[0];
   
   if (!templateConfig || !templateConfig.component) {
     return <div className="p-4 text-red-500">Template not found: {resolvedTemplateName}</div>;
