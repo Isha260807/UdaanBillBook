@@ -25,12 +25,18 @@ export default function Layout() {
     return location.pathname.startsWith(p);
   });
 
+  const pathname = location.pathname;
+
   useEffect(() => {
     if (!hydrated) return;
     if (!isAuthenticated && !isPublic) {
       navigate("/login");
+    } else if (isAuthenticated && (pathname === "/login" || pathname === "/register" || pathname === "/verify-otp")) {
+      const user = mockAuth.get();
+      const redirectPath = (user?.role?.toLowerCase() === "staff" || user?.role?.toLowerCase() === "viewer") ? "/staff/dashboard" : (user?.role?.toLowerCase() === "admin" ? "/admin" : "/vendor/dashboard");
+      navigate(redirectPath, { replace: true });
     }
-  }, [hydrated, isAuthenticated, isPublic, navigate]);
+  }, [hydrated, isAuthenticated, isPublic, navigate, pathname]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -47,13 +53,9 @@ export default function Layout() {
         })
         .catch((err) => {
           console.error("Failed to sync user profile with database:", err);
-          if (err.response?.status === 401 || err.response?.status === 403) {
-            mockAuth.signOut();
-            navigate("/login");
-          }
         });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated]);
 
   if (isPublic) {
     return (

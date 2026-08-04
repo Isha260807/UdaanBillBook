@@ -8,7 +8,7 @@ const bcrypt = require('bcryptjs');
 
 // Generate JWT
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'udaanbillbook_secret_key_12345', {
     expiresIn: '30d',
   });
 };

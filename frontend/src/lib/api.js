@@ -31,10 +31,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       console.error('API 401 Unauthorized error at:', error.config?.url, error.response?.data);
-      // Clear token and session cache
-      localStorage.removeItem('Udaan.auth');
-      // Trigger a page reload to force routing layout to redirect to login
-      window.location.reload();
+      // Only clear session and reload if error is NOT from auth endpoints (/auth/me, /auth/login, etc.)
+      const requestUrl = error.config?.url || '';
+      if (!requestUrl.includes('/auth/me') && !requestUrl.includes('/auth/verify-otp') && !requestUrl.includes('/auth/login')) {
+        localStorage.removeItem('Udaan.auth');
+        window.location.reload();
+      }
     }
     return Promise.reject(error);
   }

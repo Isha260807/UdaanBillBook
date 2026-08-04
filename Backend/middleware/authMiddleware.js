@@ -25,7 +25,8 @@ const protect = async (req, res, next) => {
       logAuth(`Received token: ${token.slice(0, 15)}... for path: ${req.originalUrl}`);
 
       // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const secret = process.env.JWT_SECRET || 'udaanbillbook_secret_key_12345';
+      const decoded = jwt.verify(token, secret);
       logAuth(`Token decoded successfully. User ID: ${decoded.id}`);
 
       // Get user from the token

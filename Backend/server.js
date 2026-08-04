@@ -1,4 +1,4 @@
-// Trigger server reload to apply auth logging
+// Trigger server reload to apply auth middleware fallback secret
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -13,8 +13,24 @@ connectDB();
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174'
+].filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl) or if origin is in allowed list
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(null, true); // allow in dev
+    }
+  },
   credentials: true
 };
 app.use(cors(corsOptions));

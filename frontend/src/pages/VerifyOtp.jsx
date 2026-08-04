@@ -101,14 +101,14 @@ export default function VerifyOtp() {
         subscription: user.subscription
       });
 
-      const redirectPath = (user.role?.toLowerCase() === "staff" || user.role?.toLowerCase() === "viewer") ? "/staff/dashboard" : "/vendor/dashboard";
+      const redirectPath = (user.role?.toLowerCase() === "staff" || user.role?.toLowerCase() === "viewer") ? "/staff/dashboard" : (user.role?.toLowerCase() === "admin" ? "/admin" : "/vendor/dashboard");
       toast.success(user.role === "admin" ? "Admin access granted!" : search.mode === "register" ? "Account created!" : "Signed in successfully");
       
       if (state.returnUrl) {
         sessionStorage.setItem('resumeInvoiceFlow', 'true');
       }
       
-      navigate(state.returnUrl || redirectPath);
+      window.location.href = state.returnUrl || redirectPath;
 
     } catch (error) {
       toast.error(error.response?.data?.message || "Invalid OTP");

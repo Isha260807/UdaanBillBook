@@ -189,25 +189,15 @@ export function MainDashboard() {
       <PageHeader
         title=""
         actions={
-          <div className="flex w-full items-center gap-2">
-            <Button variant="outline" className="rounded-xl flex-1 px-2 text-xs sm:text-sm sm:px-4 sm:flex-none">
-              <Download className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span className="truncate">Export</span>
+          <div className="flex w-full sm:w-auto items-center gap-1.5 sm:gap-2">
+            <Button variant="outline" size="sm" className="rounded-xl px-2.5 sm:px-4 text-xs sm:text-sm">
+              <Download className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span>Export</span>
             </Button>
-            <Button variant="outline" size="icon" className="rounded-xl shrink-0" onClick={() => setIsGstCalculatorOpen(true)} title="GST Calculator">
+            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl shrink-0" onClick={() => setIsGstCalculatorOpen(true)} title="GST Calculator">
               <Calculator className="h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-xl shrink-0"
-              onClick={handleTestNotification}
-              disabled={sendingTest}
-              title="Test FCM Notification"
-            >
-              {sendingTest ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
-            </Button>
-            <Button className="rounded-xl flex-1 px-2 text-xs sm:text-sm sm:px-4 sm:flex-none" onClick={() => setSearchParams({ "create-invoice": "true" })}>
-              <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span className="truncate">New Invoice</span>
+            <Button size="sm" className="rounded-xl px-3 sm:px-4 text-xs sm:text-sm font-semibold shrink-0" onClick={() => setSearchParams({ "create-invoice": "true" })}>
+              <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span>New Invoice</span>
             </Button>
           </div>
         }
@@ -242,48 +232,51 @@ export function MainDashboard() {
               <p className="text-xs text-muted-foreground">Monthly Overview</p>
             </div>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <AreaChart data={data?.chartData || []}>
-                <defs>
-                  <linearGradient id="gSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                <XAxis dataKey="d" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                <Tooltip
-                  contentStyle={{
-                    background: "var(--color-card)",
-                    border: "1px solid var(--color-border)",
-                    borderRadius: 12,
-                    fontSize: 12,
-                  }}
-                  formatter={(v) => fmt(v)}
-                />
-                <Area type="monotone" dataKey="sales" stroke="var(--color-primary)" strokeWidth={2.5} fill="url(#gSales)" />
-                <Area type="monotone" dataKey="expense" stroke="var(--color-accent)" strokeWidth={2.5} fill="url(#gExp)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+            <div className="h-[180px] sm:h-[280px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data?.chartData || []} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gExp" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--color-accent)" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="var(--color-accent)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                  <XAxis dataKey="d" stroke="var(--color-muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis stroke="var(--color-muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => v === 0 ? "₹0" : v >= 1000 ? `₹${Math.round(v / 1000)}k` : `₹${v}k`} />
+                  <Tooltip
+                    contentStyle={{
+                      background: "var(--color-card)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: 12,
+                      fontSize: 11,
+                      padding: "4px 8px"
+                    }}
+                    formatter={(v) => fmt(v)}
+                  />
+                  <Area type="monotone" dataKey="sales" stroke="var(--color-primary)" strokeWidth={2} fill="url(#gSales)" />
+                  <Area type="monotone" dataKey="expense" stroke="var(--color-accent)" strokeWidth={2} fill="url(#gExp)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-[var(--shadow-card)]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Cash Flow</CardTitle>
-            <p className="text-xs text-muted-foreground">This month</p>
+          <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+            <CardTitle className="text-sm sm:text-base">Cash Flow</CardTitle>
+            <p className="text-[10px] sm:text-xs text-muted-foreground">This month</p>
           </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="rounded-xl bg-gradient-to-br from-primary to-[oklch(0.55_0.18_150)] p-4 text-primary-foreground shadow-[var(--shadow-glow)]">
-              <p className="text-xs opacity-80">Available balance</p>
-              <p className="mt-1 text-3xl font-bold tracking-tight">{fmt((data?.sales?.totalSales || 0) - (data?.expenses || 0))}</p>
-              <div className="mt-3 flex gap-4 text-xs">
+          <CardContent className="p-3 sm:p-6 space-y-3 sm:space-y-5">
+            <div className="rounded-xl bg-gradient-to-br from-primary to-[oklch(0.55_0.18_150)] p-3 sm:p-4 text-primary-foreground shadow-[var(--shadow-glow)]">
+              <p className="text-[10px] sm:text-xs opacity-80">Available balance</p>
+              <p className="mt-0.5 text-xl sm:text-3xl font-bold tracking-tight">{fmt((data?.sales?.totalSales || 0) - (data?.expenses || 0))}</p>
+              <div className="mt-2 flex gap-3 sm:gap-4 text-[10px] sm:text-xs">
                 <div>
                   <p className="opacity-75">Inflow</p>
                   <p className="font-semibold">{fmt(data?.sales?.totalSales || 0)}</p>
@@ -296,18 +289,18 @@ export function MainDashboard() {
             </div>
 
             <div>
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="font-medium">Receivables</span>
-                <span className="font-semibold">{fmt(data?.receivables || 0)}</span>
+              <div className="mb-1 flex items-center justify-between text-xs sm:text-sm">
+                <span className="font-medium text-xs sm:text-sm">Receivables</span>
+                <span className="font-semibold text-xs sm:text-sm">{fmt(data?.receivables || 0)}</span>
               </div>
-              <Progress value={(data?.receivables || 0) + (data?.payables || 0) === 0 ? 0 : Math.round(((data?.receivables || 0) / ((data?.receivables || 0) + (data?.payables || 0))) * 100)} className="h-2" />
+              <Progress value={(data?.receivables || 0) + (data?.payables || 0) === 0 ? 0 : Math.round(((data?.receivables || 0) / ((data?.receivables || 0) + (data?.payables || 0))) * 100)} className="h-1.5 sm:h-2" />
             </div>
             <div>
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="font-medium">Payables</span>
-                <span className="font-semibold">{fmt(data?.payables || 0)}</span>
+              <div className="mb-1 flex items-center justify-between text-xs sm:text-sm">
+                <span className="font-medium text-xs sm:text-sm">Payables</span>
+                <span className="font-semibold text-xs sm:text-sm">{fmt(data?.payables || 0)}</span>
               </div>
-              <Progress value={(data?.receivables || 0) + (data?.payables || 0) === 0 ? 0 : Math.round(((data?.payables || 0) / ((data?.receivables || 0) + (data?.payables || 0))) * 100)} className="h-2 [&>div]:bg-accent" />
+              <Progress value={(data?.receivables || 0) + (data?.payables || 0) === 0 ? 0 : Math.round(((data?.payables || 0) / ((data?.receivables || 0) + (data?.payables || 0))) * 100)} className="h-1.5 sm:h-2 [&>div]:bg-accent" />
             </div>
           </CardContent>
         </Card>
@@ -390,20 +383,22 @@ export function MainDashboard() {
       </div>
 
       <Card className="border-0 shadow-[var(--shadow-card)]">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Monthly Revenue</CardTitle>
-          <p className="text-xs text-muted-foreground">Compare revenue across the last 6 months</p>
+        <CardHeader className="p-3 sm:p-6 pb-1 sm:pb-2">
+          <CardTitle className="text-sm sm:text-base">Monthly Revenue</CardTitle>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">Compare revenue across the last 6 months</p>
         </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={data?.chartData || []}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-              <XAxis dataKey="d" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-              <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-              <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 12 }} formatter={(v) => fmt(v)} />
-              <Bar dataKey="sales" fill="var(--color-primary)" radius={[8, 8, 0, 0]} maxBarSize={42} />
-            </BarChart>
-          </ResponsiveContainer>
+        <CardContent className="p-3 sm:p-6 pt-0 sm:pt-0">
+          <div className="h-[160px] sm:h-[240px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data?.chartData || []} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
+                <XAxis dataKey="d" stroke="var(--color-muted-foreground)" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="var(--color-muted-foreground)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => v === 0 ? "₹0" : v >= 1000 ? `₹${Math.round(v / 1000)}k` : `₹${v}k`} />
+                <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 11, padding: "4px 8px" }} formatter={(v) => fmt(v)} />
+                <Bar dataKey="sales" fill="var(--color-primary)" radius={[6, 6, 0, 0]} maxBarSize={36} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
