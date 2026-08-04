@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -186,6 +187,9 @@ export default function NewSale() {
   const { user } = useMockAuth();
   const { settings } = usePlatformSettings();
 
+  const [isItemModalOpen, setIsItemModalOpen] = useState(false);
+  const [editingItemIndex, setEditingItemIndex] = useState(null);
+
   const printSet = settings?.printSettings || {};
   const gstSet = settings?.gstSettings || {};
   const txnSet = settings?.txnSettings || {};
@@ -327,6 +331,44 @@ export default function NewSale() {
   });
   const [themeColor, setThemeColor] = useState(() => getInitialState("themeColor", "slate"));
   
+  // Invoice preview scaling for mobile
+  const invoiceWrapperRef = useRef(null);
+  const invoiceScalerRef = useRef(null);
+
+  useEffect(() => {
+    const wrapper = invoiceWrapperRef.current;
+    const scaler = invoiceScalerRef.current;
+    if (!wrapper || !scaler) return;
+
+    const INVOICE_NATURAL_WIDTH = 800; // min-width of the invoice content
+
+    const updateScale = () => {
+      const containerWidth = wrapper.clientWidth;
+      if (containerWidth < INVOICE_NATURAL_WIDTH && containerWidth > 0) {
+        const scale = containerWidth / INVOICE_NATURAL_WIDTH;
+        scaler.style.setProperty('--invoice-scale', scale);
+        scaler.style.setProperty('--invoice-inner-w', `${INVOICE_NATURAL_WIDTH}px`);
+        // Adjust wrapper height to match the scaled content height
+        requestAnimationFrame(() => {
+          const scaledHeight = scaler.scrollHeight * scale;
+          wrapper.style.height = `${scaledHeight}px`;
+        });
+      } else {
+        scaler.style.setProperty('--invoice-scale', '1');
+        scaler.style.setProperty('--invoice-inner-w', '100%');
+        wrapper.style.height = 'auto';
+      }
+    };
+
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(wrapper);
+    ro.observe(scaler);
+    // Initial call
+    updateScale();
+
+    return () => ro.disconnect();
+  }, [activePane]); // re-run when switching to preview pane
+
   const isEwayMode = ["E way bill", "Green E-Way", "Minimal E-Way", "Official E-Way"].includes(invoiceTemplate);
 
   useEffect(() => {
@@ -541,6 +583,17 @@ export default function NewSale() {
     if (lines.length > 1) {
       setLines(lines.filter((_, i) => i !== index));
     }
+  };
+
+  const handleMobileAdd = () => {
+    setLines([...lines, { name: "", hsnSac: "", qty: 1, rate: 0, discount: 0, gst: 18 }]);
+    setEditingItemIndex(lines.length);
+    setIsItemModalOpen(true);
+  };
+
+  const handleMobileEdit = (index) => {
+    setEditingItemIndex(index);
+    setIsItemModalOpen(true);
   };
 
   const handleSave = async (isSend = false) => {
@@ -770,24 +823,25 @@ export default function NewSale() {
   return (
     <div className="min-h-[100vh] -mx-4 -mt-4 md:-mx-6 md:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-100 font-sans text-slate-900 flex flex-col">
       {/* Top App Bar */}
-      <div className="flex h-14 shrink-0 items-center justify-between bg-white px-4 border-b">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-slate-800 hover:bg-slate-50 rounded-full transition-colors">
-            <ArrowLeft className="h-6 w-6" />
+      <div className="flex h-12 md:h-14 shrink-0 items-center justify-between bg-white px-2 md:px-4 border-b">
+        <div className="flex items-center gap-1 md:gap-3 overflow-hidden">
+          <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-slate-800 hover:bg-slate-50 rounded-full transition-colors shrink-0">
+            <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
           </button>
-          <h1 className="text-sm font-bold tracking-tight text-slate-800 uppercase">New Sale Invoice</h1>
+          <h1 className="text-xs md:text-sm font-bold tracking-tight text-slate-800 uppercase truncate">New Sale</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 md:gap-2 shrink-0">
           <Button 
             size="sm" 
             variant="outline" 
             onClick={() => setActivePane(activePane === "form" ? "preview" : "form")} 
-            className="flex items-center gap-1.5 rounded-xl text-xs md:hidden"
+            className="flex items-center gap-1 rounded-xl text-[10px] md:text-xs h-8 px-2 md:px-3 md:hidden"
           >
             <Eye className="h-3.5 w-3.5" />
-            {activePane === "form" ? "View Preview" : "View Form"}
+            <span className="hidden sm:inline">{activePane === "form" ? "View Preview" : "View Form"}</span>
+            <span className="sm:hidden">{activePane === "form" ? "Preview" : "Form"}</span>
           </Button>
-          <Button size="icon" variant="ghost" className="h-9 w-9 text-slate-600 rounded-xl" onClick={() => window.print()} title="Print Invoice">
+          <Button size="icon" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 text-slate-600 rounded-xl" onClick={() => window.print()} title="Print Invoice">
             <Printer className="h-4 w-4" />
           </Button>
         </div>
@@ -796,15 +850,15 @@ export default function NewSale() {
       {/* Main Split Screen Container */}
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT COLUMN: Billing Creator Form */}
-        <div className={`w-full md:w-1/2 lg:w-5/12 flex flex-col h-full bg-slate-50 overflow-y-auto border-r custom-scrollbar ${activePane === 'preview' ? 'hidden md:flex' : 'flex'}`}>
-          <div className="p-4 space-y-4 pb-24">
+        <div className={`w-full md:w-1/2 lg:w-5/12 flex flex-col h-full bg-white md:bg-slate-50 overflow-y-auto border-r custom-scrollbar ${activePane === 'preview' ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-4 md:p-4 space-y-6 md:space-y-4 pb-24 bg-white md:bg-transparent">
             
             {isEwayMode ? (
               <>
                 {/* 1. E-Way Bill Details */}
-                <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">1. E-Way Bill Details</span>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">eWay Bill No</Label>
                       <Input 
@@ -827,13 +881,13 @@ export default function NewSale() {
                 </div>
 
                 {/* 2. Address Details */}
-                <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">2. Address Details</span>
                   <div className="space-y-3">
                     {/* From Section */}
                     <div className="border-b pb-3 space-y-2">
                       <span className="text-xs font-bold text-slate-600 block">From (Seller / Dispatcher)</span>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Seller Name</Label>
                           <Input 
@@ -853,6 +907,7 @@ export default function NewSale() {
                           />
                         </div>
                       </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <Label className="text-xs font-semibold text-slate-700">Company Logo</Label>
                         <div className="flex items-center gap-3">
@@ -890,7 +945,8 @@ export default function NewSale() {
                           </div>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Dispatch From Address</Label>
                           <Input 
@@ -915,7 +971,7 @@ export default function NewSale() {
                     {/* To Section */}
                     <div className="space-y-2">
                       <span className="text-xs font-bold text-slate-600 block">To (Customer / Consignee)</span>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Customer Name</Label>
                           <Input 
@@ -935,7 +991,7 @@ export default function NewSale() {
                           />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Ship To Address</Label>
                           <Input 
@@ -955,7 +1011,7 @@ export default function NewSale() {
                           />
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Customer State</Label>
                           <Input 
@@ -980,10 +1036,10 @@ export default function NewSale() {
                 </div>
 
                 {/* 4 & 5. Transporter & Vehicle Details */}
-                <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">4 & 5. Transporter & Vehicle Details</span>
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Transporter Name</Label>
                         <Input 
@@ -1004,7 +1060,7 @@ export default function NewSale() {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Vehicle Number</Label>
                         <Input 
@@ -1026,7 +1082,7 @@ export default function NewSale() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
                       <div className="space-y-1">
                         <Label className="text-[11px]">Transport Mode</Label>
                         <select 
@@ -1066,7 +1122,7 @@ export default function NewSale() {
               <>
                 {/* Seller/Company Details Block (Dynamically shown based on PRINT checkboxes) */}
                 {(printSet.printCompanyName || printSet.printAddress || printSet.printEmail || printSet.printPhone || printSet.printGstin) && (
-                  <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+                  <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Seller Details (Your Info)</span>
                     <div className="space-y-3">
                       {printSet.printCompanyName && (
@@ -1130,7 +1186,7 @@ export default function NewSale() {
                           />
                         </div>
                       )}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         {printSet.printPhone && (
                           <div className="space-y-1">
                             <Label className="text-xs">Phone Number</Label>
@@ -1171,11 +1227,11 @@ export default function NewSale() {
                 )}
 
                 {/* Bank Details Block */}
-                <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bank Details (On Invoice)</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Account No.</Label>
                       <Input 
@@ -1216,12 +1272,12 @@ export default function NewSale() {
                 </div>
 
                 {/* Customer Details Block */}
-                <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Billed To (Customer Details)</span>
                   </div>
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-100">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-100">
                       <div className="space-y-1">
                         <Label className="text-xs">Invoice No. (Override)</Label>
                         <Input 
@@ -1252,7 +1308,7 @@ export default function NewSale() {
                         />
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Mobile Number</Label>
                         <Input 
@@ -1274,7 +1330,7 @@ export default function NewSale() {
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Billing Address</Label>
                         <Input 
@@ -1310,9 +1366,9 @@ export default function NewSale() {
                 </div>
 
                 {/* Transport & Additional Details Block */}
-                <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Transport & Supply Details</span>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Challan No.</Label>
                       <Input 
@@ -1332,12 +1388,11 @@ export default function NewSale() {
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Date of Supply</Label>
                       <Input 
-                        type="text"
-                        placeholder="dd/mm/yyyy"
+                        type="date"
                         value={dateOfSupply} 
                         onChange={(e) => setDateOfSupply(e.target.value)} 
                         className="h-9 rounded-lg"
@@ -1356,7 +1411,7 @@ export default function NewSale() {
                     )}
                   </div>
                   {txnSet.poDetails && (
-                    <div className="grid grid-cols-2 gap-3 border-t pt-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t pt-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Customer P.O. No.</Label>
                         <Input 
@@ -1395,15 +1450,43 @@ export default function NewSale() {
             )}
 
             {/* Items List Block */}
-            <div className="bg-white rounded-xl shadow-sm border p-4 space-y-4">
+            <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-slate-800 uppercase tracking-wide">Item Details List</span>
-                <Button type="button" size="sm" variant="outline" onClick={addLine} className="rounded-full text-xs h-7 px-3 gap-1.5">
-                  <Plus className="h-3 w-3" /> Add Item Row
-                </Button>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant="outline" onClick={addLine} className="hidden md:flex rounded-full text-xs h-7 px-3 gap-1.5">
+                    <Plus className="h-3 w-3" /> Add Item Row
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={handleMobileAdd} className="flex md:hidden rounded-full text-xs h-7 px-3 gap-1.5 bg-emerald-50 text-emerald-600 border-emerald-200">
+                    <Plus className="h-3 w-3" /> Add Item Row
+                  </Button>
+                </div>
               </div>
 
-              <div className="space-y-3">
+              {/* Mobile Summary List */}
+              <div className="md:hidden space-y-3">
+                {lines.map((l, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl shadow-sm">
+                    <div className="flex flex-col flex-1">
+                      <span className="font-semibold text-xs text-slate-800">{l.name || `Item ${i + 1}`}</span>
+                      <span className="text-[10px] text-slate-500 mt-0.5">
+                        {l.qty} {l.unit || 'unit'} x ₹{l.rate} {l.discount > 0 ? `(-${l.discount}%)` : ''}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg text-[10px]" onClick={() => handleMobileEdit(i)}>
+                        Edit
+                      </Button>
+                      <Button type="button" size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 rounded-lg" onClick={() => removeLine(i)} disabled={lines.length === 1}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Inline Edit List */}
+              <div className="hidden md:block space-y-3">
                 {lines.map((l, i) => (
                   <div key={i} className="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50/80 to-white p-4 relative group">
                     {/* Row 1: Core fields */}
@@ -1637,7 +1720,7 @@ export default function NewSale() {
 
             {/* Footer / Additional Details Card */}
             {!isEwayMode && (printSet.printDescription || printSet.printTermsAndConditions || printSet.printAcknowledgement || printSet.printReceivedByDetails || printSet.printDeliveredByDetails || printSet.printSignatureText) && (
-              <div className="bg-white rounded-xl p-4 shadow-sm border space-y-3">
+              <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Footer & T&C Details</span>
                 <div className="space-y-3">
                   {printSet.printDescription && (
@@ -1796,10 +1879,10 @@ export default function NewSale() {
 
             {/* Calculations & Payment Configuration */}
             {!isEwayMode && printSet.paymentMode && (
-              <div className="bg-white rounded-xl shadow-sm border p-4 space-y-4">
+              <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-4">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Payment Setup</span>
                 
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <div className="space-y-1">
                     <Label className="text-xs">Payment Status</Label>
                     <select
@@ -1829,7 +1912,7 @@ export default function NewSale() {
                 </div>
 
                 {status !== "Unpaid" && (
-                  <div className="grid grid-cols-2 gap-3 text-xs pt-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-1">
                     <div className="space-y-1">
                       <Label className="text-xs">Payment Date</Label>
                       <Input 
@@ -1869,7 +1952,7 @@ export default function NewSale() {
                 {status !== "Unpaid" && paymentMethod === "Online" && (
                   <div className="space-y-3 pt-3 border-t border-dashed border-slate-200">
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Online Payment Details</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-[11px] text-slate-500 font-medium">Transaction ID / UPI</Label>
                         <Input 
@@ -1904,7 +1987,7 @@ export default function NewSale() {
 
                 {status !== "Unpaid" && paymentMethod === "Bank Transfer" && (
                   <div className="space-y-3 pt-3 border-t border-dashed">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
                       <div className="space-y-1">
                         <Label className="text-[10px] text-slate-500">Bank Name</Label>
                         <Input 
@@ -1938,11 +2021,58 @@ export default function NewSale() {
         </div>
 
         {/* RIGHT COLUMN: Live Print Preview styled as selected Vyapar Theme */}
-        <div className={`w-full md:w-1/2 lg:w-7/12 flex flex-col h-full bg-slate-200 overflow-y-auto p-4 custom-scrollbar ${activePane === 'form' ? 'hidden md:flex' : 'flex'}`}>
+        <div className={`w-full md:w-1/2 lg:w-7/12 flex flex-col h-full bg-slate-200 overflow-y-auto p-2 sm:p-4 custom-scrollbar ${activePane === 'form' ? 'hidden md:flex' : 'flex'}`}>
           
+          {/* Visual Invoice Template Selector */}
+          {!isEwayMode && (
+            <div className="mb-2 sm:mb-4 bg-white border border-slate-300 rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 className="text-[10px] sm:text-xs font-bold text-slate-800 uppercase tracking-wider hidden md:block">Select Invoice Design</h3>
+              
+              {/* Desktop Template Selector */}
+              <div className="hidden md:flex flex-wrap gap-2.5">
+                {[
+                  { id: "GST Boxed", name: "Standard (Boxed)" },
+                  { id: "Classic White", name: "Classic" },
+                  { id: "Modern Blue", name: "Modern" },
+                  { id: "Minimalist", name: "Minimal" },
+                  { id: "Professional", name: "Professional" }
+                ].map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    onClick={() => setInvoiceTemplate(tpl.id)}
+                    className={`h-8 px-4 rounded-xl text-[11px] font-bold transition-all border ${
+                      invoiceTemplate === tpl.id
+                        ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
+                    }`}
+                  >
+                    {tpl.name}
+                  </button>
+                ))}
+              </div>
 
+              {/* Mobile Template Selector Dropdown */}
+              <div className="md:hidden flex items-center justify-between w-full">
+                 <span className="text-[10px] font-medium text-slate-700 uppercase tracking-wider">Design:</span>
+                 <select 
+                   value={invoiceTemplate}
+                   onChange={(e) => setInvoiceTemplate(e.target.value)}
+                   className="h-7 sm:h-8 px-2 w-36 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                 >
+                    <option value="GST Boxed">Standard (Boxed)</option>
+                    <option value="Classic White">Classic</option>
+                    <option value="Modern Blue">Modern</option>
+                    <option value="Minimalist">Minimal</option>
+                    <option value="Professional">Professional</option>
+                 </select>
+              </div>
+            </div>
+          )}
 
-          <div className="bg-white shadow-xl rounded-xl border border-slate-300 w-full min-h-[297mm] p-6 text-[11px] text-slate-800 leading-normal relative mx-auto max-w-[210mm] overflow-hidden">
+          {/* Responsive invoice preview: scales down on mobile to fit screen */}
+          <div ref={invoiceWrapperRef} className="invoice-preview-wrapper w-full mx-auto" style={{ maxWidth: '210mm' }}>
+            <div ref={invoiceScalerRef} className="invoice-preview-scaler">
+              <div className="bg-white shadow-xl rounded-xl border border-slate-300 w-full p-3 sm:p-6 text-[11px] text-slate-800 leading-normal relative overflow-hidden" style={{ minWidth: '800px' }}>
             <InvoiceTemplateRenderer
               invoice={{
                 customer,
@@ -1999,34 +2129,9 @@ export default function NewSale() {
               documentType={isEwayMode ? "EWAY" : "INVOICE"}
             />
           </div>
+            </div>
+          </div>
 
-            {/* Visual Invoice Template Selector */}
-            {!isEwayMode && (
-              <div className="mt-4 bg-white border border-slate-300 rounded-xl p-4 shadow-sm shrink-0">
-                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Select Invoice Design</h3>
-                <div className="flex flex-wrap gap-2.5">
-                  {[
-                    { id: "GST Boxed", name: "Standard (Boxed)" },
-                    { id: "Classic White", name: "Classic" },
-                    { id: "Modern Blue", name: "Modern" },
-                    { id: "Minimalist", name: "Minimal" },
-                    { id: "Professional", name: "Professional" }
-                  ].map((tpl) => (
-                    <button
-                      key={tpl.id}
-                      onClick={() => setInvoiceTemplate(tpl.id)}
-                      className={`h-8 px-4 rounded-xl text-[11px] font-bold transition-all border ${
-                        invoiceTemplate === tpl.id
-                          ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
-                      }`}
-                    >
-                      {tpl.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -2143,11 +2248,93 @@ export default function NewSale() {
         </div>
       )}
 
-        {/* Floating Bottom Action bar */}
-      <div className="sticky bottom-0 shrink-0 bg-white border-t p-4 flex flex-col md:flex-row gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:justify-center items-center">
-        <div className="flex bg-slate-100 p-1 rounded-full border border-slate-200 self-stretch md:self-auto shrink-0 mb-2 md:mb-0">
+        {/* Mobile Item Details Modal */}
+      <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
+        <DialogContent className="max-w-md w-[95vw] bg-white p-5 max-h-[90vh] overflow-y-auto rounded-xl">
+          <DialogHeader className="mb-2">
+            <DialogTitle className="text-lg font-bold text-slate-800">Item Details</DialogTitle>
+          </DialogHeader>
+          
+          {editingItemIndex !== null && lines[editingItemIndex] && (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Item Name</Label>
+                <Input value={lines[editingItemIndex].name} onChange={(e) => updateLine(editingItemIndex, 'name', e.target.value)} placeholder="Product description" className="h-11 bg-slate-50 border-slate-200" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Quantity</Label>
+                  <Input type="number" min={1} value={lines[editingItemIndex].qty} onChange={(e) => updateLine(editingItemIndex, 'qty', Number(e.target.value) || 0)} className="h-11 bg-slate-50 border-slate-200 text-center" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Price/Unit (₹)</Label>
+                  <Input type="number" min={0} value={lines[editingItemIndex].rate === 0 ? "" : lines[editingItemIndex].rate} onChange={(e) => updateLine(editingItemIndex, 'rate', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0.00" className="h-11 bg-slate-50 border-slate-200 text-right font-semibold" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Discount %</Label>
+                  <Input type="number" min={0} max={100} value={lines[editingItemIndex].discount} onChange={(e) => updateLine(editingItemIndex, 'discount', Number(e.target.value) || 0)} className="h-11 bg-slate-50 border-slate-200 text-center" />
+                </div>
+                {gstSet.enableGst && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">GST Rate %</Label>
+                    <select 
+                      value={[0, 5, 12, 18, 28].includes(Number(lines[editingItemIndex].gst)) ? String(lines[editingItemIndex].gst) : "custom"} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateLine(editingItemIndex, 'gst', val === "custom" ? 5 : Number(val));
+                      }} 
+                      className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      <option value="0">0%</option>
+                      <option value="5">5%</option>
+                      <option value="12">12%</option>
+                      <option value="18">18%</option>
+                      <option value="28">28%</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">HSN/SAC</Label>
+                  <Input value={lines[editingItemIndex].hsnSac} onChange={(e) => updateLine(editingItemIndex, 'hsnSac', e.target.value)} placeholder="996601" className="h-11 bg-slate-50 border-slate-200" />
+                </div>
+                {txnSet.taxOnRate && gstSet.enableGst && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Tax Type</Label>
+                    <select 
+                      value={lines[editingItemIndex].taxType || "inclusive"} 
+                      onChange={(e) => updateLine(editingItemIndex, 'taxType', e.target.value)}
+                      className="h-11 w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-700 focus:outline-none"
+                    >
+                      <option value="inclusive">Tax Inclusive</option>
+                      <option value="exclusive">Tax Exclusive</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-6">
+            <Button type="button" className="w-full h-11 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md" onClick={() => setIsItemModalOpen(false)}>
+              Save & Update Item
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Floating Bottom Action bar */}
+      <div className="sticky bottom-0 shrink-0 bg-white border-t p-1.5 md:p-4 flex flex-col md:flex-row gap-1.5 md:gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:justify-center items-center z-10">
+        <div className="flex bg-slate-100 p-0.5 md:p-1 rounded-full border border-slate-200 self-stretch md:self-auto shrink-0 mb-0.5 md:mb-0 overflow-x-auto custom-scrollbar">
           <button 
-            className={`flex-1 md:w-28 px-3 py-2 rounded-full text-xs font-bold transition-colors ${!isEwayMode ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${!isEwayMode ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
             onClick={() => setInvoiceTemplate(settings?.printSettings?.themeName || "GST Boxed")}
           >
             Invoice
@@ -2156,13 +2343,13 @@ export default function NewSale() {
           {isEwayMode ? (
             <>
               <button 
-                className={`flex-1 md:w-28 px-3 py-2 rounded-full text-xs font-bold transition-colors ${invoiceTemplate === 'Green E-Way' ? 'bg-white shadow-sm text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${invoiceTemplate === 'Green E-Way' ? 'bg-white shadow-sm text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}
                 onClick={() => setInvoiceTemplate("Green E-Way")}
               >
                 Green E-Way
               </button>
               <button 
-                className={`flex-1 md:w-28 px-3 py-2 rounded-full text-xs font-bold transition-colors ${invoiceTemplate === 'Minimal E-Way' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${invoiceTemplate === 'Minimal E-Way' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
                 onClick={() => setInvoiceTemplate("Minimal E-Way")}
               >
                 Minimal E-Way
@@ -2170,7 +2357,7 @@ export default function NewSale() {
             </>
           ) : (
             <button 
-              className={`flex-1 md:w-28 px-3 py-2 rounded-full text-xs font-bold transition-colors ${isEwayMode ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+              className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${isEwayMode ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
               onClick={() => setInvoiceTemplate("Green E-Way")}
             >
               E-Way Bill
@@ -2178,13 +2365,15 @@ export default function NewSale() {
           )}
         </div>
         
-        <Button variant="outline" className="w-full md:flex-1 rounded-full h-12 text-[14px] font-bold border-slate-300 md:max-w-xs" onClick={() => handleSave(false)}>
-          SAVE {isEwayMode ? "E-WAY BILL" : "INVOICE"}
-        </Button>
-        <Button className="w-full md:flex-[2] rounded-full h-12 text-[14px] font-bold bg-emerald-500 hover:bg-emerald-600 md:max-w-xs" onClick={() => handleSave(true)}>
-          <Send className="mr-2 h-4 w-4" />
-          SAVE & SEND {isEwayMode ? "E-WAY BILL" : "BILL"}
-        </Button>
+        <div className="flex flex-row w-full md:w-auto gap-1.5 md:gap-2">
+          <Button variant="outline" className="flex-1 rounded-full h-8 md:h-10 text-xs md:text-sm font-medium border-slate-300 md:max-w-xs px-2 whitespace-nowrap uppercase tracking-wide" onClick={() => handleSave(false)}>
+            SAVE {isEwayMode ? "E-WAY" : "INVOICE"}
+          </Button>
+          <Button className="flex-[1.5] md:flex-[2] rounded-full h-8 md:h-10 text-xs md:text-sm font-medium bg-emerald-500 hover:bg-emerald-600 md:max-w-xs px-2 whitespace-nowrap uppercase tracking-wide" onClick={() => handleSave(true)}>
+            <Send className="mr-1 h-3 w-3 md:mr-1.5 md:h-3.5 md:w-3.5" />
+            SAVE & SEND
+          </Button>
+        </div>
       </div>
     </div>
   );

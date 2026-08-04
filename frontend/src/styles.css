@@ -237,6 +237,35 @@ aside nav::-webkit-scrollbar,
   display: none !important;
 }
 
+/* ============================================
+   Invoice Preview – Mobile Responsive Scaling
+   Scales the A4 invoice to fit small screens
+   without breaking the internal print layout.
+   JS sets --invoice-scale and --invoice-height on
+   .invoice-preview-wrapper at runtime.
+   ============================================ */
+.invoice-preview-wrapper {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  position: relative;
+}
+
+.invoice-preview-scaler {
+  transform-origin: top left;
+  transform: scale(var(--invoice-scale, 1));
+  width: var(--invoice-inner-w, 100%);
+}
+
+/* When JS sets the height, the wrapper respects it to avoid layout overflow */
+@media (max-width: 767px) {
+  .invoice-preview-wrapper {
+    /* Height is set via inline style by JS */
+    overflow: hidden;
+  }
+}
+
+
+
 /* Print Stylesheet for clean invoice/page printing */
 @media print {
   /* Hide sidebar, top bar, navigation, toaster, buttons, and form panels during print */
@@ -319,6 +348,16 @@ aside nav::-webkit-scrollbar,
   @page {
     size: A4 portrait;
     margin: 10mm 12mm 10mm 12mm;
+  }
+
+  /* Reset invoice preview scaling for print */
+  .invoice-preview-scaler {
+    transform: none !important;
+    width: 100% !important;
+  }
+  .invoice-preview-wrapper {
+    height: auto !important;
+    overflow: visible !important;
   }
 }
 

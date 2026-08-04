@@ -109,6 +109,17 @@ export function renderCommonFooter(invoice, printSet, themeClasses = {}) {
             <span>Acknowledgement: {invoice.acknowledgement}</span>
           </div>
         )}
+        {printSet.printQrCode && printSet.qrCodeUrl && (
+          <div className="mt-3 flex items-start gap-3">
+            <div className="border border-slate-300 p-1 bg-white shrink-0 shadow-sm">
+              <img src={printSet.qrCodeUrl} alt="QR Code" className="w-16 h-16 object-contain" />
+            </div>
+            <div className="flex flex-col justify-center py-1">
+              <span className={`font-bold uppercase ${titleClass}`}>Scan to Pay</span>
+              <span className={`italic mt-0.5 ${textClass}`}>UPI / E-Way / Verify</span>
+            </div>
+          </div>
+        )}
       </div>
       <div className={signatureContainerClass}>
         <div className={`italic text-center w-full space-y-1 mb-2 ${textClass}`}>

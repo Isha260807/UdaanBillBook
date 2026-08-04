@@ -724,9 +724,9 @@ export function NewInvoiceDialog({
                 </div>
               )}
               {txnSettings.dateOfSupply && (
-                <div className="space-y-1 sm:space-y-1.5">
-                  <Label htmlFor="inv-supply-date">Date of Supply</Label>
-                  <Input id="inv-supply-date" value={dateOfSupply} onChange={(e) => setDateOfSupply(e.target.value)} className="h-12 sm:h-10 rounded-xl text-sm bg-gray-50 border-gray-200 focus:bg-white" />
+                <div className="space-y-1.5">
+                  <Label htmlFor="inv-supply-date" className="text-xs font-semibold text-slate-700">Date of Supply</Label>
+                  <Input type="date" id="inv-supply-date" value={dateOfSupply} onChange={(e) => setDateOfSupply(e.target.value)} className="h-12 sm:h-10 rounded-xl text-sm bg-gray-50 border-gray-200 focus:bg-white" />
                 </div>
               )}
               {gstSettings.placeOfSupply && (

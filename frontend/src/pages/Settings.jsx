@@ -227,7 +227,7 @@ export default function Settings() {
                     }
                     setActiveTab(t.id);
                   }}
-                  className={`flex items-center justify-between px-4 py-3 text-left text-xs font-bold rounded-xl transition-all ${
+                  className={`flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 text-left text-xs font-medium md:font-bold rounded-xl transition-all ${
                     active
                       ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow)]"
                       : "text-foreground hover:bg-muted/50"
@@ -580,7 +580,7 @@ export default function Settings() {
                     <CardHeader>
                       <CardTitle className="text-base">Message Channel</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex gap-4">
+                    <CardContent className="flex flex-col sm:flex-row gap-4">
                       <Button
                         variant={messageSettings.type === "Udaan" ? "default" : "outline"}
                         onClick={() => updateSettings("messageSettings", { type: "Udaan" })}
@@ -797,7 +797,7 @@ export default function Settings() {
 
               {/* Item Custom Fields */}
               <Card className="border-0 shadow-[var(--shadow-card)]">
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 pb-3">
                   <div>
                     <CardTitle className="text-base">Item Custom Fields</CardTitle>
                     <CardDescription>Configure dynamic attributes to capture on inventory (e.g. Color, Brand)</CardDescription>
