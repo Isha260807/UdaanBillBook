@@ -73,20 +73,20 @@ function SignaturePad({ value, onChange }) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width || 350;
     canvas.height = 150;
-    
+
     const ctx = canvas.getContext('2d');
     ctx.strokeStyle = '#000000';
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    
+
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     if (value) {
       const img = new Image();
       img.onload = () => {
@@ -100,7 +100,7 @@ function SignaturePad({ value, onChange }) {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    
+
     if (e.touches && e.touches.length > 0) {
       return {
         x: e.touches[0].clientX - rect.left,
@@ -331,7 +331,7 @@ export default function NewSale() {
     return getInitialState("invoiceTemplate", "GST Boxed");
   });
   const [themeColor, setThemeColor] = useState(() => getInitialState("themeColor", "slate"));
-  
+
   // Invoice preview scaling for mobile
   const invoiceWrapperRef = useRef(null);
   const invoiceScalerRef = useRef(null);
@@ -491,7 +491,7 @@ export default function NewSale() {
             setTimeout(() => continueFlow(null, true), 300);
           }
         }
-      } catch(e) {}
+      } catch (e) { }
       sessionStorage.removeItem('pendingNewSale');
     }
   }, []);
@@ -648,7 +648,7 @@ export default function NewSale() {
     if (status !== "Unpaid" && paymentMethod === "Online") {
       const isUtrValid = validateUtr(paymentDetails.utr);
       const isUpiValid = validateUpi(paymentDetails.transactionId);
-      
+
       let newErrors = { utr: "", upi: "" };
       if (!isUtrValid) {
         newErrors.utr = "Please enter a valid UTR Number.";
@@ -658,7 +658,7 @@ export default function NewSale() {
         newErrors.upi = "Please enter a valid UPI ID.";
         toast.error("Please enter a valid UPI ID.");
       }
-      
+
       if (!isUtrValid || !isUpiValid) {
         setErrors(newErrors);
         return;
@@ -738,12 +738,12 @@ export default function NewSale() {
 
     try {
       const { data: userData } = await api.get('/auth/me');
-      
+
       if (userData.showAds) {
         setShowAdModal(true);
         return; // wait for ad to finish
       }
-      
+
       continueFlow(userData, false, currentSave);
     } catch (err) {
       // Fallback if auth check fails or offline
@@ -779,7 +779,7 @@ export default function NewSale() {
       await api.post(endpoint, payload);
       addInvoice();
       localStorage.removeItem("Udaan.sale_draft");
-      
+
       if (isSend) {
         const phoneStr = billedToMobile ? `91${billedToMobile}` : "";
         const msg = encodeURIComponent(
@@ -813,7 +813,7 @@ export default function NewSale() {
     if (!num) return "Zero Rupees Only";
     const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
     const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-    
+
     const formatTens = (n) => {
       if (n < 20) return a[n];
       return b[Math.floor(n / 10)] + (n % 10 !== 0 ? "-" + a[n % 10] : "");
@@ -852,10 +852,10 @@ export default function NewSale() {
           <h1 className="text-xs md:text-sm font-bold tracking-tight text-slate-800 uppercase truncate">New Sale</h1>
         </div>
         <div className="flex items-center gap-1 md:gap-2 shrink-0">
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => setActivePane(activePane === "form" ? "preview" : "form")} 
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setActivePane(activePane === "form" ? "preview" : "form")}
             className="flex items-center gap-1 rounded-xl text-[10px] md:text-xs h-8 px-2 md:px-3 md:hidden"
           >
             <Eye className="h-3.5 w-3.5" />
@@ -873,7 +873,7 @@ export default function NewSale() {
         {/* LEFT COLUMN: Billing Creator Form */}
         <div className={`w-full md:w-1/2 lg:w-5/12 flex flex-col h-full bg-white md:bg-slate-50 overflow-y-auto border-r custom-scrollbar ${activePane === 'preview' ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 md:p-4 space-y-6 md:space-y-4 pb-24 bg-white md:bg-transparent">
-            
+
             {isEwayMode ? (
               <>
                 {/* 1. E-Way Bill Details */}
@@ -882,18 +882,18 @@ export default function NewSale() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">eWay Bill No</Label>
-                      <Input 
-                        value={transportDetails.ewbNumber || ""} 
-                        onChange={(e) => setTransportDetails({...transportDetails, ewbNumber: e.target.value})} 
+                      <Input
+                        value={transportDetails.ewbNumber || ""}
+                        onChange={(e) => setTransportDetails({ ...transportDetails, ewbNumber: e.target.value })}
                         placeholder="e.g. 123456789000"
                         className="h-9 rounded-lg"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Document Number</Label>
-                      <Input 
-                        value={invoiceNumber} 
-                        onChange={(e) => setInvoiceNumber(e.target.value)} 
+                      <Input
+                        value={invoiceNumber}
+                        onChange={(e) => setInvoiceNumber(e.target.value)}
                         placeholder="e.g. INV-1001"
                         className="h-9 rounded-lg"
                       />
@@ -911,77 +911,77 @@ export default function NewSale() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Seller Name</Label>
-                          <Input 
-                            value={sellerName} 
-                            onChange={(e) => setSellerName(e.target.value)} 
+                          <Input
+                            value={sellerName}
+                            onChange={(e) => setSellerName(e.target.value)}
                             placeholder="Seller Company Name"
                             className="h-9 rounded-lg"
                           />
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Seller GSTIN</Label>
-                          <Input 
-                            value={sellerGstin} 
-                            onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))} 
+                          <Input
+                            value={sellerGstin}
+                            onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))}
                             placeholder="Seller GSTIN"
                             className="h-9 rounded-lg"
                           />
                         </div>
                       </div>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-slate-700">Company Logo</Label>
-                        <div className="flex items-center gap-3">
-                          <label className="text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 cursor-pointer font-semibold transition-all">
-                            Upload Logo
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    setLogoUrl(reader.result);
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                            />
-                          </label>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-slate-700">Company Logo</Label>
+                          <div className="flex items-center gap-3">
+                            <label className="text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 cursor-pointer font-semibold transition-all">
+                              Upload Logo
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      setLogoUrl(reader.result);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                            </label>
+                            {logoUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setLogoUrl("")}
+                                className="text-[11px] text-red-500 hover:underline font-semibold"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
                           {logoUrl && (
-                            <button 
-                              type="button" 
-                              onClick={() => setLogoUrl("")} 
-                              className="text-[11px] text-red-500 hover:underline font-semibold"
-                            >
-                              Remove
-                            </button>
+                            <div className="border rounded-xl p-2 bg-slate-50 w-24 h-12 flex items-center justify-center">
+                              <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+                            </div>
                           )}
                         </div>
-                        {logoUrl && (
-                          <div className="border rounded-xl p-2 bg-slate-50 w-24 h-12 flex items-center justify-center">
-                            <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
-                          </div>
-                        )}
-                      </div>
                       </div>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Dispatch From Address</Label>
-                          <Input 
-                            value={shippingDetails.dispatchFromAddress || ""} 
-                            onChange={(e) => setShippingDetails({ ...shippingDetails, dispatchFromAddress: e.target.value })} 
+                          <Input
+                            value={shippingDetails.dispatchFromAddress || ""}
+                            onChange={(e) => setShippingDetails({ ...shippingDetails, dispatchFromAddress: e.target.value })}
                             placeholder="Full address of dispatch"
                             className="h-9 rounded-lg"
                           />
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Place of Dispatch</Label>
-                          <Input 
-                            value={shippingDetails.placeOfDispatch || ""} 
-                            onChange={(e) => setShippingDetails({ ...shippingDetails, placeOfDispatch: e.target.value })} 
+                          <Input
+                            value={shippingDetails.placeOfDispatch || ""}
+                            onChange={(e) => setShippingDetails({ ...shippingDetails, placeOfDispatch: e.target.value })}
                             placeholder="e.g. Delhi"
                             className="h-9 rounded-lg"
                           />
@@ -995,18 +995,18 @@ export default function NewSale() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Customer Name</Label>
-                          <Input 
-                            value={customer} 
-                            onChange={(e) => setCustomer(e.target.value)} 
+                          <Input
+                            value={customer}
+                            onChange={(e) => setCustomer(e.target.value)}
                             placeholder="Enter Customer Name"
                             className="h-9 rounded-lg"
                           />
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Customer GSTIN</Label>
-                          <Input 
-                            value={billedToGstin} 
-                            onChange={(e) => setBilledToGstin(e.target.value.toUpperCase().slice(0, 15))} 
+                          <Input
+                            value={billedToGstin}
+                            onChange={(e) => setBilledToGstin(e.target.value.toUpperCase().slice(0, 15))}
                             placeholder="Customer GSTIN"
                             className="h-9 rounded-lg"
                           />
@@ -1015,18 +1015,18 @@ export default function NewSale() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Ship To Address</Label>
-                          <Input 
-                            value={shippingDetails.shipToAddress || ""} 
-                            onChange={(e) => setShippingDetails({ ...shippingDetails, shipToAddress: e.target.value })} 
+                          <Input
+                            value={shippingDetails.shipToAddress || ""}
+                            onChange={(e) => setShippingDetails({ ...shippingDetails, shipToAddress: e.target.value })}
                             placeholder="Full delivery address"
                             className="h-9 rounded-lg"
                           />
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Place of Delivery</Label>
-                          <Input 
-                            value={shippingDetails.placeOfDelivery || ""} 
-                            onChange={(e) => setShippingDetails({ ...shippingDetails, placeOfDelivery: e.target.value })} 
+                          <Input
+                            value={shippingDetails.placeOfDelivery || ""}
+                            onChange={(e) => setShippingDetails({ ...shippingDetails, placeOfDelivery: e.target.value })}
                             placeholder="e.g. Mumbai"
                             className="h-9 rounded-lg"
                           />
@@ -1035,18 +1035,18 @@ export default function NewSale() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Customer State</Label>
-                          <Input 
-                            value={billedToState} 
-                            onChange={(e) => setBilledToState(e.target.value)} 
+                          <Input
+                            value={billedToState}
+                            onChange={(e) => setBilledToState(e.target.value)}
                             placeholder="e.g. Delhi (07)"
                             className="h-9 rounded-lg"
                           />
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Customer Mobile</Label>
-                          <Input 
-                            value={billedToMobile} 
-                            onChange={(e) => setBilledToMobile(e.target.value.replace(/\D/g, "").slice(0, 10))} 
+                          <Input
+                            value={billedToMobile}
+                            onChange={(e) => setBilledToMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
                             placeholder="10-digit number"
                             className="h-9 rounded-lg"
                           />
@@ -1063,42 +1063,42 @@ export default function NewSale() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Transporter Name</Label>
-                        <Input 
-                          value={transportDetails.transporterName || ""} 
-                          onChange={(e) => setTransportDetails({...transportDetails, transporterName: e.target.value})} 
+                        <Input
+                          value={transportDetails.transporterName || ""}
+                          onChange={(e) => setTransportDetails({ ...transportDetails, transporterName: e.target.value })}
                           placeholder="Transporter Co. Name"
-                          className="h-9 text-xs rounded-lg" 
+                          className="h-9 text-xs rounded-lg"
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Transporter ID (GSTIN)</Label>
-                        <Input 
-                          value={transportDetails.transporterId || ""} 
-                          onChange={(e) => setTransportDetails({...transportDetails, transporterId: e.target.value.toUpperCase().slice(0, 15)})} 
+                        <Input
+                          value={transportDetails.transporterId || ""}
+                          onChange={(e) => setTransportDetails({ ...transportDetails, transporterId: e.target.value.toUpperCase().slice(0, 15) })}
                           placeholder="Transporter GSTIN"
-                          className="h-9 text-xs rounded-lg uppercase" 
+                          className="h-9 text-xs rounded-lg uppercase"
                         />
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Vehicle Number</Label>
-                        <Input 
-                          value={transportDetails.vehicleNumber || ""} 
-                          onChange={(e) => setTransportDetails({...transportDetails, vehicleNumber: e.target.value.toUpperCase()})} 
+                        <Input
+                          value={transportDetails.vehicleNumber || ""}
+                          onChange={(e) => setTransportDetails({ ...transportDetails, vehicleNumber: e.target.value.toUpperCase() })}
                           placeholder="e.g. DL2CAZXXXX"
-                          className="h-9 text-xs rounded-lg uppercase" 
+                          className="h-9 text-xs rounded-lg uppercase"
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Approx Distance (KM)</Label>
-                        <Input 
-                          type="number" 
-                          value={transportDetails.approxDistance || ""} 
-                          onChange={(e) => setTransportDetails({...transportDetails, approxDistance: Number(e.target.value)})} 
+                        <Input
+                          type="number"
+                          value={transportDetails.approxDistance || ""}
+                          onChange={(e) => setTransportDetails({ ...transportDetails, approxDistance: Number(e.target.value) })}
                           placeholder="e.g. 250"
-                          className="h-9 text-xs rounded-lg" 
+                          className="h-9 text-xs rounded-lg"
                         />
                       </div>
                     </div>
@@ -1106,9 +1106,9 @@ export default function NewSale() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
                       <div className="space-y-1">
                         <Label className="text-[11px]">Transport Mode</Label>
-                        <select 
-                          value={transportDetails.modeOfTransport || "Road"} 
-                          onChange={(e) => setTransportDetails({...transportDetails, modeOfTransport: e.target.value})} 
+                        <select
+                          value={transportDetails.modeOfTransport || "Road"}
+                          onChange={(e) => setTransportDetails({ ...transportDetails, modeOfTransport: e.target.value })}
                           className="w-full h-9 rounded-lg border bg-white px-2 text-xs focus:outline-none"
                         >
                           <option value="Road">Road</option>
@@ -1119,20 +1119,20 @@ export default function NewSale() {
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[11px]">Doc/LR No.</Label>
-                        <Input 
-                          value={transportDetails.lrNumber || ""} 
-                          onChange={(e) => setTransportDetails({...transportDetails, lrNumber: e.target.value.toUpperCase()})} 
+                        <Input
+                          value={transportDetails.lrNumber || ""}
+                          onChange={(e) => setTransportDetails({ ...transportDetails, lrNumber: e.target.value.toUpperCase() })}
                           placeholder="LR No"
-                          className="h-9 text-xs rounded-lg uppercase" 
+                          className="h-9 text-xs rounded-lg uppercase"
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[11px]">Doc/LR Date</Label>
-                        <Input 
-                          type="date" 
-                          value={transportDetails.lrDate ? new Date(transportDetails.lrDate).toISOString().split('T')[0] : ""} 
-                          onChange={(e) => setTransportDetails({...transportDetails, lrDate: e.target.value})} 
-                          className="h-9 text-xs rounded-lg" 
+                        <Input
+                          type="date"
+                          value={transportDetails.lrDate ? new Date(transportDetails.lrDate).toISOString().split('T')[0] : ""}
+                          onChange={(e) => setTransportDetails({ ...transportDetails, lrDate: e.target.value })}
+                          className="h-9 text-xs rounded-lg"
                         />
                       </div>
                     </div>
@@ -1149,24 +1149,24 @@ export default function NewSale() {
                       {printSet.printCompanyName && (
                         <div className="space-y-1">
                           <Label className="text-xs">Company Name</Label>
-                          <Input 
-                            value={sellerName} 
-                            onChange={(e) => setSellerName(e.target.value)} 
+                          <Input
+                            value={sellerName}
+                            onChange={(e) => setSellerName(e.target.value)}
                             placeholder="Seller Company Name"
-                            className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500" 
+                            className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500"
                           />
                         </div>
                       )}
-                      
+
                       <div className="space-y-2">
                         <Label className="text-xs font-semibold text-slate-700">Company Logo</Label>
                         <div className="flex items-center gap-3">
                           <label className="text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 cursor-pointer font-semibold transition-all">
                             Upload Logo
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
@@ -1180,9 +1180,9 @@ export default function NewSale() {
                             />
                           </label>
                           {logoUrl && (
-                            <button 
-                              type="button" 
-                              onClick={() => setLogoUrl("")} 
+                            <button
+                              type="button"
+                              onClick={() => setLogoUrl("")}
                               className="text-[11px] text-red-500 hover:underline font-semibold"
                             >
                               Remove
@@ -1198,9 +1198,9 @@ export default function NewSale() {
                       {printSet.printGstin && (
                         <div className="space-y-1">
                           <Label className="text-xs">GSTIN on Sale</Label>
-                          <Input 
-                            value={sellerGstin} 
-                            onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))} 
+                          <Input
+                            value={sellerGstin}
+                            onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))}
                             maxLength={15}
                             placeholder="Seller GSTIN"
                             className="h-9 rounded-lg"
@@ -1211,9 +1211,9 @@ export default function NewSale() {
                         {printSet.printPhone && (
                           <div className="space-y-1">
                             <Label className="text-xs">Phone Number</Label>
-                            <Input 
-                              value={sellerPhone} 
-                              onChange={(e) => setSellerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} 
+                            <Input
+                              value={sellerPhone}
+                              onChange={(e) => setSellerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                               maxLength={10}
                               placeholder="Seller Phone"
                               className="h-9 rounded-lg"
@@ -1223,9 +1223,9 @@ export default function NewSale() {
                         {printSet.printEmail && (
                           <div className="space-y-1">
                             <Label className="text-xs">Email Address</Label>
-                            <Input 
-                              value={sellerEmail} 
-                              onChange={(e) => setSellerEmail(e.target.value)} 
+                            <Input
+                              value={sellerEmail}
+                              onChange={(e) => setSellerEmail(e.target.value)}
                               placeholder="Seller Email"
                               className="h-9 rounded-lg"
                             />
@@ -1235,9 +1235,9 @@ export default function NewSale() {
                       {printSet.printAddress && (
                         <div className="space-y-1">
                           <Label className="text-xs">Seller Address</Label>
-                          <Input 
-                            value={sellerAddress} 
-                            onChange={(e) => setSellerAddress(e.target.value)} 
+                          <Input
+                            value={sellerAddress}
+                            onChange={(e) => setSellerAddress(e.target.value)}
                             placeholder="Seller Address"
                             className="h-9 rounded-lg"
                           />
@@ -1255,36 +1255,36 @@ export default function NewSale() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Account No.</Label>
-                      <Input 
-                        value={bankDetails.accountNumber} 
-                        onChange={(e) => setBankDetails({...bankDetails, accountNumber: e.target.value.replace(/\D/g, "").slice(0, 18)})} 
+                      <Input
+                        value={bankDetails.accountNumber}
+                        onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value.replace(/\D/g, "").slice(0, 18) })}
                         placeholder="Account Number"
                         className="h-9 rounded-lg"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Bank Name</Label>
-                      <Input 
-                        value={bankDetails.bankName} 
-                        onChange={(e) => setBankDetails({...bankDetails, bankName: e.target.value})} 
+                      <Input
+                        value={bankDetails.bankName}
+                        onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
                         placeholder="e.g. Axis Bank"
                         className="h-9 rounded-lg"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">IFSC Code</Label>
-                      <Input 
-                        value={bankDetails.ifsc} 
-                        onChange={(e) => setBankDetails({...bankDetails, ifsc: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 11)})} 
+                      <Input
+                        value={bankDetails.ifsc}
+                        onChange={(e) => setBankDetails({ ...bankDetails, ifsc: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 11) })}
                         placeholder="e.g. UTIB0003532"
                         className="h-9 rounded-lg"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Branch Name</Label>
-                      <Input 
-                        value={bankDetails.branchName} 
-                        onChange={(e) => setBankDetails({...bankDetails, branchName: e.target.value})} 
+                      <Input
+                        value={bankDetails.branchName}
+                        onChange={(e) => setBankDetails({ ...bankDetails, branchName: e.target.value })}
                         placeholder="e.g. MG Road Branch"
                         className="h-9 rounded-lg"
                       />
@@ -1301,9 +1301,9 @@ export default function NewSale() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-100">
                       <div className="space-y-1">
                         <Label className="text-xs">Invoice No. (Override)</Label>
-                        <Input 
-                          value={invoiceNumber} 
-                          onChange={(e) => setInvoiceNumber(e.target.value)} 
+                        <Input
+                          value={invoiceNumber}
+                          onChange={(e) => setInvoiceNumber(e.target.value)}
                           placeholder="e.g. INV-1001"
                           className="h-9 rounded-lg"
                         />
@@ -1311,19 +1311,19 @@ export default function NewSale() {
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Customer Name</Label>
-                      <Input 
-                        value={customer} 
-                        onChange={(e) => setCustomer(e.target.value)} 
+                      <Input
+                        value={customer}
+                        onChange={(e) => setCustomer(e.target.value)}
                         placeholder="Enter customer / business name"
-                        className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500" 
+                        className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500"
                       />
                     </div>
                     {txnSet.billingName && (
                       <div className="space-y-1">
                         <Label className="text-xs">Billing Name</Label>
-                        <Input 
-                          value={billingName} 
-                          onChange={(e) => setBillingName(e.target.value)} 
+                        <Input
+                          value={billingName}
+                          onChange={(e) => setBillingName(e.target.value)}
                           placeholder="Enter legal / billing name"
                           className="h-9 rounded-lg"
                         />
@@ -1332,21 +1332,21 @@ export default function NewSale() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Mobile Number</Label>
-                        <Input 
-                          value={billedToMobile} 
-                          onChange={(e) => setBilledToMobile(e.target.value.replace(/\D/g, "").slice(0, 10))} 
+                        <Input
+                          value={billedToMobile}
+                          onChange={(e) => setBilledToMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
                           maxLength={10}
-                          placeholder="98765..." 
+                          placeholder="98765..."
                           className="h-9 rounded-lg"
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">GSTIN</Label>
-                        <Input 
-                          value={billedToGstin} 
-                          onChange={(e) => setBilledToGstin(e.target.value.toUpperCase().slice(0, 15))} 
+                        <Input
+                          value={billedToGstin}
+                          onChange={(e) => setBilledToGstin(e.target.value.toUpperCase().slice(0, 15))}
                           maxLength={15}
-                          placeholder="07AAAA..." 
+                          placeholder="07AAAA..."
                           className="h-9 rounded-lg"
                         />
                       </div>
@@ -1354,19 +1354,19 @@ export default function NewSale() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Billing Address</Label>
-                        <Input 
-                          value={billedToAddress} 
-                          onChange={(e) => setBilledToAddress(e.target.value)} 
-                          placeholder="City, State" 
+                        <Input
+                          value={billedToAddress}
+                          onChange={(e) => setBilledToAddress(e.target.value)}
+                          placeholder="City, State"
                           className="h-9 rounded-lg"
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">State & Code</Label>
-                        <Input 
-                          value={billedToState} 
-                          onChange={(e) => setBilledToState(e.target.value)} 
-                          placeholder="e.g. Delhi (07)" 
+                        <Input
+                          value={billedToState}
+                          onChange={(e) => setBilledToState(e.target.value)}
+                          placeholder="e.g. Delhi (07)"
                           className="h-9 rounded-lg"
                         />
                       </div>
@@ -1374,11 +1374,11 @@ export default function NewSale() {
                     {printSet.currentBalanceParty && (
                       <div className="space-y-1">
                         <Label className="text-xs">Party Current Balance (₹)</Label>
-                        <Input 
+                        <Input
                           type="number"
-                          value={partyBalance === 0 ? "" : partyBalance} 
-                          onChange={(e) => setPartyBalance(e.target.value === "" ? 0 : Number(e.target.value))} 
-                          placeholder="e.g. 15000" 
+                          value={partyBalance === 0 ? "" : partyBalance}
+                          onChange={(e) => setPartyBalance(e.target.value === "" ? 0 : Number(e.target.value))}
+                          placeholder="e.g. 15000"
                           className="h-9 rounded-lg"
                           onFocus={(e) => e.target.select()}
                         />
@@ -1393,19 +1393,19 @@ export default function NewSale() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Challan No.</Label>
-                      <Input 
-                        value={challanNo} 
-                        onChange={(e) => setChallanNo(e.target.value)} 
-                        placeholder="Challan reference" 
+                      <Input
+                        value={challanNo}
+                        onChange={(e) => setChallanNo(e.target.value)}
+                        placeholder="Challan reference"
                         className="h-9 rounded-lg"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Vehicle Number</Label>
-                      <Input 
-                        value={vehicleNo} 
-                        onChange={(e) => setVehicleNo(e.target.value.toUpperCase())} 
-                        placeholder="DL2CAZXXXX" 
+                      <Input
+                        value={vehicleNo}
+                        onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
+                        placeholder="DL2CAZXXXX"
                         className="h-9 rounded-lg"
                       />
                     </div>
@@ -1413,20 +1413,20 @@ export default function NewSale() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <Label className="text-xs">Date of Supply</Label>
-                      <Input 
+                      <Input
                         type="date"
-                        value={dateOfSupply} 
-                        onChange={(e) => setDateOfSupply(e.target.value)} 
+                        value={dateOfSupply}
+                        onChange={(e) => setDateOfSupply(e.target.value)}
                         className="h-9 rounded-lg"
                       />
                     </div>
                     {gstSet.placeOfSupply && (
                       <div className="space-y-1">
                         <Label className="text-xs">Place of Supply</Label>
-                        <Input 
-                          value={placeOfSupply} 
-                          onChange={(e) => setPlaceOfSupply(e.target.value)} 
-                          placeholder="Delhi" 
+                        <Input
+                          value={placeOfSupply}
+                          onChange={(e) => setPlaceOfSupply(e.target.value)}
+                          placeholder="Delhi"
                           className="h-9 rounded-lg"
                         />
                       </div>
@@ -1436,19 +1436,19 @@ export default function NewSale() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t pt-3">
                       <div className="space-y-1">
                         <Label className="text-xs">Customer P.O. No.</Label>
-                        <Input 
-                          value={poNumber} 
-                          onChange={(e) => setPoNumber(e.target.value)} 
-                          placeholder="P.O. reference" 
+                        <Input
+                          value={poNumber}
+                          onChange={(e) => setPoNumber(e.target.value)}
+                          placeholder="P.O. reference"
                           className="h-9 rounded-lg"
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-xs">P.O. Date</Label>
-                        <Input 
+                        <Input
                           type="date"
-                          value={poDate} 
-                          onChange={(e) => setPoDate(e.target.value)} 
+                          value={poDate}
+                          onChange={(e) => setPoDate(e.target.value)}
                           className="h-9 rounded-lg"
                         />
                       </div>
@@ -1531,12 +1531,12 @@ export default function NewSale() {
                         <Input type="number" min={1} value={l.qty} onChange={(e) => updateLine(i, 'qty', Number(e.target.value) || 0)} className="h-9 bg-white text-xs text-center rounded-lg border-slate-200" />
                         {txnSet.freeQty && (
                           <div className="mt-1">
-                            <Input 
-                              type="number" min={0} value={l.freeQty || 0} 
-                              onChange={(e) => updateLine(i, 'freeQty', Number(e.target.value) || 0)} 
+                            <Input
+                              type="number" min={0} value={l.freeQty || 0}
+                              onChange={(e) => updateLine(i, 'freeQty', Number(e.target.value) || 0)}
                               placeholder="Free Qty"
                               title="Free Quantity"
-                              className="h-7 bg-blue-50 text-[10px] text-center rounded border-blue-200 placeholder:text-blue-300" 
+                              className="h-7 bg-blue-50 text-[10px] text-center rounded border-blue-200 placeholder:text-blue-300"
                             />
                           </div>
                         )}
@@ -1545,13 +1545,13 @@ export default function NewSale() {
                       {/* Rate / Price */}
                       <div className="col-span-4 sm:col-span-2">
                         <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Price/Unit</Label>
-                        <Input 
-                          type="number" 
-                          min={0} 
-                          value={l.rate === 0 ? "" : l.rate} 
-                          onChange={(e) => updateLine(i, 'rate', e.target.value === "" ? 0 : Number(e.target.value))} 
+                        <Input
+                          type="number"
+                          min={0}
+                          value={l.rate === 0 ? "" : l.rate}
+                          onChange={(e) => updateLine(i, 'rate', e.target.value === "" ? 0 : Number(e.target.value))}
                           placeholder="0.00"
-                          className="h-9 bg-white text-xs text-right rounded-lg border-slate-200" 
+                          className="h-9 bg-white text-xs text-right rounded-lg border-slate-200"
                           onFocus={(e) => e.target.select()}
                         />
                       </div>
@@ -1568,9 +1568,9 @@ export default function NewSale() {
                     {txnSet.displayPurchasePrice && (
                       <div className="flex items-center gap-2 mt-2.5 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-1.5 max-w-max">
                         <span className="text-[10px] text-amber-600 font-semibold shrink-0">Purchase Price ₹</span>
-                        <input 
-                          type="number" 
-                          value={l.purchasePrice === 0 ? "" : (l.purchasePrice || "")} 
+                        <input
+                          type="number"
+                          value={l.purchasePrice === 0 ? "" : (l.purchasePrice || "")}
                           onChange={(e) => {
                             const val = e.target.value === "" ? 0 : Number(e.target.value);
                             setLines((prev) => prev.map((item, idx) => {
@@ -1582,9 +1582,9 @@ export default function NewSale() {
                               }
                               return item;
                             }));
-                          }} 
-                          placeholder="0.00" 
-                          className="h-5 w-16 bg-transparent text-[11px] font-bold text-amber-800 focus:outline-none" 
+                          }}
+                          placeholder="0.00"
+                          className="h-5 w-16 bg-transparent text-[11px] font-bold text-amber-800 focus:outline-none"
                         />
                       </div>
                     )}
@@ -1601,12 +1601,12 @@ export default function NewSale() {
                       {gstSet.enableGst && (
                         <div className="col-span-4 sm:col-span-2">
                           <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">GST Rate %</Label>
-                          <select 
-                            value={[0, 5, 12, 18, 28].includes(Number(l.gst)) ? String(l.gst) : "custom"} 
+                          <select
+                            value={[0, 5, 12, 18, 28].includes(Number(l.gst)) ? String(l.gst) : "custom"}
                             onChange={(e) => {
                               const val = e.target.value;
                               updateLine(i, 'gst', val === "custom" ? 5 : Number(val));
-                            }} 
+                            }}
                             className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30"
                           >
                             <option value="0">0%</option>
@@ -1623,8 +1623,8 @@ export default function NewSale() {
                       {txnSet.taxOnRate && gstSet.enableGst && (
                         <div className="col-span-4 sm:col-span-3">
                           <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Tax Type</Label>
-                          <select 
-                            value={l.taxType || "inclusive"} 
+                          <select
+                            value={l.taxType || "inclusive"}
                             onChange={(e) => updateLine(i, 'taxType', e.target.value)}
                             className="h-9 w-full text-xs rounded-lg border border-slate-200 bg-emerald-50 px-2.5 font-semibold text-emerald-700 focus:outline-none"
                           >
@@ -1749,9 +1749,9 @@ export default function NewSale() {
                   {printSet.printDescription && (
                     <div className="space-y-1">
                       <Label className="text-xs">Invoice Note / Description</Label>
-                      <textarea 
-                        value={description} 
-                        onChange={(e) => setDescription(e.target.value)} 
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                         placeholder="Enter description or note"
                         rows="3"
                         className="w-full text-xs p-2.5 border rounded-xl focus:outline-none bg-white border-slate-200"
@@ -1761,9 +1761,9 @@ export default function NewSale() {
                   {printSet.printTermsAndConditions && (
                     <div className="space-y-1">
                       <Label className="text-xs">Terms & Conditions</Label>
-                      <textarea 
-                        value={terms} 
-                        onChange={(e) => setTerms(e.target.value)} 
+                      <textarea
+                        value={terms}
+                        onChange={(e) => setTerms(e.target.value)}
                         placeholder="Enter terms & conditions"
                         rows="3"
                         className="w-full text-xs p-2.5 border rounded-xl focus:outline-none bg-white border-slate-200"
@@ -1774,24 +1774,24 @@ export default function NewSale() {
                     <div className="space-y-4 pt-2 border-t border-dashed">
                       <div className="space-y-1">
                         <Label className="text-xs">Signature Text</Label>
-                        <Input 
-                          value={signatureText} 
-                          onChange={(e) => setSignatureText(e.target.value)} 
+                        <Input
+                          value={signatureText}
+                          onChange={(e) => setSignatureText(e.target.value)}
                           placeholder="e.g. Authorized Signatory"
                           className="h-9 rounded-lg"
                         />
                       </div>
-                      
+
                       {/* Seal Upload */}
                       <div className="space-y-2">
                         <Label className="text-xs block font-semibold text-slate-700">Seal Image</Label>
                         <div className="flex items-center gap-3">
                           <label className="text-[12px] bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-xl hover:bg-blue-100 cursor-pointer font-semibold transition-all">
                             Upload Seal Image
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              className="hidden" 
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
@@ -1805,9 +1805,9 @@ export default function NewSale() {
                             />
                           </label>
                           {signatureUrl && (
-                            <button 
-                              type="button" 
-                              onClick={() => setSignatureUrl("")} 
+                            <button
+                              type="button"
+                              onClick={() => setSignatureUrl("")}
                               className="text-[11px] text-red-500 hover:underline font-semibold"
                             >
                               Remove
@@ -1850,10 +1850,10 @@ export default function NewSale() {
                             <div className="flex items-center gap-3">
                               <label className="text-[12px] bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-xl hover:bg-blue-100 cursor-pointer font-semibold transition-all">
                                 Upload Signature Image
-                                <input 
-                                  type="file" 
-                                  accept="image/*" 
-                                  className="hidden" 
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
                                     if (file) {
@@ -1867,9 +1867,9 @@ export default function NewSale() {
                                 />
                               </label>
                               {signatureImgUrl && (
-                                <button 
-                                  type="button" 
-                                  onClick={() => setSignatureImgUrl("")} 
+                                <button
+                                  type="button"
+                                  onClick={() => setSignatureImgUrl("")}
                                   className="text-[11px] text-red-500 hover:underline font-semibold"
                                 >
                                   Remove
@@ -1889,9 +1889,9 @@ export default function NewSale() {
                   {printSet.printAcknowledgement && (
                     <div className="space-y-1">
                       <Label className="text-xs">Acknowledgement Text</Label>
-                      <Input 
-                        value={acknowledgement} 
-                        onChange={(e) => setAcknowledgement(e.target.value)} 
+                      <Input
+                        value={acknowledgement}
+                        onChange={(e) => setAcknowledgement(e.target.value)}
                         placeholder="e.g. Received goods in good condition"
                         className="h-9 rounded-lg"
                       />
@@ -1906,7 +1906,7 @@ export default function NewSale() {
             {!isEwayMode && printSet.paymentMode && (
               <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-4">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Payment Setup</span>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                   <div className="space-y-1">
                     <Label className="text-xs">Payment Status</Label>
@@ -1940,19 +1940,19 @@ export default function NewSale() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs pt-1">
                     <div className="space-y-1">
                       <Label className="text-xs">Payment Date</Label>
-                      <Input 
-                        type="date" 
-                        value={paymentDate} 
-                        onChange={(e) => setPaymentDate(e.target.value)} 
+                      <Input
+                        type="date"
+                        value={paymentDate}
+                        onChange={(e) => setPaymentDate(e.target.value)}
                         className="h-9 rounded-lg"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Payment Time</Label>
-                      <Input 
-                        type="time" 
-                        value={paymentTime} 
-                        onChange={(e) => setPaymentTime(e.target.value)} 
+                      <Input
+                        type="time"
+                        value={paymentTime}
+                        onChange={(e) => setPaymentTime(e.target.value)}
                         className="h-9 rounded-lg"
                       />
                     </div>
@@ -1982,9 +1982,9 @@ export default function NewSale() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <Label className="text-[11px] text-slate-500 font-medium">Transaction ID / UPI</Label>
-                        <Input 
-                          value={paymentDetails.transactionId} 
-                          onChange={(e) => handleUpiChange(e.target.value.slice(0, 30))} 
+                        <Input
+                          value={paymentDetails.transactionId}
+                          onChange={(e) => handleUpiChange(e.target.value.slice(0, 30))}
                           maxLength={30}
                           placeholder="e.g. harsh@paytm or 123456789012"
                           className={`h-9 text-xs rounded-lg ${errors.upi ? 'border-red-400 bg-red-50/50 focus-visible:ring-red-300' : 'border-slate-200'}`}
@@ -1996,9 +1996,9 @@ export default function NewSale() {
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[11px] text-slate-500 font-medium">UTR Number</Label>
-                        <Input 
-                          value={paymentDetails.utr} 
-                          onChange={(e) => handleUtrChange(e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 22))} 
+                        <Input
+                          value={paymentDetails.utr}
+                          onChange={(e) => handleUtrChange(e.target.value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 22))}
                           maxLength={22}
                           placeholder="e.g. UTIB12345678901234"
                           className={`h-9 text-xs rounded-lg ${errors.utr ? 'border-red-400 bg-red-50/50 focus-visible:ring-red-300' : 'border-slate-200'}`}
@@ -2017,25 +2017,25 @@ export default function NewSale() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
                       <div className="space-y-1">
                         <Label className="text-[10px] text-slate-500">Bank Name</Label>
-                        <Input 
-                          value={paymentDetails.bankName} 
-                          onChange={(e) => setPaymentDetails({ ...paymentDetails, bankName: e.target.value })} 
+                        <Input
+                          value={paymentDetails.bankName}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, bankName: e.target.value })}
                           className="h-8 text-xs"
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] text-slate-500">Account No.</Label>
-                        <Input 
-                          value={paymentDetails.accountNumber} 
-                          onChange={(e) => setPaymentDetails({ ...paymentDetails, accountNumber: e.target.value.replace(/\D/g, "").slice(0, 18) })} 
+                        <Input
+                          value={paymentDetails.accountNumber}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, accountNumber: e.target.value.replace(/\D/g, "").slice(0, 18) })}
                           className="h-8 text-xs"
                         />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px] text-slate-500">IFSC Code</Label>
-                        <Input 
-                          value={paymentDetails.ifsc} 
-                          onChange={(e) => setPaymentDetails({ ...paymentDetails, ifsc: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 11) })} 
+                        <Input
+                          value={paymentDetails.ifsc}
+                          onChange={(e) => setPaymentDetails({ ...paymentDetails, ifsc: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 11) })}
                           className="h-8 text-xs"
                         />
                       </div>
@@ -2049,13 +2049,13 @@ export default function NewSale() {
 
         {/* RIGHT COLUMN: Live Print Preview styled as selected Vyapar Theme */}
         <div className={`w-full md:w-1/2 lg:w-7/12 flex flex-col h-full bg-slate-200 overflow-y-auto p-2 sm:p-4 custom-scrollbar ${activePane === 'form' ? 'hidden md:flex' : 'flex'}`}>
-          
+
           {/* Visual Invoice/E-Way Template Selector */}
           <div className="mb-2 sm:mb-4 bg-white border border-slate-300 rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <h3 className="text-[10px] sm:text-xs font-bold text-slate-800 uppercase tracking-wider hidden md:block">
               {isEwayMode ? "Select E-Way Design" : "Select Invoice Design"}
             </h3>
-            
+
             {/* Desktop Template Selector */}
             <div className="hidden md:flex flex-wrap gap-2.5">
               {(isEwayMode ? [
@@ -2072,11 +2072,10 @@ export default function NewSale() {
                 <button
                   key={tpl.id}
                   onClick={() => setInvoiceTemplate(tpl.id)}
-                  className={`h-8 px-4 rounded-xl text-[11px] font-bold transition-all border ${
-                    invoiceTemplate === tpl.id
+                  className={`h-8 px-4 rounded-xl text-[11px] font-bold transition-all border ${invoiceTemplate === tpl.id
                       ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
                       : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   {tpl.name}
                 </button>
@@ -2085,28 +2084,28 @@ export default function NewSale() {
 
             {/* Mobile Template Selector Dropdown */}
             <div className="md:hidden flex items-center justify-between w-full">
-               <span className="text-[10px] font-medium text-slate-700 uppercase tracking-wider">Design:</span>
-               <select 
-                 value={invoiceTemplate}
-                 onChange={(e) => setInvoiceTemplate(e.target.value)}
-                 className="h-7 sm:h-8 px-2 w-36 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
-               >
-                  {isEwayMode ? (
-                    <>
-                      <option value="Green E-Way">Green E-Way</option>
-                      <option value="Official E-Way">Official E-Way</option>
-                      <option value="Minimal E-Way">Minimal E-Way</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="GST Boxed">Standard (Boxed)</option>
-                      <option value="Classic White">Classic</option>
-                      <option value="Modern Blue">Modern</option>
-                      <option value="Minimalist">Minimal</option>
-                      <option value="Professional">Professional</option>
-                    </>
-                  )}
-               </select>
+              <span className="text-[10px] font-medium text-slate-700 uppercase tracking-wider">Design:</span>
+              <select
+                value={invoiceTemplate}
+                onChange={(e) => setInvoiceTemplate(e.target.value)}
+                className="h-7 sm:h-8 px-2 w-36 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+              >
+                {isEwayMode ? (
+                  <>
+                    <option value="Green E-Way">Green E-Way</option>
+                    <option value="Official E-Way">Official E-Way</option>
+                    <option value="Minimal E-Way">Minimal E-Way</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="GST Boxed">Standard (Boxed)</option>
+                    <option value="Classic White">Classic</option>
+                    <option value="Modern Blue">Modern</option>
+                    <option value="Minimalist">Minimal</option>
+                    <option value="Professional">Professional</option>
+                  </>
+                )}
+              </select>
             </div>
           </div>
 
@@ -2114,70 +2113,70 @@ export default function NewSale() {
           <div ref={invoiceWrapperRef} className="invoice-preview-wrapper w-full mx-auto" style={{ maxWidth: '210mm' }}>
             <div ref={invoiceScalerRef} className="invoice-preview-scaler">
               <div className="bg-white shadow-xl rounded-xl border border-slate-300 w-full p-3 sm:p-6 text-[11px] text-slate-800 leading-normal relative overflow-hidden" style={{ minWidth: '800px' }}>
-            <InvoiceTemplateRenderer
-              invoice={{
-                customer,
-                receivedAmount,
-                status,
-                paymentMethod,
-                paymentDetails,
-                lines,
-                totals,
-                reverseCharge,
-                challanNo,
-                vehicleNo,
-                dateOfSupply,
-                placeOfSupply,
-                billedToAddress,
-                billedToGstin,
-                billedToMobile,
-                billedToState,
-                bankDetails,
-                invoiceNumber: invoiceNumber || "INV-" + (settings?.lastInvoiceNo || "1001"),
-                date: paymentDate ? new Date(paymentDate + "T12:00:00").toISOString() : new Date().toISOString(),
-                time: paymentTime,
-                terms,
-                description,
-                receivedBy,
-                deliveredBy,
-                acknowledgement,
-                partyBalance,
-                billingName,
-                poNumber,
-                poDate,
-                transportDetails,
-                shippingDetails
-              }}
-              printSettings={{
-                ...printSet,
-                companyName: sellerName,
-                address: sellerAddress,
-                email: sellerEmail,
-                phone: sellerPhone,
-                signatureText: signatureText,
-                signatureUrl: signatureUrl,
-                signatureImgUrl: signatureImgUrl,
-                logoUrl: logoUrl
-              }}
-              gstSettings={{
-                ...gstSet,
-                gstin: sellerGstin
-              }}
-              templateName={invoiceTemplate}
-              templateData={availableTemplates.find(t => t.name === invoiceTemplate)}
-              themeColor={themeColor}
-              numberToWords={numberToWords}
-              documentType={isEwayMode ? "EWAY" : "INVOICE"}
-            />
-          </div>
+                <InvoiceTemplateRenderer
+                  invoice={{
+                    customer,
+                    receivedAmount,
+                    status,
+                    paymentMethod,
+                    paymentDetails,
+                    lines,
+                    totals,
+                    reverseCharge,
+                    challanNo,
+                    vehicleNo,
+                    dateOfSupply,
+                    placeOfSupply,
+                    billedToAddress,
+                    billedToGstin,
+                    billedToMobile,
+                    billedToState,
+                    bankDetails,
+                    invoiceNumber: invoiceNumber || "INV-" + (settings?.lastInvoiceNo || "1001"),
+                    date: paymentDate ? new Date(paymentDate + "T12:00:00").toISOString() : new Date().toISOString(),
+                    time: paymentTime,
+                    terms,
+                    description,
+                    receivedBy,
+                    deliveredBy,
+                    acknowledgement,
+                    partyBalance,
+                    billingName,
+                    poNumber,
+                    poDate,
+                    transportDetails,
+                    shippingDetails
+                  }}
+                  printSettings={{
+                    ...printSet,
+                    companyName: sellerName,
+                    address: sellerAddress,
+                    email: sellerEmail,
+                    phone: sellerPhone,
+                    signatureText: signatureText,
+                    signatureUrl: signatureUrl,
+                    signatureImgUrl: signatureImgUrl,
+                    logoUrl: logoUrl
+                  }}
+                  gstSettings={{
+                    ...gstSet,
+                    gstin: sellerGstin
+                  }}
+                  templateName={invoiceTemplate}
+                  templateData={availableTemplates.find(t => t.name === invoiceTemplate)}
+                  themeColor={themeColor}
+                  numberToWords={numberToWords}
+                  documentType={isEwayMode ? "EWAY" : "INVOICE"}
+                />
+              </div>
             </div>
           </div>
 
-          </div>
         </div>
+      </div>
 
       {/* Transport Drawer */}
-      <TransportDetailsDrawer 
+      <TransportDetailsDrawer
         isOpen={showTransportDrawer}
         onClose={() => setShowTransportDrawer(false)}
         onSave={() => {
@@ -2233,15 +2232,15 @@ export default function NewSale() {
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700">Business Name</label>
-                  <Input value={regForm.businessName} onChange={e => setRegForm({...regForm, businessName: e.target.value})} placeholder="e.g. Udaan Store" />
+                  <Input value={regForm.businessName} onChange={e => setRegForm({ ...regForm, businessName: e.target.value })} placeholder="e.g. Udaan Store" />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700">Business Type</label>
-                  <Input value={regForm.type} onChange={e => setRegForm({...regForm, type: e.target.value})} />
+                  <Input value={regForm.type} onChange={e => setRegForm({ ...regForm, type: e.target.value })} />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-700">Address</label>
-                  <Input value={regForm.address} onChange={e => setRegForm({...regForm, address: e.target.value})} />
+                  <Input value={regForm.address} onChange={e => setRegForm({ ...regForm, address: e.target.value })} />
                 </div>
               </div>
             </div>
@@ -2264,7 +2263,7 @@ export default function NewSale() {
             <div className="p-6 text-center">
               <h3 className="text-xl font-bold text-slate-800 mb-2">Choose a Plan</h3>
               <p className="text-sm text-slate-500 mb-6">Select a subscription plan to continue generating bills.</p>
-              
+
               <div className="space-y-3">
                 <div className="border border-emerald-200 bg-emerald-50 p-4 rounded-xl cursor-pointer hover:bg-emerald-100 transition-colors" onClick={() => { setShowSubModal(false); executeSave(); }}>
                   <div className="flex justify-between items-center mb-1">
@@ -2289,20 +2288,20 @@ export default function NewSale() {
         </div>
       )}
 
-        {/* Mobile Item Details Modal */}
+      {/* Mobile Item Details Modal */}
       <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
         <DialogContent className="max-w-md w-[95vw] bg-white p-5 max-h-[90vh] overflow-y-auto rounded-xl">
           <DialogHeader className="mb-2">
             <DialogTitle className="text-lg font-bold text-slate-800">Item Details</DialogTitle>
           </DialogHeader>
-          
+
           {editingItemIndex !== null && lines[editingItemIndex] && (
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Item Name</Label>
                 <Input value={lines[editingItemIndex].name} onChange={(e) => updateLine(editingItemIndex, 'name', e.target.value)} placeholder="Product description" className="h-11 bg-slate-50 border-slate-200" />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Quantity</Label>
@@ -2322,12 +2321,12 @@ export default function NewSale() {
                 {gstSet.enableGst && (
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">GST Rate %</Label>
-                    <select 
-                      value={[0, 5, 12, 18, 28].includes(Number(lines[editingItemIndex].gst)) ? String(lines[editingItemIndex].gst) : "custom"} 
+                    <select
+                      value={[0, 5, 12, 18, 28].includes(Number(lines[editingItemIndex].gst)) ? String(lines[editingItemIndex].gst) : "custom"}
                       onChange={(e) => {
                         const val = e.target.value;
                         updateLine(editingItemIndex, 'gst', val === "custom" ? 5 : Number(val));
-                      }} 
+                      }}
                       className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       <option value="0">0%</option>
@@ -2349,8 +2348,8 @@ export default function NewSale() {
                 {txnSet.taxOnRate && gstSet.enableGst && (
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Tax Type</Label>
-                    <select 
-                      value={lines[editingItemIndex].taxType || "inclusive"} 
+                    <select
+                      value={lines[editingItemIndex].taxType || "inclusive"}
                       onChange={(e) => updateLine(editingItemIndex, 'taxType', e.target.value)}
                       className="h-11 w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-700 focus:outline-none"
                     >
@@ -2374,14 +2373,14 @@ export default function NewSale() {
       {/* Floating Bottom Action bar */}
       <div className="sticky bottom-0 shrink-0 bg-white border-t p-1.5 md:p-4 flex flex-col md:flex-row gap-1.5 md:gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:justify-center items-center z-10">
         <div className="flex bg-slate-100 p-0.5 md:p-1 rounded-full border border-slate-200 self-stretch md:self-auto shrink-0 mb-0.5 md:mb-0 overflow-x-auto custom-scrollbar">
-          <button 
+          <button
             className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${!isEwayMode ? 'bg-white shadow-sm text-slate-800 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
             onClick={() => setInvoiceTemplate(settings?.printSettings?.themeName || "GST Boxed")}
           >
             Invoice
           </button>
-          
-          <button 
+
+          <button
             className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${isEwayMode ? 'bg-white shadow-sm text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
             onClick={() => {
               if (!isEwayMode) setInvoiceTemplate("Green E-Way");
@@ -2390,7 +2389,7 @@ export default function NewSale() {
             E-Way Bill
           </button>
         </div>
-        
+
         <div className="flex flex-row w-full md:w-auto gap-1.5 md:gap-2">
           <Button variant="outline" className="flex-1 rounded-full h-8 md:h-10 text-xs md:text-sm font-medium border-slate-300 md:max-w-xs px-2 whitespace-nowrap uppercase tracking-wide" onClick={() => handleSave(false)}>
             SAVE {isEwayMode ? "E-WAY" : "INVOICE"}
