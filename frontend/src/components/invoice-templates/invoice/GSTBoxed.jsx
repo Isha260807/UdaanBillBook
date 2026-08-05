@@ -56,20 +56,22 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
       style={{ paddingTop: `${Number(printSet.extraSpaceTop || 0)}px` }}
     >
       <div className="border-b border-slate-800 p-3 text-center space-y-1 bg-white relative min-h-[80px] flex flex-col justify-center">
-        {(printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
-          <div className="absolute left-4 top-2 max-h-12 max-w-[120px] overflow-hidden flex items-center justify-center">
-            <img 
-              src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} 
-              alt="Logo" 
-              className="max-h-12 max-w-[120px] object-contain" 
-              style={{ maxHeight: '48px', maxWidth: '120px', width: 'auto', height: 'auto' }} 
-            />
-          </div>
-        ) : showUdaanLogo ? (
-          <div className="absolute left-4 top-2 max-h-12 max-w-[120px] overflow-hidden flex items-center justify-center">
-            <img src="/udaan-logo-removebg-preview.png" alt="Udaan Logo" className="max-h-10 max-w-[100px] object-contain opacity-90 grayscale" style={{ maxHeight: '40px', maxWidth: '100px' }} />
-          </div>
-        ) : null}
+        {!(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && (
+          (printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
+            <div className="absolute left-4 top-2 max-h-12 max-w-[120px] overflow-hidden flex items-center justify-center">
+              <img 
+                src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} 
+                alt="Logo" 
+                className="max-h-12 max-w-[120px] object-contain" 
+                style={{ maxHeight: '48px', maxWidth: '120px', width: 'auto', height: 'auto' }} 
+              />
+            </div>
+          ) : showUdaanLogo ? (
+            <div className="absolute left-4 top-2 max-h-12 max-w-[120px] overflow-hidden flex items-center justify-center">
+              <img src="/udaan-logo-removebg-preview.png" alt="Udaan Logo" className="max-h-10 max-w-[100px] object-contain opacity-90 grayscale" style={{ maxHeight: '40px', maxWidth: '100px' }} />
+            </div>
+          ) : null
+        )}
         {printSet.printCompanyName && (
           <h2 className={`font-bold text-slate-900 tracking-wide uppercase ${getCompanyNameSizeClass(printSet.companyNameTextSize)}`}>
             {printSet.companyName || "UDAAN BUSINESS"}
@@ -82,7 +84,7 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
         )}
         <div className={`text-slate-600 flex flex-wrap justify-center gap-x-3 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
           {printSet.printPhone && printSet.phone && <span>Ph.: {printSet.phone}</span>}
-          {printSet.printEmail && printSet.email && <span>Email: {printSet.email}</span>}
+          {!(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && printSet.printEmail && printSet.email && <span>Email: {printSet.email}</span>}
         </div>
         <div className={`font-bold text-slate-800 flex justify-center gap-x-4 pt-1 border-t border-dashed mt-1.5 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
           {printSet.printGstin && gstSet.gstin && <span>GSTIN : {gstSet.gstin}</span>}
@@ -92,9 +94,9 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
 
       {/* Title */}
       <div className={`border-b border-slate-800 text-center font-bold py-1 bg-slate-50 uppercase tracking-widest ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}>
-        {gstSet.compositeScheme ? "BILL OF SUPPLY" : "TAX INVOICE"}
+        {invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase" ? "PURCHASE INVOICE" : (gstSet.compositeScheme ? "BILL OF SUPPLY" : "TAX INVOICE")}
       </div>
-      {gstSet.compositeScheme && (
+      {gstSet.compositeScheme && !(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && (
         <div className="border-b border-slate-800 text-center text-[8px] py-0.5 bg-amber-50 font-bold text-slate-700 italic border-t border-slate-800">
           Composition taxable person, not eligible to collect tax on supplies
         </div>
@@ -104,24 +106,38 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
       <div className="grid grid-cols-2 border-b border-slate-800 divide-x divide-slate-800">
         <div className="p-1.5 space-y-0.5">
           {gstSet.reverseCharge && (
-            <div className="flex"><span className="w-16 shrink-0 truncate">Rev. Charge</span><span className="truncate">: {meta.reverseCharge}</span></div>
+            <div className="flex"><span className="w-24 shrink-0 truncate">Rev. Charge</span><span className="truncate">: {meta.reverseCharge}</span></div>
           )}
-          <div className="flex"><span className="w-16 shrink-0">Invoice No.</span><span className="truncate">: {meta.invoiceNumber}</span></div>
-          <div className="flex"><span className="w-16 shrink-0">Invoice Date</span><span className="truncate">: {meta.date}</span></div>
-          <div className="flex"><span className="w-16 shrink-0">State</span><span className="truncate">: Delhi</span></div>
+          <div className="flex"><span className="w-24 shrink-0">{(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") ? "Purchase No." : "Invoice No."}</span><span className="truncate">: {meta.invoiceNumber}</span></div>
+          {(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && meta.supplierInvoiceNo && (
+            <div className="flex"><span className="w-24 shrink-0">Supp. Inv No.</span><span className="truncate">: {meta.supplierInvoiceNo}</span></div>
+          )}
+          <div className="flex"><span className="w-24 shrink-0">{(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") ? "Purchase Date" : "Invoice Date"}</span><span className="truncate">: {meta.date}</span></div>
+          {(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && meta.invoiceDate && (
+            <div className="flex"><span className="w-24 shrink-0">Supp. Inv Date</span><span className="truncate">: {meta.invoiceDate}</span></div>
+          )}
         </div>
         <div className="p-1.5 space-y-0.5">
-          <div className="flex"><span className="w-16 shrink-0">Challan No.</span><span className="truncate">: {meta.challanNo || "-"}</span></div>
-          {meta.poNumber && <div className="flex"><span className="w-16 shrink-0">P.O. No.</span><span className="truncate">: {meta.poNumber}</span></div>}
-          {meta.poDate && <div className="flex"><span className="w-16 shrink-0">P.O. Date</span><span className="truncate">: {meta.poDate}</span></div>}
-          <div className="flex"><span className="w-16 shrink-0">Vehicle No.</span><span className="truncate">: {meta.vehicleNo || invoice.transportDetails?.vehicleNo || "-"}</span></div>
-          <div className="flex"><span className="w-16 shrink-0">Supply Date</span><span className="truncate">: {meta.dateOfSupply ? meta.dateOfSupply.split("-").reverse().join("/") : "-"}</span></div>
-          {gstSet.placeOfSupply && (
-            <div className="flex"><span className="w-16 shrink-0">Place</span><span className="truncate">: {meta.placeOfSupply || "Delhi"}</span></div>
+          {(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") ? (
+            <>
+              <div className="flex"><span className="w-24 shrink-0">Payment Status</span><span className="truncate">: {invoice.status || "Unpaid"}</span></div>
+              <div className="flex"><span className="w-24 shrink-0">Payment Mode</span><span className="truncate">: {invoice.paymentMethod || "Cash"}</span></div>
+              {paymentDetails?.transactionId && <div className="flex"><span className="w-24 shrink-0">UPI / Txn ID</span><span className="truncate">: {paymentDetails.transactionId}</span></div>}
+              {paymentDetails?.utr && <div className="flex"><span className="w-24 shrink-0">UTR Number</span><span className="truncate">: {paymentDetails.utr}</span></div>}
+              {paymentDetails?.bankName && <div className="flex"><span className="w-24 shrink-0">Bank Name</span><span className="truncate">: {paymentDetails.bankName}</span></div>}
+            </>
+          ) : (
+            <>
+              <div className="flex"><span className="w-16 shrink-0">Challan No.</span><span className="truncate">: {meta.challanNo || "-"}</span></div>
+              {meta.poNumber && <div className="flex"><span className="w-16 shrink-0">P.O. No.</span><span className="truncate">: {meta.poNumber}</span></div>}
+              {meta.poDate && <div className="flex"><span className="w-16 shrink-0">P.O. Date</span><span className="truncate">: {meta.poDate}</span></div>}
+              <div className="flex"><span className="w-16 shrink-0">Vehicle No.</span><span className="truncate">: {meta.vehicleNo || invoice.transportDetails?.vehicleNo || "-"}</span></div>
+              <div className="flex"><span className="w-16 shrink-0">Supply Date</span><span className="truncate">: {meta.dateOfSupply ? meta.dateOfSupply.split("-").reverse().join("/") : "-"}</span></div>
+              {gstSet.placeOfSupply && (
+                <div className="flex"><span className="w-16 shrink-0">Place</span><span className="truncate">: {meta.placeOfSupply || "Delhi"}</span></div>
+              )}
+            </>
           )}
-          {invoice.transportDetails?.eWayBillNo && <div className="flex"><span className="w-16 shrink-0">E-Way Bill</span><span className="truncate">: {invoice.transportDetails.eWayBillNo}</span></div>}
-          {invoice.transportDetails?.transporterName && <div className="flex"><span className="w-16 shrink-0">Transporter</span><span className="truncate">: {invoice.transportDetails.transporterName}</span></div>}
-          {invoice.transportDetails?.grRrNo && <div className="flex"><span className="w-16 shrink-0">GR/RR No.</span><span className="truncate">: {invoice.transportDetails.grRrNo}</span></div>}
         </div>
       </div>
 
@@ -129,17 +145,15 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
       <div className="border-b border-slate-800 flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-slate-800">
         <div className="p-2 flex-1">
           <div className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 uppercase">
-            Details of Receiver | Billed to:
+            {(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") ? "Details of Supplier | Billed From:" : "Details of Receiver | Billed to:"}
           </div>
           <div className="grid grid-cols-1 gap-y-0.5">
             <div className="flex"><span className="w-14 shrink-0 font-semibold">Name</span><span className="truncate">: {meta.billingName || customer}</span></div>
-            <div className="flex"><span className="w-14 shrink-0 font-semibold">Address</span><span className="truncate">: {meta.billedToAddress || "-"}</span></div>
+            {meta.billedToAddress && meta.billedToAddress !== "-" && (
+              <div className="flex"><span className="w-14 shrink-0 font-semibold">Address</span><span className="truncate">: {meta.billedToAddress}</span></div>
+            )}
             <div className="flex"><span className="w-14 shrink-0 font-semibold">GSTIN</span><span className="truncate">: {meta.billedToGstin || "-"}</span></div>
             <div className="flex"><span className="w-14 shrink-0 font-semibold">Mobile</span><span className="truncate">: {meta.billedToMobile || "-"}</span></div>
-            <div className="flex"><span className="w-14 shrink-0 font-semibold">State</span><span className="truncate">: {meta.billedToState || "Delhi"}</span></div>
-            {printSet.currentBalanceParty && invoice.partyBalance && (
-              <div className="flex"><span className="w-14 shrink-0 font-semibold text-red-600">Balance</span><span className="truncate">: ₹{invoice.partyBalance}</span></div>
-            )}
           </div>
         </div>
         {(invoice.shippingDetails?.shippingAddress || invoice.shippingDetails?.shippingName) && (
@@ -312,17 +326,25 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
               <span className="text-slate-600 leading-tight italic break-words">{numberToWords(totals.grand)}</span>
             </div>
           )}
-          <div className="border rounded-lg p-1.5 bg-slate-50/50 space-y-0.5">
-            <span className={`font-bold border-b block pb-0.5 mb-1 uppercase tracking-wide ${getInvoiceSizeClass(textSz, "text-[8px]")}`}>Bank Details</span>
-            <div className="flex"><span className="w-16 shrink-0">Acc No.</span><span className="truncate">: {invoice.bankDetails?.accountNumber || paymentDetails?.accountNumber || "921020024898267"}</span></div>
-            <div className="flex"><span className="w-16 shrink-0">Bank</span><span className="truncate">: {invoice.bankDetails?.bankName || paymentDetails?.bankName || "Axis Bank"}</span></div>
-            <div className="flex"><span className="w-16 shrink-0">IFSC</span><span className="truncate">: {invoice.bankDetails?.ifsc || paymentDetails?.ifsc || "UTIB0003532"}</span></div>
-            <div className="flex"><span className="w-16 shrink-0">Branch</span><span className="truncate">: {invoice.bankDetails?.branchName || paymentDetails?.branchName || "-"}</span></div>
-          </div>
+          {!(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && (
+            <div className="border rounded-lg p-1.5 bg-slate-50/50 space-y-0.5">
+              <span className={`font-bold border-b block pb-0.5 mb-1 uppercase tracking-wide ${getInvoiceSizeClass(textSz, "text-[8px]")}`}>Bank Details</span>
+              <div className="flex"><span className="w-16 shrink-0">Acc No.</span><span className="truncate">: {invoice.bankDetails?.accountNumber || paymentDetails?.accountNumber || "921020024898267"}</span></div>
+              <div className="flex"><span className="w-16 shrink-0">Bank</span><span className="truncate">: {invoice.bankDetails?.bankName || paymentDetails?.bankName || "Axis Bank"}</span></div>
+              <div className="flex"><span className="w-16 shrink-0">IFSC</span><span className="truncate">: {invoice.bankDetails?.ifsc || paymentDetails?.ifsc || "UTIB0003532"}</span></div>
+              <div className="flex"><span className="w-16 shrink-0">Branch</span><span className="truncate">: {invoice.bankDetails?.branchName || paymentDetails?.branchName || "-"}</span></div>
+            </div>
+          )}
         </div>
         <div className="p-2 flex justify-end">
           <div className="w-full font-mono">
             <div className="py-0.5 flex justify-between"><span>Subtotal</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></div>
+            {invoice.additionalCharges && Number(invoice.additionalCharges.total) > 0 && (
+              <div className="py-0.5 flex justify-between text-slate-600">
+                <span>Add. Charges</span>
+                <span>+{formatAmt(Number(invoice.additionalCharges.total), printSet)}</span>
+              </div>
+            )}
             {(() => {
               const uniqueGst = [...new Set(lines.map(l => Number(l.gst) || 0))];
               const gstLabel = uniqueGst.length === 1 && uniqueGst[0] > 0 ? ` (${uniqueGst[0] / 2}%)` : '';
@@ -335,15 +357,15 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
             })()}
             <div className="py-0.5 flex justify-between border-t font-semibold"><span>Total GST</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
             <div className={`py-1 flex justify-between font-extrabold border-t-2 border-slate-900 pt-1 ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}><span className="uppercase">Total</span><span>{formatAmt(totals.grand, printSet)}</span></div>
-            {printSet.receivedAmount && (
+            {(printSet.receivedAmount || invoice.isPurchase) && (
               <div className={`py-0.5 flex justify-between text-slate-600 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
-                <span>Received</span>
+                <span>Paid / Received</span>
                 <span>{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
               </div>
             )}
-            {printSet.balanceAmount && (
+            {(printSet.balanceAmount || invoice.isPurchase) && (
               <div className={`py-0.5 flex justify-between text-slate-600 font-bold border-t border-dashed mt-0.5 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
-                <span>Balance</span>
+                <span>Balance Due</span>
                 <span>{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>
               </div>
             )}
@@ -351,8 +373,20 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
         </div>
       </div>
 
-      {/* T&C and Stamp */}
-      {(printSet.printTermsAndConditions || printSet.printSignatureText || printSet.printDescription || printSet.printReceivedByDetails || printSet.printDeliveredByDetails || printSet.printAcknowledgement) && (
+      {/* Purchase Notes & Remarks */}
+      {(invoice.purchaseNote || invoice.remark) && (
+        <div className="p-2 border-b border-slate-800 bg-slate-50/50 text-[9px] space-y-1">
+          {invoice.purchaseNote && (
+            <div><span className="font-bold text-slate-700">Purchase Note: </span><span className="text-slate-600">{invoice.purchaseNote}</span></div>
+          )}
+          {invoice.remark && (
+            <div><span className="font-bold text-slate-700">Internal Remark: </span><span className="text-slate-600">{invoice.remark}</span></div>
+          )}
+        </div>
+      )}
+
+      {/* T&C and Stamp (Sales only) */}
+      {!(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && (printSet.printTermsAndConditions || printSet.printSignatureText || printSet.printDescription || printSet.printReceivedByDetails || printSet.printDeliveredByDetails || printSet.printAcknowledgement) && (
         <div className={`grid grid-cols-2 divide-x divide-slate-800 ${getInvoiceSizeClass(textSz, "text-[8px]")}`}>
           {renderCommonFooter(invoice, printSet, {
             titleClass: `text-slate-700 ${getInvoiceSizeClass(textSz, "text-[9px]")}`,

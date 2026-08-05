@@ -10,6 +10,10 @@ const invoiceItemSchema = new mongoose.Schema({
     required: true,
   },
   hsnSac: String,
+  unit: {
+    type: String,
+    default: 'Pcs'
+  },
   qty: {
     type: Number,
     required: true,
@@ -39,6 +43,16 @@ const invoiceSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  supplierInvoiceNo: String,
+  gstin: String,
+  phone: String,
+  invoiceDate: String,
+  purchaseDate: String,
+  additionalCharges: mongoose.Schema.Types.Mixed,
+  balanceAmount: Number,
+  purchaseNote: String,
+  remark: String,
+  attachment: mongoose.Schema.Types.Mixed,
   party: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Party',
@@ -92,7 +106,7 @@ const invoiceSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['Cash', 'Online', 'Bank Transfer'],
+    enum: ['Cash', 'Online', 'Bank Transfer', 'Cheque', 'Netbanking'],
     default: 'Cash'
   },
   paymentDetails: {

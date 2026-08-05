@@ -25,6 +25,8 @@ import { useInvoices } from "@/contexts/InvoiceContext";
 import api from "@/lib/api";
 import { validateUtr, validateUpi } from "@/lib/validation";
 import { InvoiceTemplateRenderer } from "@/components/invoice-templates/InvoiceTemplateRenderer";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const fmt = (n) => "₹" + n.toLocaleString("en-IN");
 
@@ -216,13 +218,88 @@ export function BillingDashboard() {
     }
   };
 
+  const handleExportPdf = () => {
+    try {
+      const doc = new jsPDF();
+
+      // Header Title
+      doc.setFontSize(18);
+      doc.setTextColor(30, 41, 59);
+      doc.text("Udaan BillBook - Billing & Invoices Report", 14, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      const dateStr = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      doc.text(`Generated on: ${dateStr}`, 14, 28);
+
+      // Summary Table
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Billing Summary", 14, 36);
+
+      const summaryRows = [
+        ["Total Invoices", `${stats.total} Invoices`],
+        ["Paid Amount", `Rs. ${stats.paid.toLocaleString("en-IN")}`],
+        ["Unpaid Amount", `Rs. ${stats.unpaid.toLocaleString("en-IN")}`],
+      ];
+
+      autoTable(doc, {
+        startY: 40,
+        head: [["Metric", "Value"]],
+        body: summaryRows,
+        theme: "striped",
+        headStyles: { fillColor: [16, 185, 129] },
+        styles: { fontSize: 10, cellPadding: 3 },
+      });
+
+      let startY = (doc).lastAutoTable?.finalY ? (doc).lastAutoTable.finalY + 12 : 75;
+
+      // Invoices List Table
+      doc.setFontSize(12);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Invoices List", 14, startY);
+
+      const tableRows = filtered.map((inv) => [
+        inv.invoiceNumber || inv.id || "-",
+        inv.type || "Sale",
+        inv.partyName || inv.party || "Walk-in Customer",
+        inv.date || "-",
+        `Rs. ${Number(inv.grandTotal || inv.amount || 0).toLocaleString("en-IN")}`,
+        inv.status || "Unpaid",
+        inv.paymentMethod || "Cash"
+      ]);
+
+      autoTable(doc, {
+        startY: startY + 4,
+        head: [["Invoice No", "Type", "Party / Supplier", "Date", "Amount", "Status", "Payment Mode"]],
+        body: tableRows,
+        theme: "grid",
+        headStyles: { fillColor: [59, 130, 246] },
+        styles: { fontSize: 9, cellPadding: 3 },
+      });
+
+      const today = new Date().toISOString().split("T")[0];
+      doc.save(`Udaan_Billing_Report_${today}.pdf`);
+      toast.success("Billing & Invoices PDF report downloaded successfully!");
+    } catch (err) {
+      console.error("PDF generation failed:", err);
+      toast.error("Failed to generate PDF report");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
         title="Billing & Invoices"
         actions={
           <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2">
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2 rounded-xl h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={() => toast.success("Exporting invoices…")}>
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2 rounded-xl h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={handleExportPdf}>
               <FileDown className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Export
             </Button>
             {!isViewer && (
@@ -445,38 +522,6 @@ export function BillingDashboard() {
         </CardContent>
       </Card>
 
-      <Card className="border-0 bg-gradient-to-br from-primary-soft to-card shadow-[var(--shadow-card)]">
-        <CardContent className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="text-lg font-bold">Create your next GST invoice</h3>
-            <p className="text-sm text-muted-foreground">Auto-calculated CGST/SGST · WhatsApp share · PDF download</p>
-          </div>
-          <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap">
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-xl h-8 text-xs sm:h-9 sm:text-sm w-full sm:w-auto"
-              onClick={() => window.open("https://wa.me/?text=" + encodeURIComponent("Sharing invoice from Udaan"), "_blank")}
-            >
-              <Share2 className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Share via WhatsApp
-            </Button>
-            {!isViewer && (
-              <div className="flex w-full gap-2 sm:w-auto">
-                <Button asChild size="sm" className="flex-1 sm:flex-none rounded-xl bg-red-500 hover:bg-red-600 h-8 text-xs sm:h-9 sm:text-sm">
-                  <Link to={`${rolePrefix}/sale/new`}>
-                    <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Sale
-                  </Link>
-                </Button>
-                <Button asChild size="sm" className="flex-1 sm:flex-none rounded-xl bg-blue-600 hover:bg-blue-700 h-8 text-xs sm:h-9 sm:text-sm">
-                  <Link to={`${rolePrefix}/purchase/new`}>
-                    <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Purchase
-                  </Link>
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* ====== Status Update Modal ====== */}
       <Dialog open={statusModal} onOpenChange={setStatusModal}>

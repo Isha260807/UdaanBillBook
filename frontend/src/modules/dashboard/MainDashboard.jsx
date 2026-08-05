@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "@/lib/api";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   AreaChart,
   Area,
@@ -79,9 +81,10 @@ function Kpi({
   up,
   icon: Icon,
   tint,
+  to,
 }) {
-  return (
-    <Card className="overflow-hidden border-0 shadow-[var(--shadow-card)]">
+  const content = (
+    <Card className="overflow-hidden border-0 shadow-[var(--shadow-card)] transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 cursor-pointer">
       <CardContent className="p-2 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-1.5 sm:gap-3">
           <div className="min-w-0 flex-1">
@@ -108,6 +111,8 @@ function Kpi({
       </CardContent>
     </Card>
   );
+
+  return to ? <Link to={to} className="block">{content}</Link> : content;
 }
 
 export function MainDashboard() {
@@ -184,16 +189,111 @@ export function MainDashboard() {
     }
   }, []);
 
+  const handleExport = useCallback(() => {
+    try {
+      const doc = new jsPDF();
+
+      // Title & Header
+      doc.setFontSize(18);
+      doc.setTextColor(30, 41, 59);
+      doc.text("Udaan BillBook - Dashboard Summary", 14, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 116, 139);
+      const dateStr = new Date().toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      doc.text(`Generated on: ${dateStr}`, 14, 28);
+
+      // Section 1: Overview Metrics
+      doc.setFontSize(13);
+      doc.setTextColor(15, 23, 42);
+      doc.text("Business Overview", 14, 38);
+
+      const overviewRows = [
+        ["Total Sales", `Rs. ${totalSales.toLocaleString("en-IN")}`, `${invoiceCount} Bills`],
+        ["Total Purchase", `Rs. ${totalPurchases.toLocaleString("en-IN")}`, "Real-time"],
+        ["Expenses", `Rs. ${totalExpenses.toLocaleString("en-IN")}`, "Total spent"],
+        ["Net Profit", `Rs. ${netProfit.toLocaleString("en-IN")}`, "Calculated"],
+      ];
+
+      autoTable(doc, {
+        startY: 42,
+        head: [["Metric", "Amount", "Note"]],
+        body: overviewRows,
+        theme: "striped",
+        headStyles: { fillColor: [16, 185, 129] },
+        styles: { fontSize: 10, cellPadding: 4 },
+      });
+
+      let finalY = (doc).lastAutoTable?.finalY ? (doc).lastAutoTable.finalY + 14 : 90;
+
+      // Section 2: Monthly Breakdown if available
+      if (data?.chartData && data.chartData.length > 0) {
+        doc.setFontSize(13);
+        doc.setTextColor(15, 23, 42);
+        doc.text("Monthly Overview Breakdown", 14, finalY);
+
+        const chartRows = data.chartData.map((item) => [
+          item.d || item.day || item.month || "-",
+          `Rs. ${(item.sales || item.salesAmount || 0).toLocaleString("en-IN")}`,
+          `Rs. ${(item.expense || item.expenses || 0).toLocaleString("en-IN")}`,
+        ]);
+
+        autoTable(doc, {
+          startY: finalY + 4,
+          head: [["Period / Day", "Sales Amount", "Expenses Amount"]],
+          body: chartRows,
+          theme: "grid",
+          headStyles: { fillColor: [59, 130, 246] },
+          styles: { fontSize: 9, cellPadding: 3 },
+        });
+      }
+
+      const today = new Date().toISOString().split("T")[0];
+      doc.save(`Udaan_Dashboard_Report_${today}.pdf`);
+      toast.success("Dashboard report PDF downloaded successfully!");
+    } catch (error) {
+      console.error("PDF Export error:", error);
+      toast.error("Failed to generate PDF report.");
+    }
+  }, [totalSales, invoiceCount, totalPurchases, totalExpenses, netProfit, data]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader
         title=""
         actions={
-          <div className="flex w-full sm:w-auto items-center gap-1.5 sm:gap-2">
-            <Button variant="outline" size="sm" className="rounded-xl px-2.5 sm:px-4 text-xs sm:text-sm">
+          <div className="flex w-full sm:w-auto items-center gap-2">
+            <Button
+              size="sm"
+              className="md:hidden flex-1 rounded-xl px-2.5 text-xs h-8.5 bg-emerald-600 hover:bg-emerald-700 text-white justify-center font-medium shadow-sm shrink-0"
+              asChild
+            >
+              <Link to={getRoleUrl("/vendor/sale/new")}>
+                <Plus className="mr-1 h-3.5 w-3.5 shrink-0" />
+                <span>New Invoice</span>
+              </Link>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 md:flex-initial rounded-xl px-2.5 sm:px-4 text-xs sm:text-sm h-8.5 sm:h-10 justify-center font-medium border-slate-200 shadow-sm"
+              onClick={handleExport}
+            >
               <Download className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> <span>Export</span>
             </Button>
-            <Button variant="outline" size="icon" className="h-9 w-9 sm:h-10 sm:w-10 rounded-xl shrink-0" onClick={() => setIsGstCalculatorOpen(true)} title="GST Calculator">
+            <Button
+              variant="outline"
+              size="icon"
+              className="hidden md:inline-flex h-10 w-10 rounded-xl shrink-0 border-slate-200"
+              onClick={() => setIsGstCalculatorOpen(true)}
+              title="GST Calculator"
+            >
               <Calculator className="h-4 w-4" />
             </Button>
           </div>
@@ -201,10 +301,10 @@ export function MainDashboard() {
       />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-        <Kpi label="Total Sales" value={fmt(totalSales)} delta={`+${invoiceCount} Bills`} up icon={IndianRupee} tint="bg-primary-soft text-primary" />
-        <Kpi label="Total Purchase" value={fmt(totalPurchases)} delta="Real-time" up icon={ShoppingBasket} tint="bg-accent-soft text-accent" />
-        <Kpi label="Expenses" value={fmt(totalExpenses)} delta="Total spent" up={false} icon={Wallet} tint="bg-secondary text-secondary-foreground" />
-        <Kpi label="Net Profit" value={fmt(netProfit)} delta="Calculated" up icon={PiggyBank} tint="bg-success-soft text-success" />
+        <Kpi label="Total Sales" value={fmt(totalSales)} delta={`+${invoiceCount} Bills`} up icon={IndianRupee} tint="bg-primary-soft text-primary" to={getRoleUrl("/vendor/billing?type=sale")} />
+        <Kpi label="Total Purchase" value={fmt(totalPurchases)} delta="Real-time" up icon={ShoppingBasket} tint="bg-accent-soft text-accent" to={getRoleUrl("/vendor/billing?type=purchase")} />
+        <Kpi label="Expenses" value={fmt(totalExpenses)} delta="Total spent" up={false} icon={Wallet} tint="bg-secondary text-secondary-foreground" to={getRoleUrl("/vendor/expenses")} />
+        <Kpi label="Net Profit" value={fmt(netProfit)} delta="Calculated" up icon={PiggyBank} tint="bg-success-soft text-success" to={getRoleUrl("/vendor/reports")} />
       </div>
 
       <div className="bg-white rounded-2xl p-3 sm:p-6 shadow-[var(--shadow-card)] border-0">

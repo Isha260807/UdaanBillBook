@@ -95,8 +95,8 @@ const createInvoice = async (req, res) => {
       sellerDetails,
       bankDetails,
       billedToAddress,
-      billedToGstin,
-      billedToMobile,
+      billedToGstin: billedToGstin || req.body.gstin || "",
+      billedToMobile: billedToMobile || req.body.phone || "",
       billedToState,
       billingName
     });
@@ -199,6 +199,7 @@ const createSentInvoice = async (req, res) => {
     }
 
     const sentInvoice = await SentInvoice.create({
+      ...req.body,
       user: req.user.id,
       invoiceNumber,
       party,
@@ -221,8 +222,8 @@ const createSentInvoice = async (req, res) => {
       sellerDetails,
       bankDetails,
       billedToAddress,
-      billedToGstin,
-      billedToMobile,
+      billedToGstin: billedToGstin || req.body.gstin || "",
+      billedToMobile: billedToMobile || req.body.phone || "",
       billedToState,
       billingName,
       isSent: true

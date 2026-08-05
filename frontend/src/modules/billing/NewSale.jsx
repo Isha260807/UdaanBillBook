@@ -1824,20 +1824,22 @@ export default function NewSale() {
                       {/* Signature Option */}
                       <div className="space-y-2 pt-3 border-t border-dashed border-slate-200">
                         <Label className="text-xs block font-semibold text-slate-700">Authorized Signature</Label>
-                        <div className="flex gap-2 p-1 bg-slate-100 rounded-lg w-max mb-2">
+                        <div className="inline-flex w-auto gap-1 p-0.5 bg-slate-100 rounded-lg mb-2">
                           <button
                             type="button"
                             onClick={() => setSigMode("draw")}
-                            className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all ${sigMode === "draw" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-800"}`}
+                            className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all whitespace-nowrap ${sigMode === "draw" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-800"}`}
                           >
-                            Draw Signature
+                            <span className="sm:hidden">Draw</span>
+                            <span className="hidden sm:inline">Draw Signature</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => setSigMode("upload")}
-                            className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all ${sigMode === "upload" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-800"}`}
+                            className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all whitespace-nowrap ${sigMode === "upload" ? "bg-white text-blue-600 shadow-sm" : "text-slate-600 hover:text-slate-800"}`}
                           >
-                            Upload Signature Photo
+                            <span className="sm:hidden">Upload</span>
+                            <span className="hidden sm:inline">Upload Signature</span>
                           </button>
                         </div>
 
@@ -2048,51 +2050,65 @@ export default function NewSale() {
         {/* RIGHT COLUMN: Live Print Preview styled as selected Vyapar Theme */}
         <div className={`w-full md:w-1/2 lg:w-7/12 flex flex-col h-full bg-slate-200 overflow-y-auto p-2 sm:p-4 custom-scrollbar ${activePane === 'form' ? 'hidden md:flex' : 'flex'}`}>
           
-          {/* Visual Invoice Template Selector */}
-          {!isEwayMode && (
-            <div className="mb-2 sm:mb-4 bg-white border border-slate-300 rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h3 className="text-[10px] sm:text-xs font-bold text-slate-800 uppercase tracking-wider hidden md:block">Select Invoice Design</h3>
-              
-              {/* Desktop Template Selector */}
-              <div className="hidden md:flex flex-wrap gap-2.5">
-                {[
-                  { id: "GST Boxed", name: "Standard (Boxed)" },
-                  { id: "Classic White", name: "Classic" },
-                  { id: "Modern Blue", name: "Modern" },
-                  { id: "Minimalist", name: "Minimal" },
-                  { id: "Professional", name: "Professional" }
-                ].map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    onClick={() => setInvoiceTemplate(tpl.id)}
-                    className={`h-8 px-4 rounded-xl text-[11px] font-bold transition-all border ${
-                      invoiceTemplate === tpl.id
-                        ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
-                    }`}
-                  >
-                    {tpl.name}
-                  </button>
-                ))}
-              </div>
-
-              {/* Mobile Template Selector Dropdown */}
-              <div className="md:hidden flex items-center justify-between w-full">
-                 <span className="text-[10px] font-medium text-slate-700 uppercase tracking-wider">Design:</span>
-                 <select 
-                   value={invoiceTemplate}
-                   onChange={(e) => setInvoiceTemplate(e.target.value)}
-                   className="h-7 sm:h-8 px-2 w-36 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
-                 >
-                    <option value="GST Boxed">Standard (Boxed)</option>
-                    <option value="Classic White">Classic</option>
-                    <option value="Modern Blue">Modern</option>
-                    <option value="Minimalist">Minimal</option>
-                    <option value="Professional">Professional</option>
-                 </select>
-              </div>
+          {/* Visual Invoice/E-Way Template Selector */}
+          <div className="mb-2 sm:mb-4 bg-white border border-slate-300 rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <h3 className="text-[10px] sm:text-xs font-bold text-slate-800 uppercase tracking-wider hidden md:block">
+              {isEwayMode ? "Select E-Way Design" : "Select Invoice Design"}
+            </h3>
+            
+            {/* Desktop Template Selector */}
+            <div className="hidden md:flex flex-wrap gap-2.5">
+              {(isEwayMode ? [
+                { id: "Green E-Way", name: "Green E-Way" },
+                { id: "Official E-Way", name: "Official E-Way" },
+                { id: "Minimal E-Way", name: "Minimal E-Way" }
+              ] : [
+                { id: "GST Boxed", name: "Standard (Boxed)" },
+                { id: "Classic White", name: "Classic" },
+                { id: "Modern Blue", name: "Modern" },
+                { id: "Minimalist", name: "Minimal" },
+                { id: "Professional", name: "Professional" }
+              ]).map((tpl) => (
+                <button
+                  key={tpl.id}
+                  onClick={() => setInvoiceTemplate(tpl.id)}
+                  className={`h-8 px-4 rounded-xl text-[11px] font-bold transition-all border ${
+                    invoiceTemplate === tpl.id
+                      ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
+                  }`}
+                >
+                  {tpl.name}
+                </button>
+              ))}
             </div>
-          )}
+
+            {/* Mobile Template Selector Dropdown */}
+            <div className="md:hidden flex items-center justify-between w-full">
+               <span className="text-[10px] font-medium text-slate-700 uppercase tracking-wider">Design:</span>
+               <select 
+                 value={invoiceTemplate}
+                 onChange={(e) => setInvoiceTemplate(e.target.value)}
+                 className="h-7 sm:h-8 px-2 w-36 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+               >
+                  {isEwayMode ? (
+                    <>
+                      <option value="Green E-Way">Green E-Way</option>
+                      <option value="Official E-Way">Official E-Way</option>
+                      <option value="Minimal E-Way">Minimal E-Way</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="GST Boxed">Standard (Boxed)</option>
+                      <option value="Classic White">Classic</option>
+                      <option value="Modern Blue">Modern</option>
+                      <option value="Minimalist">Minimal</option>
+                      <option value="Professional">Professional</option>
+                    </>
+                  )}
+               </select>
+            </div>
+          </div>
 
           {/* Responsive invoice preview: scales down on mobile to fit screen */}
           <div ref={invoiceWrapperRef} className="invoice-preview-wrapper w-full mx-auto" style={{ maxWidth: '210mm' }}>
@@ -2359,41 +2375,20 @@ export default function NewSale() {
       <div className="sticky bottom-0 shrink-0 bg-white border-t p-1.5 md:p-4 flex flex-col md:flex-row gap-1.5 md:gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:justify-center items-center z-10">
         <div className="flex bg-slate-100 p-0.5 md:p-1 rounded-full border border-slate-200 self-stretch md:self-auto shrink-0 mb-0.5 md:mb-0 overflow-x-auto custom-scrollbar">
           <button 
-            className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${!isEwayMode ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${!isEwayMode ? 'bg-white shadow-sm text-slate-800 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
             onClick={() => setInvoiceTemplate(settings?.printSettings?.themeName || "GST Boxed")}
           >
             Invoice
           </button>
           
-          {isEwayMode ? (
-            <>
-              <button 
-                className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${invoiceTemplate === 'Green E-Way' ? 'bg-white shadow-sm text-emerald-700' : 'text-slate-500 hover:text-slate-700'}`}
-                onClick={() => setInvoiceTemplate("Green E-Way")}
-              >
-                Green E-Way
-              </button>
-              <button 
-                className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${invoiceTemplate === 'Official E-Way' ? 'bg-white shadow-sm text-slate-900 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
-                onClick={() => setInvoiceTemplate("Official E-Way")}
-              >
-                Official E-Way
-              </button>
-              <button 
-                className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${invoiceTemplate === 'Minimal E-Way' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-                onClick={() => setInvoiceTemplate("Minimal E-Way")}
-              >
-                Minimal E-Way
-              </button>
-            </>
-          ) : (
-            <button 
-              className={`flex-1 md:w-28 px-2 py-1.5 md:px-3 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${isEwayMode ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'}`}
-              onClick={() => setInvoiceTemplate("Green E-Way")}
-            >
-              E-Way Bill
-            </button>
-          )}
+          <button 
+            className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${isEwayMode ? 'bg-white shadow-sm text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
+            onClick={() => {
+              if (!isEwayMode) setInvoiceTemplate("Green E-Way");
+            }}
+          >
+            E-Way Bill
+          </button>
         </div>
         
         <div className="flex flex-row w-full md:w-auto gap-1.5 md:gap-2">

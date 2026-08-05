@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import api from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -586,97 +586,101 @@ function AddCategoryDialog({ open, onOpenChange, onAdd }) {
 
 function BulkUploadDialog({ open, onOpenChange, onUploadSuccess }) {
   const [text, setText] = useState("");
+  const [fileName, setFileName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("file");
+
+  const parseDataToItems = (dataText) => {
+    if (!dataText.trim()) return [];
+    const lines = dataText.split("\n");
+    const items = [];
+    for (let i = 1; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      
+      let cols = [];
+      if (lines[i].includes("\t")) {
+        cols = lines[i].split("\t").map(c => c.trim());
+      } else {
+        cols = lines[i].split(",").map(c => c.trim());
+      }
+
+      if (cols.length === 0 || !cols[0]) continue;
+
+      let parsedExpDate = null;
+      const expStr = cols[6];
+      if (expStr) {
+        const trimmedDate = expStr.trim();
+        if (trimmedDate.includes('/')) {
+          const parts = trimmedDate.split('/');
+          if (parts.length === 2) {
+            parsedExpDate = new Date(`${parts[1]}-${parts[0]}-01`);
+          } else if (parts.length === 3) {
+            parsedExpDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+          }
+        } else {
+          parsedExpDate = new Date(trimmedDate);
+        }
+      }
+      if (parsedExpDate && isNaN(parsedExpDate.getTime())) {
+        parsedExpDate = null;
+      }
+
+      items.push({
+        name: cols[0],
+        salePrice: Number(cols[1]) || 0,
+        purchasePrice: Number(cols[2]) || Number(cols[1]) * 0.75 || 0,
+        stockQty: Number(cols[3]) || 0,
+        category: cols[4] || 'General',
+        batchNumber: cols[5] || '',
+        expiryDate: parsedExpDate
+      });
+    }
+    return items;
+  };
+
+  const parsedItems = useMemo(() => parseDataToItems(text), [text]);
 
   const handleCsvUpload = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
+    setFileName(file.name);
     const reader = new FileReader();
     reader.onload = (evt) => {
       setText(evt.target.result);
+      toast.success(`Loaded ${file.name}`);
     };
     reader.readAsText(file);
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,Product Name,Sale Price,Purchase Price,Stock Qty,Category,Batch No,Expiry Date\nBasmati Rice 5kg,480,360,78,Grocery,B-102,2026-12-31\nSunflower Oil 1L,180,140,32,Grocery,B-103,2026-06-30\n";
+    const csvContent = "data:text/csv;charset=utf-8,Product Name,Sale Price,Purchase Price,Stock Qty,Category,Batch No,Expiry Date\nBasmati Rice 5kg,480,360,78,Grocery,B-102,2026-12-31\nSunflower Oil 1L,180,140,32,Grocery,B-103,2026-06-30\nTata Salt 1kg,25,18,156,Grocery,B-542,2028-05-31\n";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "udaan_products_template.csv");
+    link.setAttribute("download", "udaan_sample_products_template.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    toast.success("Sample template CSV downloaded!");
   };
 
   const handleProcess = async () => {
-    if (!text.trim()) {
-      toast.error("Please upload a file or paste data");
+    if (parsedItems.length === 0) {
+      toast.error("No valid products found to import");
       return;
     }
 
     try {
       setLoading(true);
-      const lines = text.split("\n");
-      const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-      
-      const items = [];
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-        
-        let cols = [];
-        if (lines[i].includes("\t")) {
-          cols = lines[i].split("\t").map(c => c.trim());
-        } else {
-          cols = lines[i].split(",").map(c => c.trim());
-        }
-
-        if (cols.length === 0 || !cols[0]) continue;
-
-        let parsedExpDate = null;
-        const expStr = cols[6];
-        if (expStr) {
-          const trimmedDate = expStr.trim();
-          if (trimmedDate.includes('/')) {
-            const parts = trimmedDate.split('/');
-            if (parts.length === 2) {
-              parsedExpDate = new Date(`${parts[1]}-${parts[0]}-01`);
-            } else if (parts.length === 3) {
-              parsedExpDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-            }
-          } else {
-            parsedExpDate = new Date(trimmedDate);
-          }
-        }
-        if (parsedExpDate && isNaN(parsedExpDate.getTime())) {
-          parsedExpDate = null;
-        }
-
-        items.push({
-          name: cols[0],
-          salePrice: Number(cols[1]) || 0,
-          purchasePrice: Number(cols[2]) || Number(cols[1]) * 0.75 || 0,
-          stockQty: Number(cols[3]) || 0,
-          category: cols[4] || 'General',
-          batchNumber: cols[5] || '',
-          expiryDate: parsedExpDate
-        });
-      }
-
-      if (items.length === 0) {
-        toast.error("No valid products found in the data");
-        setLoading(false);
-        return;
-      }
-
-      await api.post('/items/bulk', { items });
-      toast.success(`Successfully imported ${items.length} products!`);
+      await api.post('/items/bulk', { items: parsedItems });
+      toast.success(`Successfully imported ${parsedItems.length} products!`);
       onUploadSuccess();
       onOpenChange(false);
       setText("");
+      setFileName("");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to import products. Check format.");
+      toast.error("Failed to import products. Please check formatting.");
     } finally {
       setLoading(false);
     }
@@ -684,44 +688,123 @@ function BulkUploadDialog({ open, onOpenChange, onUploadSuccess }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg rounded-2xl">
+      <DialogContent className="max-w-xl rounded-2xl p-6 sm:p-7">
         <DialogHeader>
-          <DialogTitle>Bulk Upload Products</DialogTitle>
-          <DialogDescription>
-            Import multiple items using a CSV file or by copying and pasting spreadsheet rows.
-          </DialogDescription>
+          <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <Upload className="h-5 w-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-lg font-bold text-slate-900">Bulk Upload Products</DialogTitle>
+              <DialogDescription className="text-xs text-slate-500">
+                Easily import multiple inventory items from Excel / CSV in seconds.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={handleDownloadTemplate} className="rounded-xl">
-              Download Template CSV
+          {/* Step 1: Download Template Callout */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+            <div>
+              <p className="text-xs font-semibold text-slate-800">1. Need a sample format?</p>
+              <p className="text-[11px] text-slate-500">Download sample Excel/CSV template with demo products.</p>
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={handleDownloadTemplate} className="rounded-xl border-emerald-600 text-emerald-600 hover:bg-emerald-50 text-xs h-8">
+              Download Sample
             </Button>
-            <label className="inline-flex items-center justify-center rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/95 cursor-pointer">
-              Upload CSV File
-              <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
-            </label>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="paste-data">Or Paste Spreadsheet Data (CSV or Tab-Separated Rows)</Label>
-            <Textarea
-              id="paste-data"
-              rows={8}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              className="rounded-xl font-mono text-xs"
-              placeholder="Product Name,Sale Price,Purchase Price,Stock Qty,Category,Batch No,Expiry Date&#10;Tata Salt 1kg,25,18,156,Grocery,B-542,2028-05-31"
-            />
-          </div>
+          {/* Step 2: Upload or Paste Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 rounded-xl bg-slate-100 p-1">
+              <TabsTrigger value="file" className="rounded-lg text-xs font-semibold">📁 Upload CSV File</TabsTrigger>
+              <TabsTrigger value="paste" className="rounded-lg text-xs font-semibold">📋 Paste Excel Rows</TabsTrigger>
+            </TabsList>
+
+            {/* File Upload Tab */}
+            {activeTab === "file" && (
+              <div className="mt-3">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-2xl cursor-pointer bg-slate-50/50 hover:bg-slate-100/50 transition-all p-4 text-center">
+                  <Upload className="h-8 w-8 text-emerald-600 mb-1" />
+                  <span className="text-xs font-semibold text-slate-700">
+                    {fileName ? `File Selected: ${fileName}` : "Click or drag & drop CSV file here"}
+                  </span>
+                  <span className="text-[11px] text-slate-400 mt-0.5">Supports .csv files exported from Excel</span>
+                  <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
+                </label>
+              </div>
+            )}
+
+            {/* Paste Data Tab */}
+            {activeTab === "paste" && (
+              <div className="mt-3 space-y-1.5">
+                <Label htmlFor="paste-data" className="text-xs font-semibold text-slate-700">Paste Excel/Spreadsheet Columns</Label>
+                <Textarea
+                  id="paste-data"
+                  rows={5}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  className="rounded-xl font-mono text-xs p-3 bg-white"
+                  placeholder="Product Name,Sale Price,Purchase Price,Stock Qty,Category&#10;Tata Salt 1kg,25,18,156,Grocery"
+                />
+              </div>
+            )}
+          </Tabs>
+
+          {/* Live Data Preview Table */}
+          {parsedItems.length > 0 && (
+            <div className="space-y-2 border-t pt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800">
+                  Preview ({parsedItems.length} Products Found)
+                </span>
+                <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Ready to Import</span>
+              </div>
+              <div className="max-h-36 overflow-y-auto rounded-xl border border-slate-200 bg-white">
+                <Table className="text-xs">
+                  <TableHeader className="bg-slate-50 sticky top-0">
+                    <TableRow>
+                      <TableHead className="h-7 text-[11px]">Product Name</TableHead>
+                      <TableHead className="h-7 text-[11px] text-right">Sale (₹)</TableHead>
+                      <TableHead className="h-7 text-[11px] text-right">Purchase (₹)</TableHead>
+                      <TableHead className="h-7 text-[11px] text-center">Stock</TableHead>
+                      <TableHead className="h-7 text-[11px]">Category</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {parsedItems.slice(0, 5).map((item, idx) => (
+                      <TableRow key={idx} className="h-7">
+                        <TableCell className="font-medium truncate max-w-[120px]">{item.name}</TableCell>
+                        <TableCell className="text-right">₹{item.salePrice}</TableCell>
+                        <TableCell className="text-right">₹{item.purchasePrice}</TableCell>
+                        <TableCell className="text-center font-semibold">{item.stockQty}</TableCell>
+                        <TableCell className="truncate max-w-[80px]">{item.category}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {parsedItems.length > 5 && (
+                  <p className="text-[10px] text-slate-400 text-center py-1 bg-slate-50 border-t">
+                    + {parsedItems.length - 5} more products will be imported
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        <DialogFooter>
-          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading} className="rounded-xl">
             Cancel
           </Button>
-          <Button type="button" onClick={handleProcess} disabled={loading} className="rounded-xl">
-            {loading ? "Importing..." : "Process Import"}
+          <Button 
+            type="button" 
+            onClick={handleProcess} 
+            disabled={loading || parsedItems.length === 0} 
+            className="rounded-xl bg-emerald-600 hover:bg-emerald-700 font-semibold px-5"
+          >
+            {loading ? "Importing Products..." : parsedItems.length > 0 ? `Import ${parsedItems.length} Products` : "Import Products"}
           </Button>
         </DialogFooter>
       </DialogContent>

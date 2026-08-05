@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Bell, Search, Plus, LogOut, Settings as SettingsIcon, User, Menu, X } from "lucide-react";
+import { Bell, Search, Plus, LogOut, Settings as SettingsIcon, User, Menu, X, Calculator } from "lucide-react";
 import { useNavigate, Link, useLocation, useSearchParams } from "react-router-dom";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 const logo = "/udaan-logo-removebg-preview.png";
@@ -11,6 +11,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NewInvoiceDialog } from "@/components/NewInvoiceDialog";
+import { GstCalculatorDialog } from "@/components/GstCalculatorDialog";
 import { useMockAuth, mockAuth } from "@/lib/auth-store";
 import { toast } from "sonner";
 
@@ -29,6 +30,7 @@ export function AppTopbar() {
     });
   };
   const { user } = useMockAuth();
+  const [isGstCalculatorOpen, setIsGstCalculatorOpen] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, title: "Payment received", description: "Anil Sweets paid ₹24,500", url: "/billing" },
     { id: 2, title: "Low stock alert", description: "Atta 10kg has only 8 units left", url: "/inventory" },
@@ -122,6 +124,17 @@ export function AppTopbar() {
               </Link>
             </Button>
           </div>
+
+          {/* Calculator Icon (Mobile Only - next to Bell icon) */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden h-10 w-10 rounded-xl"
+            onClick={() => setIsGstCalculatorOpen(true)}
+            title="GST Calculator"
+          >
+            <Calculator className="h-5 w-5" />
+          </Button>
 
           {/* Bell Icon */}
           <DropdownMenu>
@@ -226,6 +239,7 @@ export function AppTopbar() {
         </div>
       </header>
       <NewInvoiceDialog open={open} onOpenChange={setOpen} />
+      <GstCalculatorDialog open={isGstCalculatorOpen} onOpenChange={setIsGstCalculatorOpen} />
     </>
   );
 }

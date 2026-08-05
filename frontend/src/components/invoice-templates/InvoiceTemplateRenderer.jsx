@@ -4,9 +4,13 @@ import { TEMPLATES } from "./registry";
 
 export function normalizeInvoice(inv) {
   if (!inv) return null;
+  const isPurchase = (inv.type || "").toLowerCase() === "purchase";
   const rawLines = inv.lines || inv.items || [];
-  const lines = rawLines.filter((l) => l.name && l.name.trim() !== "");
-  const customer = inv.customer || inv.partyName || "Walk-in Customer";
+  const lines = rawLines.filter((l) => l.name && l.name.trim() !== "").map(l => ({
+    ...l,
+    unit: l.unit || "Pcs"
+  }));
+  const customer = inv.partyName || inv.supplier || inv.customer || (isPurchase ? "Walk-in Supplier" : "Walk-in Customer");
   const totals = inv.totals || {
     subtotal: inv.subtotal || 0,
     discountAmount: inv.discountAmount || 0,
@@ -16,24 +20,36 @@ export function normalizeInvoice(inv) {
     grand: inv.grandTotal || inv.grand || 0
   };
   const meta = {
+    isPurchase,
+    type: inv.type || "Sale",
+    supplierInvoiceNo: inv.supplierInvoiceNo || "",
     reverseCharge: inv.reverseCharge || "No",
     challanNo: inv.challanNo || inv.transportDetails?.challanNo || inv.transportDetails?.lrNumber || "",
     vehicleNo: inv.vehicleNo || inv.transportDetails?.vehicleNo || inv.transportDetails?.vehicleNumber || "",
     dateOfSupply: inv.dateOfSupply || inv.transportDetails?.dateOfSupply || (inv.transportDetails?.lrDate ? String(inv.transportDetails.lrDate).split('T')[0] : ""),
     placeOfSupply: inv.placeOfSupply || inv.shippingDetails?.placeOfDelivery || "Delhi",
     billedToAddress: inv.billedToAddress || inv.shippingDetails?.shipToAddress || inv.party?.address || inv.partyAddress || "",
-    billedToGstin: inv.billedToGstin || inv.shippingDetails?.shipToGSTIN || inv.party?.gstin || "",
-    billedToMobile: inv.billedToMobile || inv.shippingDetails?.phone || inv.party?.phone || "",
+    billedToGstin: inv.gstin || inv.billedToGstin || inv.shippingDetails?.shipToGSTIN || inv.party?.gstin || "",
+    billedToMobile: inv.phone || inv.billedToMobile || inv.shippingDetails?.phone || inv.party?.phone || "",
     billedToState: inv.billedToState || inv.shippingDetails?.state || inv.party?.state || "Delhi",
-    billingName: inv.billingName || inv.shippingDetails?.shipToName || inv.partyName || inv.party?.name || "",
+    billingName: inv.partyName || inv.supplier || inv.billingName || inv.shippingDetails?.shipToName || inv.party?.name || "",
     poNumber: inv.poNumber || "",
     poDate: inv.poDate || "",
-    invoiceNumber: inv.invoiceNumber || "INV-XXXX",
+    invoiceNumber: inv.invoiceNumber || (isPurchase ? "PUR-XXXX" : "INV-XXXX"),
     date: inv.date 
       ? `${new Date(inv.date).toLocaleDateString('en-IN')}${inv.time ? ' ' + inv.time : ''}` 
-      : `${new Date().toLocaleDateString('en-IN')}${inv.time ? ' ' + inv.time : ''}`
+      : `${new Date().toLocaleDateString('en-IN')}${inv.time ? ' ' + inv.time : ''}`,
+    invoiceDate: inv.invoiceDate ? `${new Date(inv.invoiceDate).toLocaleDateString('en-IN')}` : ""
   };
   return { 
+    isPurchase,
+    type: inv.type || "Sale",
+    supplierInvoiceNo: inv.supplierInvoiceNo || "",
+    additionalCharges: inv.additionalCharges || null,
+    purchaseNote: inv.purchaseNote || "",
+    remark: inv.remark || "",
+    receivedAmount: inv.receivedAmount || 0,
+    balanceAmount: inv.balanceAmount || 0,
     customer, 
     lines, 
     totals, 
