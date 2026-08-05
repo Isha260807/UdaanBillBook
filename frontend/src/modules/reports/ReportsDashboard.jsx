@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -21,25 +23,8 @@ import { toast } from "sonner";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import api from "@/lib/api";
 
-const fmt = (n) => "₹" + n.toLocaleString("en-IN");
-
-// ─── Quick Insights Chart Data ──────────────────────────────────────────
-const monthly = [
-  { m: "Nov", sales: 184000, expense: 78000, profit: 106000 },
-  { m: "Dec", sales: 212000, expense: 84000, profit: 128000 },
-  { m: "Jan", sales: 198000, expense: 81000, profit: 117000 },
-  { m: "Feb", sales: 246000, expense: 96000, profit: 150000 },
-  { m: "Mar", sales: 274000, expense: 102000, profit: 172000 },
-  { m: "Apr", sales: 312000, expense: 118000, profit: 194000 },
-];
-
-const gstSplit = [
-  { name: "CGST 9%", value: 28080 },
-  { name: "SGST 9%", value: 28080 },
-  { name: "IGST 18%", value: 14200 },
-  { name: "Exempt", value: 6400 },
-];
-const pieColors = ["var(--color-primary)", "var(--color-chart-2)", "var(--color-accent)", "var(--color-muted-foreground)"];
+const fmt = (n) => "₹" + (n || 0).toLocaleString("en-IN");
+const pieColors = ["#10b981", "#3b82f6", "#f59e0b", "#94a3b8"];
 
 // ─── Report Categories Definition ───────────────────────────────────────
 const reportCategories = [
@@ -124,48 +109,6 @@ const reportCategories = [
     ],
   },
 ];
-
-// ─── Report Action Handlers ─────────────────────────────────────────────
-const handleAction = (reportName, action) => {
-  toast.success(`${action} — ${reportName}`, {
-    description: action === "View" 
-      ? "Opening report view..." 
-      : `${reportName}.${action === "PDF" ? "pdf" : "csv"} will download shortly.`,
-  });
-
-  setTimeout(() => {
-    if (action === "View") {
-      const dummyContent = `<html><head><title>${reportName}</title><style>body{font-family:sans-serif;padding:40px;}h2{color:#333;}table{border-collapse:collapse;width:100%;max-width:800px;margin-top:20px;}th,td{border:1px solid #ddd;padding:12px;text-align:left;}th{background-color:#f8f9fa;}</style></head><body><h2>${reportName}</h2><p>This is a simulated view for the selected report.</p><table><tr><th>Date</th><th>Description</th><th>Amount</th></tr><tr><td>2026-06-01</td><td>Sample Transaction 1</td><td>₹ 1,500.00</td></tr><tr><td>2026-06-02</td><td>Sample Transaction 2</td><td>₹ 3,250.00</td></tr></table></body></html>`;
-      const blob = new Blob([dummyContent], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
-    } else if (action === "PDF") {
-      // Minimal valid PDF structure
-      const pdfContent = `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 4 0 R >> >> /MediaBox [0 0 612 792] /Contents 5 0 R >>\nendobj\n4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n5 0 obj\n<< /Length 50 >>\nstream\nBT\n/F1 24 Tf\n100 700 Td\n(Mock PDF Report) Tj\nET\nendstream\nendobj\ntrailer\n<< /Root 1 0 R /Size 6 >>\n%%EOF`;
-      const blob = new Blob([pdfContent], { type: "application/pdf" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${reportName.replace(/\s+/g, "_")}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } else if (action === "Excel") {
-      // Generate CSV which opens perfectly in Excel
-      const csvContent = `Report,${reportName}\nDate,${new Date().toLocaleDateString()}\n\nDate,Description,Amount\n2026-06-01,Sample Transaction 1,1500\n2026-06-02,Sample Transaction 2,3250`;
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${reportName.replace(/\s+/g, "_")}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  }, 600);
-};
 
 // ─── Individual Report Row ──────────────────────────────────────────────
 function ReportRow({ report, handleAction }) {
@@ -358,6 +301,10 @@ export function ReportsDashboard() {
     }));
   };
 
+  const isAllExpanded = useMemo(() => {
+    return reportCategories.every((c) => expandedCategories[c.id]);
+  }, [expandedCategories]);
+
   const expandAll = () => {
     const allExpanded = {};
     reportCategories.forEach((c) => (allExpanded[c.id] = true));
@@ -368,6 +315,14 @@ export function ReportsDashboard() {
     const allCollapsed = {};
     reportCategories.forEach((c) => (allCollapsed[c.id] = false));
     setExpandedCategories(allCollapsed);
+  };
+
+  const toggleExpandAll = () => {
+    if (isAllExpanded) {
+      collapseAll();
+    } else {
+      expandAll();
+    }
   };
 
   // Total reports count
@@ -454,33 +409,37 @@ export function ReportsDashboard() {
     ].filter(item => item.value > 0);
   }, [invoices]);
 
+  // Helper to format values to 2 decimal places for numeric amounts
+  const fmtNum = (v) => typeof v === 'number' ? v.toFixed(2) : (v ?? "—");
+
+  // ─── Dynamic Live Report Generator ─────────────────────────────────────
   const generateReportData = (reportName) => {
+    const nameLower = reportName.toLowerCase();
     let headers = [];
     let rows = [];
-    const nameLower = reportName.toLowerCase();
 
     if (nameLower.includes("sale report") || nameLower.includes("gstr-1")) {
       headers = ["Date", "Invoice No", "Customer", "Taxable Value (₹)", "GST Amount (₹)", "Total (₹)", "Status"];
       rows = invoices.filter(i => i.type === "Sale").map(i => [
         new Date(i.date).toLocaleDateString("en-IN"),
-        i.invoiceNumber,
-        i.partyName,
-        i.taxableAmount,
-        i.gstAmount,
-        i.grandTotal,
-        i.status
+        i.invoiceNumber || "-",
+        i.partyName || "Walk-in Customer",
+        fmtNum(i.taxableAmount),
+        fmtNum(i.gstAmount),
+        fmtNum(i.grandTotal),
+        i.status || i.paymentStatus || "Paid"
       ]);
     } 
     else if (nameLower.includes("purchase report") || nameLower.includes("gstr-2")) {
       headers = ["Date", "Purchase No", "Supplier", "Taxable Value (₹)", "GST Amount (₹)", "Total (₹)", "Status"];
       rows = invoices.filter(i => i.type === "Purchase").map(i => [
         new Date(i.date).toLocaleDateString("en-IN"),
-        i.invoiceNumber,
-        i.partyName,
-        i.taxableAmount,
-        i.gstAmount,
-        i.grandTotal,
-        i.status
+        i.invoiceNumber || "-",
+        i.partyName || "Supplier",
+        fmtNum(i.taxableAmount),
+        fmtNum(i.gstAmount),
+        fmtNum(i.grandTotal),
+        i.status || i.paymentStatus || "Paid"
       ]);
     } 
     else if (nameLower.includes("day book")) {
@@ -494,17 +453,17 @@ export function ReportsDashboard() {
         new Date(t.date).toLocaleDateString("en-IN"),
         t.type,
         t.party,
-        t.taxable,
-        t.gst,
-        t.total
+        fmtNum(t.taxable),
+        fmtNum(t.gst),
+        fmtNum(t.total)
       ]);
     } 
     else if (nameLower.includes("cash flow")) {
       headers = ["Date", "Description", "Inflow (₹)", "Outflow (₹)"];
       rows = [
-        ...invoices.filter(i => i.type === "Sale").map(i => [new Date(i.date).toLocaleDateString("en-IN"), `Sale Invoice ${i.invoiceNumber}`, i.receivedAmount || i.grandTotal, 0]),
-        ...invoices.filter(i => i.type === "Purchase").map(i => [new Date(i.date).toLocaleDateString("en-IN"), `Purchase Bill ${i.invoiceNumber}`, 0, i.grandTotal]),
-        ...expenses.map(e => [new Date(e.date).toLocaleDateString("en-IN"), `Expense: ${e.title || "General"}`, 0, e.amount])
+        ...invoices.filter(i => i.type === "Sale").map(i => [new Date(i.date).toLocaleDateString("en-IN"), `Sale Invoice ${i.invoiceNumber}`, fmtNum(i.receivedAmount || i.grandTotal), "0.00"]),
+        ...invoices.filter(i => i.type === "Purchase").map(i => [new Date(i.date).toLocaleDateString("en-IN"), `Purchase Bill ${i.invoiceNumber}`, "0.00", fmtNum(i.grandTotal)]),
+        ...expenses.map(e => [new Date(e.date).toLocaleDateString("en-IN"), `Expense: ${e.title || "General"}`, "0.00", fmtNum(e.amount)])
       ];
     } 
     else if (nameLower.includes("all parties")) {
@@ -514,7 +473,7 @@ export function ReportsDashboard() {
         p.type || "Customer",
         p.phone || "N/A",
         p.gstin || "N/A",
-        p.openingBalance || 0
+        fmtNum(p.openingBalance || p.balance || 0)
       ]);
     } 
     else if (nameLower.includes("stock summary") || nameLower.includes("low stock")) {
@@ -526,27 +485,100 @@ export function ReportsDashboard() {
       rows = stockItems.map(item => [
         item.name,
         item.hsnSac || "N/A",
-        item.salePrice || 0,
-        item.purchasePrice || 0,
+        fmtNum(item.salePrice || 0),
+        fmtNum(item.purchasePrice || 0),
         item.stock || 0,
         item.minStock || 5
       ]);
-    } 
-    else if (nameLower.includes("expense report")) {
-      headers = ["Date", "Expense Category", "Title / Description", "Amount (₹)"];
-      rows = expenses.map(e => [
+    }
+    else if (nameLower.includes("delivery challan")) {
+      headers = ["Challan Date", "Challan No", "Customer / Consignee", "Dispatch Status", "Vehicle / Transport", "Total Goods Value (₹)"];
+      const challans = invoices.filter(i => i.type === "Delivery Challan" || i.documentType === "Delivery Challan" || i.challanNumber || i.isChallan);
+      rows = challans.map(c => [
+        new Date(c.date).toLocaleDateString("en-IN"),
+        c.challanNumber || c.invoiceNumber || "DC-001",
+        c.partyName || "Walk-in Consignee",
+        c.status || "Dispatched",
+        c.vehicleNumber || c.transportMode || "Road Freight",
+        fmtNum(c.grandTotal || c.totalAmount || 0)
+      ]);
+    }
+    else if (nameLower.includes("estimate") || nameLower.includes("quotation")) {
+      headers = ["Quotation Date", "Quotation No", "Customer Name", "Status", "Taxable (₹)", "Total Amount (₹)"];
+      const estimates = invoices.filter(i => i.type === "Estimate" || i.type === "Quotation" || i.documentType === "Quotation");
+      rows = estimates.map(e => [
         new Date(e.date).toLocaleDateString("en-IN"),
+        e.invoiceNumber || "EST-001",
+        e.partyName || "Customer",
+        e.status || "Active",
+        fmtNum(e.taxableAmount || 0),
+        fmtNum(e.grandTotal || 0)
+      ]);
+    }
+    else if (nameLower.includes("credit note")) {
+      headers = ["Note Date", "Credit Note No", "Original Invoice", "Customer Name", "Reason", "Refund Amount (₹)"];
+      const creditNotes = invoices.filter(i => i.type === "Credit Note" || i.type === "Sale Return");
+      rows = creditNotes.map(cn => [
+        new Date(cn.date).toLocaleDateString("en-IN"),
+        cn.invoiceNumber || "CN-001",
+        cn.originalInvoiceNumber || "INV-001",
+        cn.partyName || "Customer",
+        cn.reason || cn.notes || "Goods Return",
+        fmtNum(cn.grandTotal || 0)
+      ]);
+    }
+    else if (nameLower.includes("debit note")) {
+      headers = ["Note Date", "Debit Note No", "Original Purchase", "Supplier Name", "Reason", "Debit Amount (₹)"];
+      const debitNotes = invoices.filter(i => i.type === "Debit Note" || i.type === "Purchase Return");
+      rows = debitNotes.map(dn => [
+        new Date(dn.date).toLocaleDateString("en-IN"),
+        dn.invoiceNumber || "DN-001",
+        dn.originalInvoiceNumber || "PUR-001",
+        dn.partyName || "Supplier",
+        dn.reason || dn.notes || "Purchase Return",
+        fmtNum(dn.grandTotal || 0)
+      ]);
+    }
+    else if (nameLower.includes("receivable")) {
+      headers = ["Customer Name", "Mobile Phone", "GSTIN", "Aging Period", "Receivable Amount (₹)"];
+      const recParties = parties.filter(p => (p.balanceType === "To Receive" || p.balanceType === "Receivable") && (p.balance || p.openingBalance || 0) > 0);
+      rows = recParties.map(p => [
+        p.name || "Customer",
+        p.phone || "N/A",
+        p.gstin || "N/A",
+        "0 - 30 Days",
+        fmtNum(p.balance || p.openingBalance || 0)
+      ]);
+    }
+    else if (nameLower.includes("payable")) {
+      headers = ["Supplier Name", "Mobile Phone", "GSTIN", "Payment Due Date", "Payable Amount (₹)"];
+      const payParties = parties.filter(p => (p.balanceType === "To Pay" || p.balanceType === "Payable") && (p.balance || p.openingBalance || 0) > 0);
+      rows = payParties.map(p => [
+        p.name || "Supplier",
+        p.phone || "N/A",
+        p.gstin || "N/A",
+        "Immediate",
+        fmtNum(p.balance || p.openingBalance || 0)
+      ]);
+    }
+    else if (nameLower.includes("expense")) {
+      headers = ["Date", "Expense Category", "Title / Notes", "Payment Mode", "Amount (₹)"];
+      rows = expenses.map(e => [
+        e.date ? new Date(e.date).toLocaleDateString("en-IN") : "-",
         e.category || "General",
-        e.title || "",
-        e.amount
+        e.title || e.notes || "-",
+        e.mode || "Cash",
+        fmtNum(e.amount)
       ]);
     } 
     else {
-      headers = ["Date", "Description", "Amount (₹)"];
+      headers = ["Date", "Voucher / Ref No", "Description", "Type", "Amount (₹)"];
       rows = invoices.map(i => [
         new Date(i.date).toLocaleDateString("en-IN"),
-        `${i.type} Invoice ${i.invoiceNumber}`,
-        i.grandTotal
+        i.invoiceNumber || "-",
+        `${i.type} Invoice — ${i.partyName || "General"}`,
+        i.type || "Invoice",
+        fmtNum(i.grandTotal)
       ]);
     }
     return { headers, rows };
@@ -564,14 +596,16 @@ export function ReportsDashboard() {
       const tableRows = rows.map(r => `<tr>${r.map(val => `<td>${val}</td>`).join("")}</tr>`).join("");
       
       const htmlContent = `
+        <!DOCTYPE html>
         <html>
         <head>
-          <title>${reportName}</title>
+          <meta charset="UTF-8">
+          <title>${reportName} — UdaanBillBook</title>
           <style>
             body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; padding: 40px; background-color: #f8fafc; color: #1e293b; }
-            h2 { color: #0f172a; font-weight: 800; margin-bottom: 5px; }
+            h2 { color: #10b981; font-weight: 800; margin-bottom: 5px; }
             p.subtitle { color: #64748b; font-size: 13px; margin-bottom: 25px; }
-            table { border-collapse: collapse; width: 100%; max-width: 1000px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+            table { border-collapse: collapse; width: 100%; max-width: 1050px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
             th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f1f5f9; }
             th { background-color: #f8fafc; font-weight: 700; font-size: 11px; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; }
             td { font-size: 13px; color: #334155; }
@@ -589,7 +623,7 @@ export function ReportsDashboard() {
         </body>
         </html>
       `;
-      const blob = new Blob([htmlContent], { type: "text/html" });
+      const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       window.open(url, "_blank");
     } 
@@ -602,7 +636,7 @@ export function ReportsDashboard() {
         ...rows.map(r => r.map(v => typeof v === 'string' ? `"${v.replace(/"/g, '""')}"` : v).join(","))
       ].join("\n");
 
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -613,35 +647,31 @@ export function ReportsDashboard() {
       URL.revokeObjectURL(url);
     } 
     else if (action === "PDF") {
-      const tableHeaders = headers.map(h => `<th>${h}</th>`).join("");
-      const tableRows = rows.map(r => `<tr>${r.map(val => `<td>${val}</td>`).join("")}</tr>`).join("");
-      
-      const htmlContent = `
-        <html>
-        <head>
-          <title>${reportName}</title>
-          <style>
-            body { font-family: system-ui; padding: 20px; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; font-size: 12px; }
-            th { background-color: #f1f5f9; }
-          </style>
-        </head>
-        <body>
-          <h2 style="margin-bottom:0;">${reportName}</h2>
-          <p style="font-size:10px; color:#64748b; margin-top:2px;">Live database compilation - ${new Date().toLocaleDateString('en-IN')}</p>
-          <hr />
-          <table>
-            <thead><tr>${tableHeaders}</tr></thead>
-            <tbody>${tableRows.length > 0 ? tableRows : `<tr><td colspan="${headers.length}" style="text-align: center;">No records</td></tr>`}</tbody>
-          </table>
-          <script>window.onload = function() { window.print(); }</script>
-        </body>
-        </html>
-      `;
-      const blob = new Blob([htmlContent], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank");
+      try {
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.setTextColor(16, 185, 129);
+        doc.text(`UdaanBillBook — ${reportName}`, 14, 18);
+
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        doc.text(`Report Date: ${new Date().toLocaleDateString('en-IN')} | Total Entries: ${rows.length}`, 14, 25);
+
+        autoTable(doc, {
+          startY: 30,
+          head: [headers],
+          body: rows.length > 0 ? rows : [["No records found", "-", "-", "-", "-", "-"]],
+          theme: "grid",
+          headStyles: { fillColor: [16, 185, 129] },
+          styles: { fontSize: 8 }
+        });
+
+        const fileDate = new Date().toISOString().split("T")[0];
+        doc.save(`${reportName.replace(/\s+/g, "_")}_${fileDate}.pdf`);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to generate PDF");
+      }
     }
   };
 
@@ -662,9 +692,9 @@ export function ReportsDashboard() {
               <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
               {showInsights ? "Hide" : "Show"} Quick Insights
             </Button>
-            <Button className="rounded-xl text-xs" onClick={expandAll}>
+            <Button className="rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={toggleExpandAll}>
               <FileText className="mr-1.5 h-3.5 w-3.5" />
-              Expand All
+              {isAllExpanded ? "Collapse All" : "Expand All"}
             </Button>
           </>
         }
@@ -692,6 +722,70 @@ export function ReportsDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* ── Quick Insights (collapsible charts at top) ────────────────────── */}
+      {showInsights && (
+        <div className="space-y-4 animate-in slide-in-from-top-3 duration-300 bg-white p-5 rounded-2xl border shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="h-5 w-5 text-emerald-600" />
+            <h2 className="text-base font-bold text-slate-800">Quick Insights & Business Trends</h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Card className="border shadow-sm lg:col-span-2">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Profit & Revenue Trend (Last 6 Months)</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dynamicMonthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                      <XAxis dataKey="m" fontSize={12} />
+                      <YAxis fontSize={12} tickFormatter={(v) => `₹${v/1000}k`} />
+                      <Tooltip formatter={(v) => [`₹${v.toLocaleString('en-IN')}`, '']} />
+                      <Legend />
+                      <Bar dataKey="sales" name="Sales" fill="#10b981" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="expense" name="Expenses" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="profit" name="Net Profit" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">GST Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <div className="h-64 w-full flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={dynamicGstSplit}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={70}
+                        innerRadius={40}
+                        paddingAngle={4}
+                      >
+                        {dynamicGstSplit.map((_, idx) => (
+                          <Cell key={idx} fill={pieColors[idx % pieColors.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v) => [`₹${v.toLocaleString('en-IN')}`, 'Amount']} />
+                      <Legend fontSize={10} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
 
       {/* ── Search & Filter Bar ────────────────────────────────────── */}
       <Card className="border-0 shadow-[var(--shadow-card)]">
@@ -741,103 +835,6 @@ export function ReportsDashboard() {
           />
         ))}
       </div>
-
-      {/* ── Quick Insights (collapsible charts) ────────────────────── */}
-      {showInsights && (
-        <div className="space-y-4 animate-in slide-in-from-top-3 duration-300">
-          <Separator />
-          <div className="flex items-center gap-2 mb-2">
-            <BarChart3 className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-bold">Quick Insights</h2>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <Card className="border-0 shadow-[var(--shadow-card)] lg:col-span-2">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Profit Trend</CardTitle>
-                <p className="text-xs text-muted-foreground">Last 6 months</p>
-              </CardHeader>
-              <CardContent>
-                {dynamicMonthlyData.every(d => d.sales === 0 && d.expense === 0) ? (
-                  <div className="h-[300px] flex items-center justify-center text-xs text-muted-foreground">No monthly stats available.</div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={dynamicMonthlyData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                      <XAxis dataKey="m" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-                      <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                      <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 12 }} formatter={(v) => fmt(v)} />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
-                      <Line type="monotone" dataKey="sales" stroke="var(--color-primary)" strokeWidth={2.5} dot={{ r: 3 }} />
-                      <Line type="monotone" dataKey="expense" stroke="var(--color-accent)" strokeWidth={2.5} dot={{ r: 3 }} />
-                      <Line type="monotone" dataKey="profit" stroke="var(--color-chart-2)" strokeWidth={2.5} dot={{ r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-[var(--shadow-card)]">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">GST Breakdown</CardTitle>
-                <p className="text-xs text-muted-foreground">Current quarter</p>
-              </CardHeader>
-              <CardContent>
-                {dynamicGstSplit.length === 0 ? (
-                  <div className="h-[240px] flex items-center justify-center text-xs text-muted-foreground">No GST records.</div>
-                ) : (
-                  <>
-                    <ResponsiveContainer width="100%" height={240}>
-                      <PieChart>
-                        <Pie data={dynamicGstSplit} dataKey="value" innerRadius={55} outerRadius={85} paddingAngle={3}>
-                          {dynamicGstSplit.map((_, i) => (
-                            <Cell key={i} fill={pieColors[i % pieColors.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 12 }} formatter={(v) => fmt(v)} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="mt-2 space-y-1.5">
-                      {dynamicGstSplit.map((g, i) => (
-                        <div key={g.name} className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="h-2.5 w-2.5 rounded-full" style={{ background: pieColors[i % pieColors.length] }} />
-                            <span className="font-medium">{g.name}</span>
-                          </div>
-                          <span className="font-semibold">{fmt(g.value)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="border-0 shadow-[var(--shadow-card)]">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Sales vs Expenses by Month</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {dynamicMonthlyData.every(d => d.sales === 0 && d.expense === 0) ? (
-                <div className="h-[280px] flex items-center justify-center text-xs text-muted-foreground">No comparative stats available.</div>
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={dynamicMonthlyData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
-                    <XAxis dataKey="m" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-                    <YAxis stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                    <Tooltip contentStyle={{ background: "var(--color-card)", border: "1px solid var(--color-border)", borderRadius: 12, fontSize: 12 }} formatter={(v) => fmt(v)} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="sales" fill="var(--color-primary)" radius={[8, 8, 0, 0]} maxBarSize={28} />
-                    <Bar dataKey="expense" fill="var(--color-accent)" radius={[8, 8, 0, 0]} maxBarSize={28} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

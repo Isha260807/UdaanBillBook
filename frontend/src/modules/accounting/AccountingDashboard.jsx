@@ -35,6 +35,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import { useMockAuth } from "@/lib/auth-store";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 // Format currency
 const fmt = (n) => "₹" + (n || 0).toLocaleString("en-IN");
@@ -66,6 +67,13 @@ export function AccountingDashboard() {
   const [journalForm, setJournalForm] = useState({ debitAcc: "Cash", creditAcc: "HDFC", amount: "", narration: "" });
   const [receiptForm, setReceiptForm] = useState({ partyId: "", partyName: "", amount: "", mode: "Cash", ref: "", notes: "" });
   const [paymentForm, setPaymentForm] = useState({ partyId: "", partyName: "", amount: "", mode: "Cash", ref: "", notes: "", category: "Supplier" });
+
+  // Custom Modal States for Opening Balance and Add Bank
+  const [isOpBalModalOpen, setIsOpBalModalOpen] = useState(false);
+  const [opBalInput, setOpBalInput] = useState("");
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [newBankName, setNewBankName] = useState("");
+  const [newBankBal, setNewBankBal] = useState("");
 
   // Custom LocalStorage State Namespaced by User ID
   const storageKey = `Udaan.accounting_logs_${user?._id || "default"}`;
@@ -500,12 +508,17 @@ export function AccountingDashboard() {
   };
 
   const handleOpeningBalance = () => {
-    const val = prompt("Enter new ledger opening balance (₹):", openingBalance);
-    if (val !== null && !isNaN(val)) {
-      setOpeningBalance(Number(val));
-      localStorage.setItem(openingBalanceKey, val);
-      toast.success(`Opening balance updated to ${fmt(Number(val))}`);
-    }
+    setOpBalInput(openingBalance || 0);
+    setIsOpBalModalOpen(true);
+  };
+
+  const handleSaveOpBal = (e) => {
+    e?.preventDefault();
+    const val = Number(opBalInput) || 0;
+    setOpeningBalance(val);
+    localStorage.setItem(openingBalanceKey, val.toString());
+    toast.success(`Opening balance updated to ${fmt(val)}`);
+    setIsOpBalModalOpen(false);
   };
 
   const deleteLocalLog = (id) => {
@@ -516,29 +529,32 @@ export function AccountingDashboard() {
   };
 
   const handleAddBank = () => {
-    const name = prompt("Enter Bank Name (e.g. Axis Bank, PNB):");
-    if (!name) return;
-    
-    const cleanName = name.trim();
+    setNewBankName("");
+    setNewBankBal("");
+    setIsBankModalOpen(true);
+  };
+
+  const handleSaveNewBank = (e) => {
+    e?.preventDefault();
+    const cleanName = newBankName.trim();
+    if (!cleanName) {
+      toast.error("Please enter bank name");
+      return;
+    }
+
     if (bankBalances[cleanName] !== undefined) {
       toast.error("Bank account with this name already exists");
       return;
     }
 
-    const balStr = prompt("Enter starting / opening balance (₹):", "0");
-    if (balStr === null) return;
-    const bal = Number(balStr);
-    if (isNaN(bal)) {
-      toast.error("Invalid balance amount");
-      return;
-    }
-
+    const bal = Number(newBankBal) || 0;
     const newBals = {
       ...bankBalances,
       [cleanName]: bal
     };
     saveBankBalances(newBals);
     toast.success(`${cleanName} added with starting balance of ${fmt(bal)}`);
+    setIsBankModalOpen(false);
   };
 
   const handleDeleteBank = (bankName) => {
@@ -559,8 +575,8 @@ export function AccountingDashboard() {
         subtitle="Vyapar-grade multi-book accounting, ledgers, statements and financial reports."
         actions={
           <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2">
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2 rounded-xl border-slate-200 h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={handleOpeningBalance}>
-              <Calculator className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" /> Bal: {fmt(openingBalance)}
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2 rounded-xl border-slate-200 h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={handleOpeningBalance} title="Click to update Ledger Opening Balance">
+              <Calculator className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" /> Op. Bal: {fmt(openingBalance)}
             </Button>
             <Button size="sm" className="flex-1 sm:flex-none px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={() => setActiveTab("receipts")}>
               <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Receipt In
@@ -1417,6 +1433,95 @@ export function AccountingDashboard() {
 
         </div>
       </div>
+
+      {/* 1. Opening Balance Dialog Modal */}
+      <Dialog open={isOpBalModalOpen} onOpenChange={setIsOpBalModalOpen}>
+        <DialogContent className="max-w-md rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-slate-900">Update Opening Balance</DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Set the starting ledger opening balance for your business account.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveOpBal} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label htmlFor="op-bal-val" className="text-xs font-semibold text-slate-700">Opening Balance (₹)</label>
+              <Input
+                id="op-bal-val"
+                type="number"
+                value={opBalInput === 0 ? "" : opBalInput}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                  setOpBalInput(raw);
+                }}
+                onFocus={(e) => e.target.select()}
+                placeholder="0"
+                className="h-10 rounded-xl text-base font-bold"
+              />
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setIsOpBalModalOpen(false)} className="rounded-xl">
+                Cancel
+              </Button>
+              <Button type="submit" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 font-semibold px-5">
+                Save Opening Balance
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* 2. Add Bank Account Dialog Modal */}
+      <Dialog open={isBankModalOpen} onOpenChange={setIsBankModalOpen}>
+        <DialogContent className="max-w-md rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-slate-900">Add New Bank Account</DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              Register a new bank account or wallet to track balances and transactions.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveNewBank} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label htmlFor="bank-name-input" className="text-xs font-semibold text-slate-700">Bank / Wallet Name</label>
+              <Input
+                id="bank-name-input"
+                value={newBankName}
+                onChange={(e) => setNewBankName(e.target.value)}
+                placeholder="e.g. Axis Bank, PNB, Paytm Wallet"
+                className="h-10 rounded-xl text-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="bank-bal-input" className="text-xs font-semibold text-slate-700">Starting Balance (₹)</label>
+              <Input
+                id="bank-bal-input"
+                type="number"
+                value={newBankBal === 0 ? "" : newBankBal}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                  setNewBankBal(raw);
+                }}
+                onFocus={(e) => e.target.select()}
+                placeholder="0"
+                className="h-10 rounded-xl text-sm font-bold"
+              />
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0 pt-2">
+              <Button type="button" variant="ghost" onClick={() => setIsBankModalOpen(false)} className="rounded-xl">
+                Cancel
+              </Button>
+              <Button type="submit" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 font-semibold px-5">
+                Add Bank Account
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -362,20 +362,54 @@ const updateInvoiceStatus = async (req, res) => {
       return res.status(401).json({ message: 'Not authorized' });
     }
 
+    const oldReceived = Number(invoice.receivedAmount) || 0;
+    const grandTotal = Number(invoice.grandTotal) || 0;
+
+    let newReceived = oldReceived;
     invoice.status = status;
     if (status === 'Paid') {
-      invoice.receivedAmount = invoice.grandTotal;
+      newReceived = grandTotal;
+      invoice.receivedAmount = grandTotal;
     } else if (status === 'Unpaid') {
+      newReceived = 0;
       invoice.receivedAmount = 0;
       invoice.paymentMethod = undefined;
       invoice.paymentDetails = undefined;
     } else if (status === 'Partial' && receivedAmount !== undefined) {
-      invoice.receivedAmount = receivedAmount;
+      newReceived = Number(receivedAmount) || 0;
+      invoice.receivedAmount = newReceived;
     }
 
     if (status !== 'Unpaid') {
       if (paymentMethod) invoice.paymentMethod = paymentMethod;
       if (paymentDetails) invoice.paymentDetails = paymentDetails;
+    }
+
+    // Update Party balance if party exists
+    if (invoice.party && mongoose.Types.ObjectId.isValid(invoice.party)) {
+      const dbParty = await Party.findById(invoice.party);
+      if (dbParty) {
+        const oldNet = grandTotal - oldReceived;
+        const newNet = grandTotal - newReceived;
+        const diffNet = newNet - oldNet; // positive if unpaid balance increased
+
+        let currentMathBalance = dbParty.balanceType === 'To Receive' ? dbParty.balance : -dbParty.balance;
+        let amountChange = 0;
+        if (invoice.type === 'Sale') {
+          amountChange = diffNet;
+        } else if (invoice.type === 'Purchase') {
+          amountChange = -diffNet;
+        } else if (invoice.type === 'Sale Return') {
+          amountChange = -diffNet;
+        } else if (invoice.type === 'Purchase Return') {
+          amountChange = diffNet;
+        }
+
+        const newMathBalance = currentMathBalance + amountChange;
+        dbParty.balance = Math.abs(newMathBalance);
+        dbParty.balanceType = newMathBalance >= 0 ? 'To Receive' : 'To Pay';
+        await dbParty.save();
+      }
     }
 
     await invoice.save();

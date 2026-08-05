@@ -419,7 +419,11 @@ const subscribeUser = async (req, res) => {
 // @access  Private
 const getUserTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find({ user: req.user.id }).sort({ createdAt: -1 });
+    const ownerId = req.user.role === 'staff' ? req.user.ownerId : req.user.id;
+    const userIds = [req.user.id];
+    if (ownerId) userIds.push(ownerId);
+
+    const tickets = await Ticket.find({ user: { $in: userIds } }).sort({ createdAt: -1 });
     res.status(200).json(tickets);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -436,12 +440,13 @@ const createUserTicket = async (req, res) => {
       return res.status(400).json({ message: 'Subject and description are required' });
     }
 
+    const userId = req.user.id;
     const ticketCount = await Ticket.countDocuments({});
     const ticketId = `TKT-${880 + ticketCount + 1}`;
 
     const newTicket = await Ticket.create({
       id: ticketId,
-      user: req.user.id,
+      user: userId,
       subject,
       description,
       priority: priority || 'Medium',

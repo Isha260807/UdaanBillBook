@@ -126,11 +126,10 @@ export function SupportTickets() {
               </div>
               <div className="flex items-center gap-4 shrink-0 self-start">
                 <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                  <User className="h-3 w-3" />
                   <select 
                     value={t.assignee}
                     onChange={(e) => handleUpdateTicket(t.id, { assignee: e.target.value })}
-                    className="bg-[#181d2a] border border-white/10 rounded-md px-1.5 py-0.5 text-xs text-white focus:outline-none cursor-pointer"
+                    className="bg-[#181d2a] border border-white/10 rounded-md px-2 py-1 text-xs text-white focus:outline-none cursor-pointer"
                   >
                     <option value="Unassigned">Unassigned</option>
                     <option value="Support Team">Support Team</option>
@@ -139,7 +138,6 @@ export function SupportTickets() {
                     <option value="Billing Team">Billing Team</option>
                   </select>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-slate-500"><MessageSquare className="h-3 w-3" />{t.messages}</div>
               </div>
             </div>
           </div>

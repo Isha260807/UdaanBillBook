@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { 
   ShieldCheck, 
   FileText, 
@@ -29,11 +30,18 @@ import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/PageHeader";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const fmt = (n) => "₹" + (n || 0).toLocaleString("en-IN");
 
 export function GstDashboard() {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "overview";
+  
+  const handleTabChange = (tabId) => {
+    setSearchParams({ tab: tabId });
+  };
   
   // Data States
   const [invoices, setInvoices] = useState([]);
@@ -127,7 +135,13 @@ export function GstDashboard() {
   // Helper: Lookup party GSTIN by invoice reference
   const getPartyGstin = (inv) => {
     if (inv.partyGstin) return inv.partyGstin;
-    const matchingParty = parties.find(p => p._id === inv.party || p.name === inv.partyName);
+    if (inv.billedToGstin) return inv.billedToGstin;
+    if (inv.gstin) return inv.gstin;
+    const invNameLower = (inv.partyName || "").trim().toLowerCase();
+    const matchingParty = parties.find(p => 
+      (inv.party && p._id === inv.party) || 
+      (p.name && p.name.trim().toLowerCase() === invNameLower)
+    );
     return matchingParty?.gstin || "N/A";
   };
 
@@ -225,6 +239,29 @@ export function GstDashboard() {
     });
   }, [purchaseInvoices, globalSearch, purchaseFilter]);
 
+  // Pagination states
+  const [salesPage, setSalesPage] = useState(1);
+  const [purchasePage, setPurchasePage] = useState(1);
+  const pageSize = 5;
+
+  useEffect(() => {
+    setSalesPage(1);
+    setPurchasePage(1);
+  }, [globalSearch, salesFilter, purchaseFilter]);
+
+  // Paginated data lists
+  const salesTotalPages = Math.max(1, Math.ceil(filteredSales.length / pageSize));
+  const paginatedSales = useMemo(() => {
+    const start = (salesPage - 1) * pageSize;
+    return filteredSales.slice(start, start + pageSize);
+  }, [filteredSales, salesPage, pageSize]);
+
+  const purchaseTotalPages = Math.max(1, Math.ceil(filteredPurchases.length / pageSize));
+  const paginatedPurchases = useMemo(() => {
+    const start = (purchasePage - 1) * pageSize;
+    return filteredPurchases.slice(start, start + pageSize);
+  }, [filteredPurchases, purchasePage, pageSize]);
+
   // Compute live aggregates (Overview)
   const gstStats = useMemo(() => {
     const totalOutputGst = salesInvoices.reduce((sum, inv) => sum + (inv.gstAmount || 0), 0);
@@ -278,6 +315,162 @@ export function GstDashboard() {
     return alerts;
   }, [gstStats, gstProfile.gstin]);
 
+  // Real PDF Export Functions
+  const exportSalesGstPdf = () => {
+    if (filteredSales.length === 0) {
+      toast.error("No sales records to export");
+      return;
+    }
+    try {
+      const doc = new jsPDF({ orientation: "landscape" });
+      const today = new Date().toLocaleDateString('en-IN');
+      
+      doc.setFontSize(16);
+      doc.setTextColor(16, 185, 129);
+      doc.text("UdaanBillBook — Sales GST Register (Output Tax)", 14, 15);
+      
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text(`GSTIN: ${gstProfile.gstin || "N/A"} | Business: ${gstProfile.businessName || "Sharma Traders"} | Date: ${today}`, 14, 22);
+
+      const tableRows = filteredSales.map(inv => [
+        inv.invoiceNumber || "",
+        inv.date ? new Date(inv.date).toLocaleDateString('en-IN') : "",
+        inv.partyName || "",
+        inv.partyGstin || "N/A",
+        fmt(inv.taxableAmount),
+        inv.splits.cgst > 0 ? fmt(inv.splits.cgst) : "—",
+        inv.splits.sgst > 0 ? fmt(inv.splits.sgst) : "—",
+        inv.splits.igst > 0 ? fmt(inv.splits.igst) : "—",
+        fmt(inv.gstAmount),
+        fmt(inv.grandTotal)
+      ]);
+
+      autoTable(doc, {
+        startY: 27,
+        head: [["Invoice No", "Date", "Customer", "GSTIN", "Taxable Val", "CGST (9%)", "SGST (9%)", "IGST (18%)", "Total GST", "Total Amount"]],
+        body: tableRows,
+        theme: "grid",
+        headStyles: { fillColor: [16, 185, 129] },
+        styles: { fontSize: 8 }
+      });
+
+      const fileDate = new Date().toISOString().split("T")[0];
+      doc.save(`Udaan_Sales_GST_Register_${fileDate}.pdf`);
+      toast.success("Sales GST Register PDF downloaded!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate Sales GST PDF");
+    }
+  };
+
+  const exportPurchaseGstPdf = () => {
+    if (filteredPurchases.length === 0) {
+      toast.error("No purchase records to export");
+      return;
+    }
+    try {
+      const doc = new jsPDF({ orientation: "landscape" });
+      const today = new Date().toLocaleDateString('en-IN');
+      
+      doc.setFontSize(16);
+      doc.setTextColor(239, 68, 68);
+      doc.text("UdaanBillBook — Purchase GST Register (Input Tax Credit)", 14, 15);
+      
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text(`GSTIN: ${gstProfile.gstin || "N/A"} | Business: ${gstProfile.businessName || "Sharma Traders"} | Date: ${today}`, 14, 22);
+
+      const tableRows = filteredPurchases.map(inv => [
+        inv.invoiceNumber || "",
+        inv.date ? new Date(inv.date).toLocaleDateString('en-IN') : "",
+        inv.partyName || "",
+        inv.partyGstin || "N/A",
+        fmt(inv.taxableAmount),
+        inv.splits.cgst > 0 ? fmt(inv.splits.cgst) : "—",
+        inv.splits.sgst > 0 ? fmt(inv.splits.sgst) : "—",
+        inv.splits.igst > 0 ? fmt(inv.splits.igst) : "—",
+        fmt(inv.gstAmount),
+        fmt(inv.grandTotal)
+      ]);
+
+      autoTable(doc, {
+        startY: 27,
+        head: [["Purchase No", "Date", "Supplier", "GSTIN", "Taxable Val", "CGST (Input)", "SGST (Input)", "IGST (Input)", "Input GST (ITC)", "Total Bill"]],
+        body: tableRows,
+        theme: "grid",
+        headStyles: { fillColor: [51, 65, 85] },
+        styles: { fontSize: 8 }
+      });
+
+      const fileDate = new Date().toISOString().split("T")[0];
+      doc.save(`Udaan_Purchase_GST_Register_${fileDate}.pdf`);
+      toast.success("Purchase GST Register PDF downloaded!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate Purchase GST PDF");
+    }
+  };
+
+  const exportGstrSummaryPdf = () => {
+    try {
+      const doc = new jsPDF();
+      const today = new Date().toLocaleDateString('en-IN');
+      
+      doc.setFontSize(16);
+      doc.setTextColor(16, 185, 129);
+      doc.text("UdaanBillBook — GST Taxation Summary Report", 14, 18);
+      
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text(`GSTIN: ${gstProfile.gstin || "N/A"} | Business: ${gstProfile.businessName || "Sharma Traders"}`, 14, 25);
+      doc.text(`Report Date: ${today}`, 14, 30);
+      
+      const summaryRows = [
+        ["Output GST Collected (Sales)", fmt(gstStats.outputGst)],
+        ["Input Tax Credit (Purchases ITC)", fmt(gstStats.inputGst)],
+        ["Net GST Liability Payable to Govt", fmt(gstStats.netGstPayable)],
+        ["Total Monthly Sales", fmt(gstStats.monthlySales)],
+        ["Total Monthly Purchase", fmt(gstStats.monthlyPurchase)]
+      ];
+      
+      autoTable(doc, {
+        startY: 35,
+        head: [["Tax Metric", "Amount (INR)"]],
+        body: summaryRows,
+        theme: "striped",
+        headStyles: { fillColor: [16, 185, 129] }
+      });
+
+      if (salesInvoices.length > 0) {
+        const salesRows = salesInvoices.map(inv => [
+          inv.invoiceNumber,
+          new Date(inv.date).toLocaleDateString('en-IN'),
+          inv.partyName,
+          inv.partyGstin,
+          fmt(inv.taxableAmount),
+          fmt(inv.gstAmount),
+          fmt(inv.grandTotal)
+        ]);
+        
+        autoTable(doc, {
+          startY: doc.lastAutoTable.finalY + 10,
+          head: [["Invoice No", "Date", "Customer", "GSTIN", "Taxable", "GST", "Total"]],
+          body: salesRows,
+          theme: "grid",
+          headStyles: { fillColor: [51, 65, 85] }
+        });
+      }
+      
+      const fileDate = new Date().toISOString().split("T")[0];
+      doc.save(`Udaan_GSTR_Summary_${fileDate}.pdf`);
+      toast.success("GSTR Summary PDF Report downloaded!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to generate PDF report");
+    }
+  };
+
   if (loading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading GST details...</div>;
 
   // Render Empty State if no invoices are present
@@ -293,7 +486,7 @@ export function GstDashboard() {
             <Button variant="outline" className="rounded-xl border-slate-200" onClick={fetchData}>
               <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Sync Data
             </Button>
-            <Button className="rounded-xl bg-emerald-600 hover:bg-emerald-700" onClick={() => toast.success("Summary report downloaded successfully")}>
+            <Button className="rounded-xl bg-emerald-600 hover:bg-emerald-700" onClick={exportGstrSummaryPdf}>
               <Download className="mr-1.5 h-3.5 w-3.5" /> GSTR Summary
             </Button>
           </div>
@@ -342,7 +535,7 @@ export function GstDashboard() {
           ].map((nav) => (
             <button
               key={nav.id}
-              onClick={() => setActiveTab(nav.id)}
+              onClick={() => handleTabChange(nav.id)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold transition-all ${
                 activeTab === nav.id 
                   ? "bg-emerald-50 text-emerald-700 shadow-sm" 
@@ -539,7 +732,7 @@ export function GstDashboard() {
                     <CardTitle className="text-base">Sales GST Register (Output Tax)</CardTitle>
                     <CardDescription>GST collected on Sales Invoices generated dynamically.</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={() => toast.success("Sales GST Register exported")}>
+                  <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={exportSalesGstPdf}>
                     <Download className="mr-1.5 h-3.5 w-3.5" /> Export Register
                   </Button>
                 </div>
@@ -588,7 +781,7 @@ export function GstDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {filteredSales.map((inv) => (
+                        {paginatedSales.map((inv) => (
                           <tr key={inv._id} className="hover:bg-slate-50 transition-colors">
                             <td className="p-3 font-mono font-semibold">{inv.invoiceNumber}</td>
                             <td className="p-3">{new Date(inv.date).toLocaleDateString('en-IN')}</td>
@@ -606,6 +799,38 @@ export function GstDashboard() {
                     </table>
                   </div>
                 )}
+
+                {/* Sales Pagination Bar */}
+                {filteredSales.length > 0 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 border-t bg-slate-50/50">
+                    <span className="text-xs text-slate-500 font-medium">
+                      Showing {(salesPage - 1) * pageSize + 1} to {Math.min(salesPage * pageSize, filteredSales.length)} of {filteredSales.length} entries
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={salesPage === 1}
+                        onClick={() => setSalesPage(p => Math.max(1, p - 1))}
+                        className="h-8 text-xs rounded-xl"
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-xs font-semibold text-slate-700 px-2">
+                        Page {salesPage} of {salesTotalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={salesPage >= salesTotalPages}
+                        onClick={() => setSalesPage(p => Math.min(salesTotalPages, p + 1))}
+                        className="h-8 text-xs rounded-xl"
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -619,7 +844,7 @@ export function GstDashboard() {
                     <CardTitle className="text-base">Purchase GST Register (Input Tax Credit)</CardTitle>
                     <CardDescription>Input tax credit logs computed from business purchases.</CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={() => toast.success("Purchase GST Register exported")}>
+                  <Button variant="outline" size="sm" className="h-8 rounded-lg text-xs" onClick={exportPurchaseGstPdf}>
                     <Download className="mr-1.5 h-3.5 w-3.5" /> Export Register
                   </Button>
                 </div>
@@ -668,7 +893,7 @@ export function GstDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y">
-                        {filteredPurchases.map((inv) => (
+                        {paginatedPurchases.map((inv) => (
                           <tr key={inv._id} className="hover:bg-slate-50 transition-colors">
                             <td className="p-3 font-mono font-semibold">{inv.invoiceNumber}</td>
                             <td className="p-3">{new Date(inv.date).toLocaleDateString('en-IN')}</td>
@@ -684,6 +909,38 @@ export function GstDashboard() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+
+                {/* Purchase Pagination Bar */}
+                {filteredPurchases.length > 0 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 border-t bg-slate-50/50">
+                    <span className="text-xs text-slate-500 font-medium">
+                      Showing {(purchasePage - 1) * pageSize + 1} to {Math.min(purchasePage * pageSize, filteredPurchases.length)} of {filteredPurchases.length} entries
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={purchasePage === 1}
+                        onClick={() => setPurchasePage(p => Math.max(1, p - 1))}
+                        className="h-8 text-xs rounded-xl"
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-xs font-semibold text-slate-700 px-2">
+                        Page {purchasePage} of {purchaseTotalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={purchasePage >= purchaseTotalPages}
+                        onClick={() => setPurchasePage(p => Math.min(purchaseTotalPages, p + 1))}
+                        className="h-8 text-xs rounded-xl"
+                      >
+                        Next
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>

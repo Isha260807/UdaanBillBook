@@ -261,7 +261,7 @@ export function InventoryDashboard() {
                   variant="outline"
                   size="icon"
                   className="h-10 w-10 rounded-xl shrink-0"
-                  onClick={() => setStockQty((q) => Math.max(1, q - 1))}
+                  onClick={() => setStockQty((q) => Math.max(1, (Number(q) || 0) - 1))}
                 >
                   <MinusCircle className="h-4 w-4" />
                 </Button>
@@ -269,8 +269,17 @@ export function InventoryDashboard() {
                   id="stock-qty"
                   type="number"
                   min={1}
-                  value={stockQty}
-                  onChange={(e) => setStockQty(Number(e.target.value) || 0)}
+                  value={stockQty === 0 ? "" : stockQty}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/^0+(?=\d)/, "");
+                    if (raw === "") {
+                      setStockQty("");
+                    } else {
+                      const num = Number(raw);
+                      setStockQty(isNaN(num) ? "" : num);
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
                   className="h-10 rounded-xl text-center text-lg font-bold"
                 />
                 <Button
@@ -278,7 +287,7 @@ export function InventoryDashboard() {
                   variant="outline"
                   size="icon"
                   className="h-10 w-10 rounded-xl shrink-0"
-                  onClick={() => setStockQty((q) => q + 1)}
+                  onClick={() => setStockQty((q) => (Number(q) || 0) + 1)}
                 >
                   <PlusCircle className="h-4 w-4" />
                 </Button>
@@ -590,6 +599,16 @@ function BulkUploadDialog({ open, onOpenChange, onUploadSuccess }) {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("file");
 
+  const handleReset = () => {
+    setText("");
+    setFileName("");
+  };
+
+  const handleClose = () => {
+    handleReset();
+    onOpenChange(false);
+  };
+
   const parseDataToItems = (dataText) => {
     if (!dataText.trim()) return [];
     const lines = dataText.split("\n");
@@ -650,6 +669,7 @@ function BulkUploadDialog({ open, onOpenChange, onUploadSuccess }) {
       toast.success(`Loaded ${file.name}`);
     };
     reader.readAsText(file);
+    e.target.value = "";
   };
 
   const handleDownloadTemplate = () => {
@@ -675,9 +695,7 @@ function BulkUploadDialog({ open, onOpenChange, onUploadSuccess }) {
       await api.post('/items/bulk', { items: parsedItems });
       toast.success(`Successfully imported ${parsedItems.length} products!`);
       onUploadSuccess();
-      onOpenChange(false);
-      setText("");
-      setFileName("");
+      handleClose();
     } catch (error) {
       console.error(error);
       toast.error("Failed to import products. Please check formatting.");
@@ -687,7 +705,7 @@ function BulkUploadDialog({ open, onOpenChange, onUploadSuccess }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) handleReset(); onOpenChange(v); }}>
       <DialogContent className="max-w-xl rounded-2xl p-6 sm:p-7">
         <DialogHeader>
           <div className="flex items-center gap-2">
@@ -725,21 +743,49 @@ function BulkUploadDialog({ open, onOpenChange, onUploadSuccess }) {
             {/* File Upload Tab */}
             {activeTab === "file" && (
               <div className="mt-3">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-2xl cursor-pointer bg-slate-50/50 hover:bg-slate-100/50 transition-all p-4 text-center">
-                  <Upload className="h-8 w-8 text-emerald-600 mb-1" />
-                  <span className="text-xs font-semibold text-slate-700">
-                    {fileName ? `File Selected: ${fileName}` : "Click or drag & drop CSV file here"}
-                  </span>
-                  <span className="text-[11px] text-slate-400 mt-0.5">Supports .csv files exported from Excel</span>
-                  <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
-                </label>
+                {fileName ? (
+                  <div className="flex items-center justify-between p-4 border border-emerald-200 rounded-2xl bg-emerald-50/50">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                        <Upload className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate">{fileName}</p>
+                        <p className="text-[10px] text-emerald-700 font-semibold">{parsedItems.length} products ready</p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleReset}
+                      className="rounded-xl border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 text-xs h-8 shrink-0 ml-2"
+                    >
+                      Remove File
+                    </Button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-2xl cursor-pointer bg-slate-50/50 hover:bg-slate-100/50 transition-all p-4 text-center">
+                    <Upload className="h-8 w-8 text-emerald-600 mb-1" />
+                    <span className="text-xs font-semibold text-slate-700">Click or drag & drop CSV file here</span>
+                    <span className="text-[11px] text-slate-400 mt-0.5">Supports .csv files exported from Excel</span>
+                    <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
+                  </label>
+                )}
               </div>
             )}
 
             {/* Paste Data Tab */}
             {activeTab === "paste" && (
               <div className="mt-3 space-y-1.5">
-                <Label htmlFor="paste-data" className="text-xs font-semibold text-slate-700">Paste Excel/Spreadsheet Columns</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="paste-data" className="text-xs font-semibold text-slate-700">Paste Excel/Spreadsheet Columns</Label>
+                  {text && (
+                    <button type="button" onClick={handleReset} className="text-[11px] text-red-500 hover:underline font-semibold">
+                      Clear Text
+                    </button>
+                  )}
+                </div>
                 <Textarea
                   id="paste-data"
                   rows={5}
@@ -795,7 +841,7 @@ function BulkUploadDialog({ open, onOpenChange, onUploadSuccess }) {
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading} className="rounded-xl">
+          <Button type="button" variant="ghost" onClick={handleClose} disabled={loading} className="rounded-xl">
             Cancel
           </Button>
           <Button 
