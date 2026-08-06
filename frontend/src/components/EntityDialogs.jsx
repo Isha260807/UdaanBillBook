@@ -163,7 +163,7 @@ export function AddProductDialog({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {(itemSettings.barcodeScan || itemSettings.directBarcodeScan) && (
+            {itemSettings.barcodeScan && (
               <div className="space-y-1.5">
                 <Label htmlFor="psku">SKU / Barcode</Label>
                 <div className="relative">
