@@ -654,6 +654,11 @@ const verifyRazorpayPayment = async (req, res) => {
       message: `Successfully verified and subscribed to ${planName}`,
       subscription: responseSubscription
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Update user profile details
 // @route   PUT /api/auth/profile
 // @access  Private

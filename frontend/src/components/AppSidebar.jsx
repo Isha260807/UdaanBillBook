@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useMockAuth, mockAuth } from "@/lib/auth-store";
 import { useSubscription, PLANS } from "@/hooks/useSubscription";
+import { usePlatformSettings } from "@/lib/platform-settings";
 import { toast } from "sonner";
 import { useSidebar } from "@/components/ui/sidebar";
 const logo = "/udaan-logo-removebg-preview.png";
@@ -65,9 +66,16 @@ export function AppSidebar() {
     if (isMobile) setOpenMobile(false);
   };
 
+  const { settings } = usePlatformSettings();
+  const enableItem = settings?.itemSettings?.enableItem !== false;
+
   // Filter sections based on permissions
   const filteredMain = main.filter(item => {
     const featureKey = (item.url.split("/").pop() || "dashboard").toLowerCase();
+
+    // If Item Module is turned OFF in settings, hide Inventory
+    if (featureKey === "inventory" && !enableItem) return false;
+
     if (isVendor) return true;
     if (["staff", "viewer", "user"].includes(userRole)) {
       // 1. Check custom permission

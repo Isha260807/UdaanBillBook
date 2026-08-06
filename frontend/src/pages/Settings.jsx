@@ -776,30 +776,32 @@ export default function Settings() {
                     {renderControl("itemSettings", "enableItem", "Enable Item Module")}
                     {renderControl("itemSettings", "barcodeScan", "Enable Barcode Scanning Fields")}
                     {itemSettings.barcodeScan && (
-                      <div className="pl-6 py-1.5 flex items-center gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600">
-                          <input 
-                            type="radio" 
-                            name="barcodeScanType" 
-                            checked={itemSettings.barcodeScanType === "usb"} 
-                            onChange={() => updateSettings("itemSettings", { barcodeScanType: "usb" })}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300"
-                          />
-                          USB Scanner
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600">
-                          <input 
-                            type="radio" 
-                            name="barcodeScanType" 
-                            checked={itemSettings.barcodeScanType === "camera" || !itemSettings.barcodeScanType} 
-                            onChange={() => updateSettings("itemSettings", { barcodeScanType: "camera" })}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300"
-                          />
-                          Phone camera
-                        </label>
+                      <div className="pl-6 space-y-2 py-1.5 border-l-2 border-slate-200 ml-2 my-1">
+                        <div className="flex items-center gap-6">
+                          <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600">
+                            <input 
+                              type="radio" 
+                              name="barcodeScanType" 
+                              checked={itemSettings.barcodeScanType === "usb"} 
+                              onChange={() => updateSettings("itemSettings", { barcodeScanType: "usb" })}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300"
+                            />
+                            USB Scanner
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-slate-600">
+                            <input 
+                              type="radio" 
+                              name="barcodeScanType" 
+                              checked={itemSettings.barcodeScanType === "camera" || !itemSettings.barcodeScanType} 
+                              onChange={() => updateSettings("itemSettings", { barcodeScanType: "camera" })}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300"
+                            />
+                            Phone camera
+                          </label>
+                        </div>
+                        {renderControl("itemSettings", "directBarcodeScan", "Auto-Add Item on Scan (Direct Mode)")}
                       </div>
                     )}
-                    {renderControl("itemSettings", "directBarcodeScan", "Direct Barcode Scanning Mode")}
                     {renderControl("itemSettings", "stockMaintenance", "Maintain Stock Quantities")}
                     {renderControl("itemSettings", "showLowStockDialog", "Warn on Low Stock Dialogs")}
                     {renderControl("itemSettings", "itemsUnit", "Item Measuring Units")}
