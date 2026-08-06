@@ -157,6 +157,8 @@ const getMe = async (req, res) => {
       phone: req.user.phone,
       email: req.user.email,
       businessName: req.user.businessName,
+      businessAddress: req.user.businessAddress,
+      gstin: req.user.gstin,
       role: req.user.role,
       showAds: req.user.showAds,
       billLimit: req.user.billLimit,
@@ -652,6 +654,39 @@ const verifyRazorpayPayment = async (req, res) => {
       message: `Successfully verified and subscribed to ${planName}`,
       subscription: responseSubscription
     });
+// @desc    Update user profile details
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { name, businessName, businessAddress, gstin, phone, email } = req.body;
+    if (name !== undefined) user.name = name;
+    if (businessName !== undefined) user.businessName = businessName;
+    if (businessAddress !== undefined) user.businessAddress = businessAddress;
+    if (gstin !== undefined) user.gstin = gstin;
+    if (phone !== undefined) user.phone = phone;
+    if (email !== undefined) user.email = email;
+
+    await user.save();
+
+    const responseSubscription = await getSubscriptionWithLogo(user.subscription);
+
+    res.json({
+      _id: user.id,
+      name: user.name,
+      phone: user.phone,
+      email: user.email,
+      businessName: user.businessName,
+      businessAddress: user.businessAddress,
+      gstin: user.gstin,
+      role: user.role,
+      subscription: responseSubscription,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -661,6 +696,7 @@ module.exports = {
   sendOtp,
   verifyOtp,
   getMe,
+  updateProfile,
   loginEmail,
   getStaff,
   addStaff,

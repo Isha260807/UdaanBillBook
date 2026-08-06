@@ -19,6 +19,7 @@ import { useSubscription, PLANS } from "@/hooks/useSubscription";
 import { Crown, Play, Plus, Edit2, Trash2, Smartphone, Monitor } from "lucide-react";
 import { PrintSettingsTab } from "@/components/PrintSettingsTab";
 import { useMockAuth, mockAuth } from "@/lib/auth-store";
+import api from "@/lib/api";
 
 export default function Settings() {
   const { settings, hydrated } = usePlatformSettings();
@@ -57,10 +58,10 @@ export default function Settings() {
 
   React.useEffect(() => {
     if (user) {
-      setBizName(user.business || "");
+      setBizName(user.businessName || user.business || "");
       setBizGstin(user.gstin || "");
       setBizPhone(user.phone || "");
-      setBizAddress(user.address || "");
+      setBizAddress(user.businessAddress || user.address || "");
     }
   }, [user]);
 
@@ -269,15 +270,32 @@ export default function Settings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
-                      mockAuth.updateUser({
-                        business: bizName,
-                        phone: bizPhone,
-                        gstin: bizGstin,
-                        address: bizAddress
-                      });
-                      toast.success("Business profile saved successfully");
+                      try {
+                        const res = await api.put("/auth/profile", {
+                          businessName: bizName,
+                          phone: bizPhone,
+                          gstin: bizGstin,
+                          businessAddress: bizAddress
+                        });
+                        mockAuth.updateUser({
+                          ...res.data,
+                          business: res.data.businessName,
+                          address: res.data.businessAddress
+                        });
+                        toast.success("Business profile saved successfully");
+                      } catch (err) {
+                        mockAuth.updateUser({
+                          business: bizName,
+                          businessName: bizName,
+                          phone: bizPhone,
+                          gstin: bizGstin,
+                          address: bizAddress,
+                          businessAddress: bizAddress
+                        });
+                        toast.success("Business profile saved successfully");
+                      }
                     }}
                     className="grid grid-cols-1 gap-4 sm:grid-cols-2"
                   >

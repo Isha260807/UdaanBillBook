@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { sendOtp, verifyOtp, getMe, loginEmail, getStaff, addStaff, updateStaff, deleteStaff, getPlans, subscribeUser, getPublicSettings, getUserTickets, createUserTicket, getRazorpayKey, createRazorpayOrder, verifyRazorpayPayment } = require('../controllers/authController');
+const { sendOtp, verifyOtp, getMe, updateProfile, loginEmail, getStaff, addStaff, updateStaff, deleteStaff, getPlans, subscribeUser, getPublicSettings, getUserTickets, createUserTicket, getRazorpayKey, createRazorpayOrder, verifyRazorpayPayment } = require('../controllers/authController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 
 router.post('/send-otp', sendOtp);
 router.post('/verify-otp', verifyOtp);
 router.post('/login-email', loginEmail);
 router.get('/me', protect, getMe);
+router.put('/profile', protect, updateProfile);
 router.get('/plans', getPlans);
 router.post('/subscribe', protect, subscribeUser);
 router.get('/settings', getPublicSettings);

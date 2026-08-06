@@ -25,6 +25,9 @@ const userSchema = new mongoose.Schema({
   businessType: {
     type: String,
   },
+  gstin: {
+    type: String,
+  },
   otp: {
     type: String,
   },

@@ -47,6 +47,10 @@ export default function Layout() {
             role: res.data.role,
             name: res.data.name,
             business: res.data.businessName,
+            businessName: res.data.businessName,
+            address: res.data.businessAddress,
+            businessAddress: res.data.businessAddress,
+            gstin: res.data.gstin,
             phone: res.data.phone,
             email: res.data.email
           });
