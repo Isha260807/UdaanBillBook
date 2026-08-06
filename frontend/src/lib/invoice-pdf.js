@@ -367,6 +367,11 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
     totalGrand += lineTotal;
   });
 
+  const isRcm = String(data.reverseCharge || "").toLowerCase() === "yes";
+  if (isRcm) {
+    totalGrand = totalTaxable;
+  }
+
   // Add the summary row at the end of body
   rows.push([
     "",
@@ -491,12 +496,14 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
     doc.line(295, footerY + r * 18, 560, footerY + r * 18);
   }
 
+  const isRcmDoc = String(data.reverseCharge || "").toLowerCase() === "yes";
+
   const totalLines = [
     { label: "Total Amount Before Tax", val: fmtNum(totalTaxable), bold: false },
     { label: "Add : CGST", val: fmtNum(totalCgst), bold: false },
     { label: "Add : SGST", val: fmtNum(totalSgst), bold: false },
     { label: "Tax Amount : GST", val: fmtNum(totalCgst + totalSgst), bold: false },
-    { label: "Amount With Tax", val: fmtNum(totalGrand), bold: true },
+    { label: isRcmDoc ? "Total Payable (Excl. Tax RCM)" : "Amount With Tax", val: fmtNum(totalGrand), bold: true },
   ];
 
   totalLines.forEach((item, idx) => {

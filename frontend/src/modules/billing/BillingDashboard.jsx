@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner";
 import { useMockAuth } from "@/lib/auth-store";
 import { downloadInvoicePdf, printInvoiceHtml } from "@/lib/invoice-pdf";
+import { openWhatsAppShare } from "@/lib/whatsapp-helper";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import api from "@/lib/api";
 import { validateUtr, validateUpi } from "@/lib/validation";
@@ -185,10 +186,7 @@ export function BillingDashboard() {
   };
 
   const shareWA = (inv) => {
-    const msg = encodeURIComponent(
-      `Hi ${inv.partyName || inv.party}, your invoice ${inv.invoiceNumber || inv.id} of ₹${(inv.grandTotal || inv.amount).toLocaleString("en-IN")} is ready.`
-    );
-    window.open(`https://wa.me/?text=${msg}`, "_blank");
+    openWhatsAppShare(inv, inv.partyPhone || inv.phone || inv.billedToMobile || "");
   };
 
   const previewOne = async (inv) => {

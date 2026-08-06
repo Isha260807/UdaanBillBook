@@ -1,6 +1,6 @@
 import React from "react";
 import { Building2 } from "lucide-react";
-import { getTemplateColumns, formatAmt, renderCommonFooter } from "../templateUtils.jsx";
+import { getTemplateColumns, getTransactionTitle, formatAmt, renderCommonFooter } from "../templateUtils.jsx";
 
 export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -56,7 +56,7 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
       style={{ paddingTop: `${Number(printSet.extraSpaceTop || 0)}px` }}
     >
       <div className="border-b border-slate-800 p-3 text-center space-y-1 bg-white relative min-h-[80px] flex flex-col justify-center">
-        {!(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && (
+        {!(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && printSet.printCompanyLogo !== false && (
           (printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
             <div className="absolute left-4 top-2 max-h-12 max-w-[120px] overflow-hidden flex items-center justify-center">
               <img 
@@ -94,7 +94,7 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
 
       {/* Title */}
       <div className={`border-b border-slate-800 text-center font-bold py-1 bg-slate-50 uppercase tracking-widest ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}>
-        {invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase" ? "PURCHASE INVOICE" : (gstSet.compositeScheme ? "BILL OF SUPPLY" : "TAX INVOICE")}
+        {getTransactionTitle(invoice, printSet, gstSet)}
       </div>
       {gstSet.compositeScheme && !(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && (
         <div className="border-b border-slate-800 text-center text-[8px] py-0.5 bg-amber-50 font-bold text-slate-700 italic border-t border-slate-800">
@@ -133,6 +133,12 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
               {meta.poDate && <div className="flex"><span className="w-16 shrink-0">P.O. Date</span><span className="truncate">: {meta.poDate}</span></div>}
               <div className="flex"><span className="w-16 shrink-0">Vehicle No.</span><span className="truncate">: {meta.vehicleNo || invoice.transportDetails?.vehicleNo || "-"}</span></div>
               <div className="flex"><span className="w-16 shrink-0">Supply Date</span><span className="truncate">: {meta.dateOfSupply ? meta.dateOfSupply.split("-").reverse().join("/") : "-"}</span></div>
+              {printSet.paymentMode && (
+                <>
+                  <div className="flex"><span className="w-16 shrink-0">Pay Mode</span><span className="truncate">: {invoice.paymentMethod || "Cash"}</span></div>
+                  <div className="flex"><span className="w-16 shrink-0">Pay Status</span><span className="truncate">: {invoice.status || "Unpaid"}</span></div>
+                </>
+              )}
               {gstSet.placeOfSupply && (
                 <div className="flex"><span className="w-16 shrink-0">Place</span><span className="truncate">: {meta.placeOfSupply || "Delhi"}</span></div>
               )}
@@ -355,8 +361,21 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
                 </>
               );
             })()}
-            <div className="py-0.5 flex justify-between border-t font-semibold"><span>Total GST</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
-            <div className={`py-1 flex justify-between font-extrabold border-t-2 border-slate-900 pt-1 ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}><span className="uppercase">Total</span><span>{formatAmt(totals.grand, printSet)}</span></div>
+            <div className="py-0.5 flex justify-between border-t font-semibold">
+              <span>Total GST</span>
+              <span>{formatAmt(totals.gstAmount, printSet)}</span>
+            </div>
+            {String(meta.reverseCharge || "").toLowerCase() === "yes" && (
+              <div className="text-[7.5px] text-amber-700 font-medium italic text-right py-0.5 leading-tight">
+                *Tax to be paid on Reverse Charge by Recipient/Buyer
+              </div>
+            )}
+            <div className={`py-1 flex justify-between font-extrabold border-t-2 border-slate-900 pt-1 ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}>
+              <span className="uppercase">
+                Total {String(meta.reverseCharge || "").toLowerCase() === "yes" ? "(Excl. Tax)" : ""}
+              </span>
+              <span>{formatAmt(totals.grand, printSet)}</span>
+            </div>
             {(printSet.receivedAmount || invoice.isPurchase) && (
               <div className={`py-0.5 flex justify-between text-slate-600 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
                 <span>Paid / Received</span>

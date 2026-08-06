@@ -8,20 +8,38 @@ export function GstCalculatorDialog({ open, onOpenChange }) {
   const [amount, setAmount] = useState("");
   const [rate, setRate] = useState("18");
   const [gstType, setGstType] = useState("exclusive");
+  const [taxSplit, setTaxSplit] = useState("cgst_sgst"); // 'cgst_sgst' or 'igst'
 
   const calculateGst = () => {
     const amt = parseFloat(amount) || 0;
     const r = parseFloat(rate) || 0;
 
+    let gstAmount = 0;
+    let net = 0;
+    let total = 0;
+
     if (gstType === "exclusive") {
-      const gstAmount = (amt * r) / 100;
-      const total = amt + gstAmount;
-      return { net: amt, gst: gstAmount, total: total };
+      gstAmount = (amt * r) / 100;
+      net = amt;
+      total = amt + gstAmount;
     } else {
-      const gstAmount = amt - (amt * (100 / (100 + r)));
-      const net = amt - gstAmount;
-      return { net: net, gst: gstAmount, total: amt };
+      gstAmount = amt - (amt * (100 / (100 + r)));
+      net = amt - gstAmount;
+      total = amt;
     }
+
+    const halfGst = gstAmount / 2;
+    const halfRate = r / 2;
+
+    return {
+      net,
+      gst: gstAmount,
+      cgst: halfGst,
+      sgst: halfGst,
+      cgstRate: halfRate,
+      sgstRate: halfRate,
+      total,
+    };
   };
 
   const results = calculateGst();
@@ -48,6 +66,21 @@ export function GstCalculatorDialog({ open, onOpenChange }) {
               </div>
             </RadioGroup>
           </div>
+
+          <div className="grid gap-2">
+            <Label>Tax Calculation Type</Label>
+            <RadioGroup defaultValue="cgst_sgst" value={taxSplit} onValueChange={setTaxSplit} className="flex gap-4">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="cgst_sgst" id="cgst_sgst" />
+                <Label htmlFor="cgst_sgst" className="font-normal cursor-pointer">CGST + SGST (Intra-State)</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="igst" id="igst" />
+                <Label htmlFor="igst" className="font-normal cursor-pointer">IGST (Inter-State)</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="amount">Amount (₹)</Label>
             <Input
@@ -81,10 +114,29 @@ export function GstCalculatorDialog({ open, onOpenChange }) {
               <span className="text-muted-foreground">Net Amount:</span>
               <span className="font-semibold">{formatCurrency(results.net)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">GST Amount ({rate}%):</span>
-              <span className="font-semibold text-destructive">{formatCurrency(results.gst)}</span>
-            </div>
+
+            {taxSplit === "cgst_sgst" ? (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">CGST ({results.cgstRate}%):</span>
+                  <span className="font-semibold text-destructive">{formatCurrency(results.cgst)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">SGST ({results.sgstRate}%):</span>
+                  <span className="font-semibold text-destructive">{formatCurrency(results.sgst)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-muted-foreground/80 border-t border-dashed pt-1">
+                  <span>Total GST ({rate}%):</span>
+                  <span>{formatCurrency(results.gst)}</span>
+                </div>
+              </>
+            ) : (
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">IGST ({rate}%):</span>
+                <span className="font-semibold text-destructive">{formatCurrency(results.gst)}</span>
+              </div>
+            )}
+
             <div className="border-t pt-2 mt-2 flex justify-between">
               <span className="font-bold">Total Amount:</span>
               <span className="font-bold text-success">{formatCurrency(results.total)}</span>

@@ -11,7 +11,7 @@ export function normalizeInvoice(inv) {
     unit: l.unit || "Pcs"
   }));
   const customer = inv.partyName || inv.supplier || inv.customer || (isPurchase ? "Walk-in Supplier" : "Walk-in Customer");
-  const totals = inv.totals || {
+  const origTotals = inv.totals || {
     subtotal: inv.subtotal || 0,
     discountAmount: inv.discountAmount || 0,
     taxableAmount: inv.taxableAmount || 0,
@@ -19,6 +19,14 @@ export function normalizeInvoice(inv) {
     roundOff: inv.roundOff || 0,
     grand: inv.grandTotal || inv.grand || 0
   };
+
+  const isRcm = String(inv.reverseCharge || "").toLowerCase() === "yes";
+
+  const totals = isRcm ? {
+    ...origTotals,
+    grand: Math.round(origTotals.taxableAmount + (Number(inv.additionalCharges?.total) || 0))
+  } : origTotals;
+
   const meta = {
     isPurchase,
     type: inv.type || "Sale",
@@ -41,6 +49,9 @@ export function normalizeInvoice(inv) {
       : `${new Date().toLocaleDateString('en-IN')}${inv.time ? ' ' + inv.time : ''}`,
     invoiceDate: inv.invoiceDate ? `${new Date(inv.invoiceDate).toLocaleDateString('en-IN')}` : ""
   };
+
+  const calcBalance = totals.grand - (Number(inv.receivedAmount) || 0);
+
   return { 
     isPurchase,
     type: inv.type || "Sale",
@@ -49,7 +60,7 @@ export function normalizeInvoice(inv) {
     purchaseNote: inv.purchaseNote || "",
     remark: inv.remark || "",
     receivedAmount: inv.receivedAmount || 0,
-    balanceAmount: inv.balanceAmount || 0,
+    balanceAmount: calcBalance,
     customer, 
     lines, 
     totals, 
@@ -76,21 +87,27 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
   
   const normalizedInvoice = normalizeInvoice(invoice);
 
+  const isCompanyNameEnabled = printSettings?.printCompanyName !== false;
+  const isAddressEnabled = printSettings?.printAddress !== false;
+  const isPhoneEnabled = printSettings?.printPhone !== false;
+  const isEmailEnabled = printSettings?.printEmail !== false;
+  const isLogoEnabled = printSettings?.printCompanyLogo !== false;
+  const isGstinEnabled = printSettings?.printGstin !== false;
+
   const effectivePrintSet = {
-    printCompanyName: true,
-    printAddress: true,
-    printPhone: true,
-    printEmail: true,
-    printGstin: true,
-    printSignatureText: true,
-    printTermsAndConditions: true,
     taxDetails: printSettings?.taxDetails !== false,
     ...printSettings,
-    companyName: invoice.sellerDetails?.companyName || printSettings?.companyName || user?.businessName || "",
-    address: invoice.sellerDetails?.address || printSettings?.address || user?.businessAddress || "",
-    phone: invoice.sellerDetails?.phone || printSettings?.phone || user?.phone || "",
-    email: invoice.sellerDetails?.email || printSettings?.email || user?.email || "",
-    logoUrl: invoice.logoUrl || invoice.sellerDetails?.logoUrl || printSettings?.logoUrl || "",
+    printCompanyName: isCompanyNameEnabled,
+    printCompanyLogo: isLogoEnabled,
+    printAddress: isAddressEnabled,
+    printPhone: isPhoneEnabled,
+    printEmail: isEmailEnabled,
+    printGstin: isGstinEnabled,
+    companyName: isCompanyNameEnabled ? (invoice.sellerDetails?.companyName || printSettings?.companyName || user?.businessName || "") : "",
+    address: isAddressEnabled ? (invoice.sellerDetails?.address || printSettings?.address || user?.businessAddress || "") : "",
+    phone: isPhoneEnabled ? (invoice.sellerDetails?.phone || printSettings?.phone || user?.phone || "") : "",
+    email: isEmailEnabled ? (invoice.sellerDetails?.email || printSettings?.email || user?.email || "") : "",
+    logoUrl: isLogoEnabled ? (invoice.logoUrl || invoice.sellerDetails?.logoUrl || printSettings?.logoUrl || "") : "",
     signatureText: invoice.signatureText || invoice.sellerDetails?.signatureText || printSettings?.signatureText || "Authorized Signatory",
     signatureUrl: invoice.signatureUrl || invoice.sellerDetails?.signatureUrl || printSettings?.signatureUrl || "",
     signatureImgUrl: invoice.signatureImgUrl || invoice.sellerDetails?.signatureImgUrl || printSettings?.signatureImgUrl || "",
@@ -98,7 +115,7 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
 
   const effectiveGstSet = {
     ...gstSettings,
-    gstin: invoice.sellerDetails?.gstin || gstSettings?.gstin || printSettings?.gstinOnSale || ""
+    gstin: isGstinEnabled ? (invoice.sellerDetails?.gstin || gstSettings?.gstin || printSettings?.gstinOnSale || "") : ""
   };
 
   const colors = [

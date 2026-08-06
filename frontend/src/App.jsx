@@ -25,6 +25,8 @@ import { ReportsDashboard } from "./modules/reports/ReportsDashboard";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import UserTickets from "./pages/UserTickets";
+import PublicInvoiceView from "./pages/PublicInvoiceView";
+import PublicPaymentPage from "./pages/PublicPaymentPage";
 import { useSubscription } from "./hooks/useSubscription";
 import { useMockAuth } from "./lib/auth-store";
 
@@ -136,6 +138,10 @@ export default function App() {
     <InvoiceProvider>
     <BrowserRouter>
       <Routes>
+        {/* Standalone External Public Pages (No Vendor Sidebar/Header) */}
+        <Route path="/invoice/:id" element={<PublicInvoiceView />} />
+        <Route path="/pay/:id" element={<PublicPaymentPage />} />
+
         <Route element={<Layout />}>
           {/* Public Routes */}
           <Route path="/login" element={<Login role="vendor" />} />

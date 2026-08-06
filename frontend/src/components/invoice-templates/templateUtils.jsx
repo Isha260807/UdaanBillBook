@@ -1,4 +1,31 @@
-import React from "react";
+export function getTransactionTitle(invoice, printSet = {}, gstSet = {}) {
+  const names = printSet.transactionNames || {};
+  const typeLower = (invoice?.type || "").toLowerCase();
+
+  if (typeLower === "estimate" || typeLower === "quotation") {
+    return (names.estimate || "ESTIMATE").toUpperCase();
+  }
+  if (typeLower === "purchase") {
+    return (names.purchase || "PURCHASE INVOICE").toUpperCase();
+  }
+  if (typeLower === "sale return" || typeLower === "credit note") {
+    return (names.saleReturn || "CREDIT NOTE").toUpperCase();
+  }
+  if (typeLower === "purchase return" || typeLower === "debit note") {
+    return (names.purchaseReturn || "DEBIT NOTE").toUpperCase();
+  }
+  if (typeLower === "delivery challan") {
+    return (names.deliveryChallan || "DELIVERY CHALLAN").toUpperCase();
+  }
+  if (typeLower === "proforma invoice") {
+    return (names.proformaInvoice || "PROFORMA INVOICE").toUpperCase();
+  }
+
+  // Default Sale
+  if (names.sale) return names.sale.toUpperCase();
+  if (gstSet.compositeScheme) return "BILL OF SUPPLY";
+  return "TAX INVOICE";
+}
 
 export function getTemplateColumns(printSet) {
   const cols = printSet.tableColumns && Object.keys(printSet.tableColumns).length > 0 ? printSet.tableColumns : {
@@ -82,9 +109,18 @@ export function getTemplateColumns(printSet) {
   };
 }
 
-export function formatAmt(val, printSet) {
+export function formatAmt(val, printSet = {}) {
   const num = Number(val) || 0;
-  return printSet?.amountWithDecimal ? num.toFixed(2) : Math.round(num).toString();
+  const useDecimals = printSet.amountWithDecimal !== false;
+  const useGrouping = printSet.printAmountWithGrouping !== false;
+
+  if (useGrouping) {
+    return num.toLocaleString("en-IN", {
+      minimumFractionDigits: useDecimals ? 2 : 0,
+      maximumFractionDigits: useDecimals ? 2 : 0
+    });
+  }
+  return useDecimals ? num.toFixed(2) : Math.round(num).toString();
 }
 
 export function renderCommonFooter(invoice, printSet, themeClasses = {}) {
@@ -105,9 +141,33 @@ export function renderCommonFooter(invoice, printSet, themeClasses = {}) {
             <p className={`whitespace-pre-line ${textClass}`}>{invoice.terms || "1. We are responsible for the loss of signed Duty slip, check details.\n2. Interest@24% will be charged if bill not paid within 15 days."}</p>
           </div>
         )}
-        {printSet.printAcknowledgement && invoice.acknowledgement && (
+        {printSet.printAcknowledgement && (
           <div className={`italic mt-1 border-t border-dashed pt-1 ${textClass}`}>
-            <span>Acknowledgement: {invoice.acknowledgement}</span>
+            <span>Acknowledgement: {invoice.acknowledgement || "Received goods in good condition"}</span>
+          </div>
+        )}
+        {(printSet.printReceivedByDetails || printSet.printDeliveredByDetails) && (
+          <div className="flex gap-4 pt-2 border-t border-dashed mt-2">
+            {printSet.printReceivedByDetails && (
+              <div className={`flex-1 border border-dashed p-1.5 rounded text-center ${textClass}`}>
+                <span className="block font-semibold">Received By</span>
+                {invoice.receivedBy ? (
+                  <span className="block text-[9px] font-bold text-slate-700 mt-1.5">{invoice.receivedBy}</span>
+                ) : (
+                  <span className="block text-[8px] text-slate-400 mt-3">Signature / Stamp</span>
+                )}
+              </div>
+            )}
+            {printSet.printDeliveredByDetails && (
+              <div className={`flex-1 border border-dashed p-1.5 rounded text-center ${textClass}`}>
+                <span className="block font-semibold">Delivered By</span>
+                {invoice.deliveredBy ? (
+                  <span className="block text-[9px] font-bold text-slate-700 mt-1.5">{invoice.deliveredBy}</span>
+                ) : (
+                  <span className="block text-[8px] text-slate-400 mt-3">Signature / Stamp</span>
+                )}
+              </div>
+            )}
           </div>
         )}
         {printSet.printQrCode && printSet.qrCodeUrl && (

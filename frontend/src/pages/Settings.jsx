@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,30 @@ export default function Settings() {
   const { settings, hydrated } = usePlatformSettings();
   const { currentPlan } = useSubscription();
   const isMobile = useIsMobile();
-  const [activeTab, setActiveTab] = useState("GENERAL");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tabs = [
+    { id: "GENERAL", label: "GENERAL", slug: "general" },
+    { id: "PRINT", label: "PRINT", badge: "pro", slug: "print" },
+    { id: "TAXES_GST", label: "TAXES & GST", slug: "taxes" },
+    { id: "MESSAGE", label: "TRANSACTION MESSAGE", slug: "message" },
+    { id: "PARTY", label: "PARTY", slug: "party" },
+    { id: "ITEM", label: "ITEM", slug: "item" }
+  ];
+
+  const initialSlug = searchParams.get("tab") || "general";
+  const initialTabObj = tabs.find(t => t.slug === initialSlug.toLowerCase() || t.id.toLowerCase() === initialSlug.toLowerCase());
+  const [activeTab, setActiveTab] = useState(initialTabObj ? initialTabObj.id : "GENERAL");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam) {
+      const match = tabs.find(t => t.slug === tabParam.toLowerCase() || t.id.toLowerCase() === tabParam.toLowerCase());
+      if (match) {
+        setActiveTab(match.id);
+      }
+    }
+  }, [searchParams]);
 
   const { user } = useMockAuth();
   const [bizName, setBizName] = useState("");
@@ -185,15 +209,6 @@ export default function Settings() {
     );
   };
 
-  const tabs = [
-    { id: "GENERAL", label: "GENERAL" },
-    { id: "PRINT", label: "PRINT", badge: "pro" },
-    { id: "TAXES_GST", label: "TAXES & GST" },
-    { id: "MESSAGE", label: "TRANSACTION MESSAGE" },
-    { id: "PARTY", label: "PARTY" },
-    { id: "ITEM", label: "ITEM" }
-  ];
-
   return (
     <div className="space-y-6 pb-12">
       <PageHeader
@@ -226,6 +241,7 @@ export default function Settings() {
                       return;
                     }
                     setActiveTab(t.id);
+                    setSearchParams({ tab: t.slug });
                   }}
                   className={`flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 text-left text-xs font-medium md:font-bold rounded-xl transition-all ${
                     active
@@ -693,6 +709,9 @@ export default function Settings() {
                         <p className="text-slate-600">Balance: ₹492.00</p>
                         {messageSettings.showBalance && (
                           <p className="text-slate-600 font-semibold">Total Balance: ₹800.00</p>
+                        )}
+                        {messageSettings.showPaymentLink && (
+                          <p className="text-emerald-700 font-medium">Payment Link: https://udaanbillbook.co/pay/inv_85</p>
                         )}
                         {messageSettings.showWebLink && (
                           <p className="text-blue-600 underline cursor-pointer mt-1 break-all">

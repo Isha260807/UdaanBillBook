@@ -15,6 +15,7 @@ import { InvoiceTemplateRenderer } from "@/components/invoice-templates/InvoiceT
 import { usePlatformSettings } from "@/lib/platform-settings";
 import { TransportDetailsDrawer } from "@/components/TransportDetailsDrawer";
 import { printInvoiceHtml } from "@/lib/invoice-pdf";
+import { openWhatsAppShare } from "@/lib/whatsapp-helper";
 
 function TemplatePreviewMini({ previewColor, previewStyle }) {
   const base = "h-8 w-12 rounded border border-slate-300 bg-white flex flex-col p-0.5 space-y-0.5 mb-1.5 overflow-hidden";
@@ -781,12 +782,15 @@ export default function NewSale() {
       localStorage.removeItem("Udaan.sale_draft");
 
       if (isSend) {
-        const phoneStr = billedToMobile ? `91${billedToMobile}` : "";
-        const msg = encodeURIComponent(
-          `Hi ${payload.partyName}, your invoice ${payload.invoiceNumber} of ₹${payload.grandTotal} is generated. Thank you for doing business with us!`
-        );
-        const waUrl = phoneStr ? `https://wa.me/${phoneStr}?text=${msg}` : `https://wa.me/?text=${msg}`;
-        window.open(waUrl, "_blank");
+        openWhatsAppShare({
+          ...payload,
+          _id: payload.invoiceNumber,
+          partyName: payload.partyName || billedToMobile,
+          phone: billedToMobile,
+          grandTotal: payload.grandTotal,
+          receivedAmount: payload.receivedAmount,
+          balanceAmount: payload.grandTotal - (payload.receivedAmount || 0)
+        }, billedToMobile);
       }
 
       toast.success(isSend ? "Sale invoice saved & shared via WhatsApp!" : "Sale invoice created successfully!");
@@ -1142,7 +1146,7 @@ export default function NewSale() {
             ) : (
               <>
                 {/* Seller/Company Details Block (Dynamically shown based on PRINT checkboxes) */}
-                {(printSet.printCompanyName || printSet.printAddress || printSet.printEmail || printSet.printPhone || printSet.printGstin) && (
+                {(printSet.printCompanyName || printSet.printCompanyLogo || printSet.printAddress || printSet.printEmail || printSet.printPhone || printSet.printGstin) && (
                   <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Seller Details (Your Info)</span>
                     <div className="space-y-3">
@@ -1158,43 +1162,45 @@ export default function NewSale() {
                         </div>
                       )}
 
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-slate-700">Company Logo</Label>
-                        <div className="flex items-center gap-3">
-                          <label className="text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 cursor-pointer font-semibold transition-all">
-                            Upload Logo
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    setLogoUrl(reader.result);
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                            />
-                          </label>
+                      {printSet.printCompanyLogo && (
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-slate-700">Company Logo</Label>
+                          <div className="flex items-center gap-3">
+                            <label className="text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 cursor-pointer font-semibold transition-all">
+                              Upload Logo
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      setLogoUrl(reader.result);
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                            </label>
+                            {logoUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setLogoUrl("")}
+                                className="text-[11px] text-red-500 hover:underline font-semibold"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
                           {logoUrl && (
-                            <button
-                              type="button"
-                              onClick={() => setLogoUrl("")}
-                              className="text-[11px] text-red-500 hover:underline font-semibold"
-                            >
-                              Remove
-                            </button>
+                            <div className="border rounded-xl p-2 bg-slate-50 w-24 h-12 flex items-center justify-center">
+                              <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+                            </div>
                           )}
                         </div>
-                        {logoUrl && (
-                          <div className="border rounded-xl p-2 bg-slate-50 w-24 h-12 flex items-center justify-center">
-                            <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
-                          </div>
-                        )}
-                      </div>
+                      )}
                       {printSet.printGstin && (
                         <div className="space-y-1">
                           <Label className="text-xs">GSTIN on Sale</Label>
@@ -1897,6 +1903,28 @@ export default function NewSale() {
                       />
                     </div>
                   )}
+                  {printSet.printReceivedByDetails && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">Received By Details / Name</Label>
+                      <Input
+                        value={receivedBy}
+                        onChange={(e) => setReceivedBy(e.target.value)}
+                        placeholder="e.g. Recipient Name / Designation"
+                        className="h-9 rounded-lg"
+                      />
+                    </div>
+                  )}
+                  {printSet.printDeliveredByDetails && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">Delivered By Details / Name</Label>
+                      <Input
+                        value={deliveredBy}
+                        onChange={(e) => setDeliveredBy(e.target.value)}
+                        placeholder="e.g. Driver / Delivery Agent Name"
+                        className="h-9 rounded-lg"
+                      />
+                    </div>
+                  )}
 
                 </div>
               </div>
@@ -2356,6 +2384,94 @@ export default function NewSale() {
                       <option value="inclusive">Tax Inclusive</option>
                       <option value="exclusive">Tax Exclusive</option>
                     </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Additional Columns Enabled in Print Settings */}
+              <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                {cols.itemCode && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.itemCode || "Item Code"}</Label>
+                    <Input value={lines[editingItemIndex].itemCode || ""} onChange={(e) => updateLine(editingItemIndex, 'itemCode', e.target.value)} placeholder="Code" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.batchNo && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.batchNo || "Batch No."}</Label>
+                    <Input value={lines[editingItemIndex].batchNo || ""} onChange={(e) => updateLine(editingItemIndex, 'batchNo', e.target.value)} placeholder="Batch" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.expDate && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.expDate || "Exp. Date"}</Label>
+                    <Input value={lines[editingItemIndex].expDate || ""} onChange={(e) => updateLine(editingItemIndex, 'expDate', e.target.value)} placeholder="MM/YY" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.mfgDate && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.mfgDate || "Mfg. Date"}</Label>
+                    <Input value={lines[editingItemIndex].mfgDate || ""} onChange={(e) => updateLine(editingItemIndex, 'mfgDate', e.target.value)} placeholder="MM/YY" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.mrp && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.mrp || "MRP"}</Label>
+                    <Input type="number" value={lines[editingItemIndex].mrp || ""} onChange={(e) => updateLine(editingItemIndex, 'mrp', Number(e.target.value) || 0)} placeholder="MRP" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.size && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.size || "Size"}</Label>
+                    <Input value={lines[editingItemIndex].size || ""} onChange={(e) => updateLine(editingItemIndex, 'size', e.target.value)} placeholder="Size" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.modelNo && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.modelNo || "Model No."}</Label>
+                    <Input value={lines[editingItemIndex].modelNo || ""} onChange={(e) => updateLine(editingItemIndex, 'modelNo', e.target.value)} placeholder="Model" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.count && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.count || "Count"}</Label>
+                    <Input type="number" value={lines[editingItemIndex].count || ""} onChange={(e) => updateLine(editingItemIndex, 'count', Number(e.target.value) || 0)} placeholder="Count" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.colour && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.colour || "Colour"}</Label>
+                    <Input value={lines[editingItemIndex].colour || ""} onChange={(e) => updateLine(editingItemIndex, 'colour', e.target.value)} placeholder="Colour" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.material && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.material || "Material"}</Label>
+                    <Input value={lines[editingItemIndex].material || ""} onChange={(e) => updateLine(editingItemIndex, 'material', e.target.value)} placeholder="Material" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.brand && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.brand || "Brand"}</Label>
+                    <Input value={lines[editingItemIndex].brand || ""} onChange={(e) => updateLine(editingItemIndex, 'brand', e.target.value)} placeholder="Brand" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.serialNo && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.serialNo || "Serial No."}</Label>
+                    <Input value={lines[editingItemIndex].serialNo || ""} onChange={(e) => updateLine(editingItemIndex, 'serialNo', e.target.value)} placeholder="Serial" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.unit && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.unit || "Unit"}</Label>
+                    <Input value={lines[editingItemIndex].unit || ""} onChange={(e) => updateLine(editingItemIndex, 'unit', e.target.value)} placeholder="Pcs/Kgs" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  </div>
+                )}
+                {cols.description && (
+                  <div className="col-span-2 space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.description || "Description"}</Label>
+                    <Input value={lines[editingItemIndex].description || ""} onChange={(e) => updateLine(editingItemIndex, 'description', e.target.value)} placeholder="Item notes..." className="h-10 bg-slate-50 border-slate-200 text-xs" />
                   </div>
                 )}
               </div>
