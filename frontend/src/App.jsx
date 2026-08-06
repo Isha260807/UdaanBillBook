@@ -25,6 +25,7 @@ import { ReportsDashboard } from "./modules/reports/ReportsDashboard";
 import Settings from "./pages/Settings";
 import Pricing from "./pages/Pricing";
 import UserTickets from "./pages/UserTickets";
+import NotificationsPage from "./pages/NotificationsPage";
 import PublicInvoiceView from "./pages/PublicInvoiceView";
 import PublicPaymentPage from "./pages/PublicPaymentPage";
 import { useSubscription } from "./hooks/useSubscription";
@@ -165,6 +166,7 @@ export default function App() {
           <Route path="/:roleType/reports" element={<SubscriptionGuard feature="reports"><ReportsDashboard /></SubscriptionGuard>} />
           <Route path="/:roleType/settings" element={<Settings />} />
           <Route path="/:roleType/pricing" element={<Pricing />} />
+          <Route path="/:roleType/notifications" element={<NotificationsPage />} />
           <Route path="/:roleType/tickets" element={<UserTickets />} />
 
           {/* Root Redirect based on role */}

@@ -38,41 +38,7 @@ export function CheckoutModal({ isOpen, onClose, selectedPlan, planPrice }) {
       const keyId = keyRes.data.keyId;
 
       const orderRes = await api.post("/auth/razorpay-order", { planName: selectedPlan });
-      const { orderId, amount, currency, isMock } = orderRes.data;
-
-      if (isMock) {
-        setTimeout(async () => {
-          try {
-            const verifyRes = await api.post("/auth/verify-razorpay", {
-              razorpay_order_id: orderId,
-              razorpay_payment_id: `pay_mock_${Date.now()}`,
-              razorpay_signature: "mock_signature",
-              planName: selectedPlan
-            });
-
-            if (verifyRes.data.success) {
-              setIsProcessing(false);
-              setIsSuccess(true);
-              
-              mockAuth.updateUser({
-                subscription: verifyRes.data.subscription
-              });
-              
-              toast.success(`Successfully upgraded to ${selectedPlan} Plan (Demo Mode)!`);
-              
-              setTimeout(() => {
-                setIsSuccess(false);
-                onClose();
-                window.location.reload();
-              }, 2000);
-            }
-          } catch (err) {
-            setIsProcessing(false);
-            toast.error(err.response?.data?.message || "Mock payment verification failed");
-          }
-        }, 1500);
-        return;
-      }
+      const { orderId, amount, currency } = orderRes.data;
 
       const options = {
         key: keyId,

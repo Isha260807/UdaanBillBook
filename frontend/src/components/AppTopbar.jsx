@@ -162,27 +162,42 @@ export function AppTopbar() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {notifications.length > 0 ? (
-                notifications.map((n) => (
-                  <DropdownMenuItem 
-                    key={n.id}
-                    className="flex items-center justify-between cursor-pointer group pr-2 py-2"
-                    onClick={() => navigate(`${rolePrefix}${n.url}`)}
-                  >
-                    <div className="flex flex-col items-start gap-0.5 flex-1 pr-2">
-                      <span className="text-xs font-semibold">{n.title}</span>
-                      <span className="text-[11px] text-muted-foreground">{n.description}</span>
-                    </div>
-                    <button
-                      onClick={(e) => removeNotification(n.id, e)}
-                      className="opacity-0 group-hover:opacity-100 hover:bg-slate-100 p-1 rounded transition-all text-slate-400 hover:text-slate-600"
+                <>
+                  {notifications.map((n) => (
+                    <DropdownMenuItem 
+                      key={n.id}
+                      className="flex items-center justify-between cursor-pointer group pr-2 py-2"
+                      onClick={() => navigate(`${rolePrefix}${n.url}`)}
                     >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
+                      <div className="flex flex-col items-start gap-0.5 flex-1 pr-2">
+                        <span className="text-xs font-semibold">{n.title}</span>
+                        <span className="text-[11px] text-muted-foreground">{n.description}</span>
+                      </div>
+                      <button
+                        onClick={(e) => removeNotification(n.id, e)}
+                        className="opacity-0 group-hover:opacity-100 hover:bg-slate-100 p-1 rounded transition-all text-slate-400 hover:text-slate-600"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="text-center justify-center text-xs font-semibold text-primary cursor-pointer hover:bg-slate-50 py-2.5"
+                    onClick={() => navigate(`${rolePrefix}/notifications`)}
+                  >
+                    View All Notifications →
                   </DropdownMenuItem>
-                ))
+                </>
               ) : (
                 <div className="py-6 text-center text-xs text-muted-foreground">
-                  All caught up! 🎉
+                  <p>All caught up! 🎉</p>
+                  <button 
+                    onClick={() => navigate(`${rolePrefix}/notifications`)}
+                    className="text-xs text-primary font-semibold hover:underline mt-2 inline-block"
+                  >
+                    Go to Notifications Page
+                  </button>
                 </div>
               )}
             </DropdownMenuContent>

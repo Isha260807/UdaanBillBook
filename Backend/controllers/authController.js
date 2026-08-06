@@ -518,16 +518,8 @@ const createRazorpayOrder = async (req, res) => {
     const keyId = process.env.RAZORPAY_KEY_ID || '';
     const keySecret = process.env.RAZORPAY_KEY_SECRET || '';
 
-    // If keys are missing or are the placeholder strings, use a mock order success callback
-    if (!keyId || !keySecret || keyId.includes('placeholder') || keyId.includes('your_razorpay_key')) {
-      return res.status(201).json({
-        success: true,
-        orderId: `order_mock_${Date.now()}`,
-        amount: amountInPaise,
-        currency: "INR",
-        planName,
-        isMock: true
-      });
+    if (!keyId || !keySecret) {
+      return res.status(400).json({ message: 'Razorpay keys not configured on server' });
     }
 
     const Razorpay = require('razorpay');
@@ -552,15 +544,9 @@ const createRazorpayOrder = async (req, res) => {
       isMock: false
     });
   } catch (error) {
-    console.error('Razorpay order creation failed, falling back to mock:', error);
-    res.status(201).json({
-      success: true,
-      orderId: `order_mock_${Date.now()}`,
-      amount: 423400,
-      currency: "INR",
-      planName,
-      isMock: true
-    });
+    console.error('Razorpay order creation failed:', error);
+    const errMsg = error.error?.description || error.message || 'Razorpay order creation failed';
+    res.status(500).json({ message: errMsg });
   }
 };
 
