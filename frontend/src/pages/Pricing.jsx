@@ -81,7 +81,7 @@ export default function Pricing() {
             <CardHeader>
               <CardTitle className="text-2xl flex items-center justify-between">
                 {plan.name}
-                {currentPlan.toLowerCase() === plan.name.toLowerCase() && (
+                {(currentPlan || "").toLowerCase() === (plan.name || "").toLowerCase() && (
                   <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80">
                     Current Plan
                   </Badge>
@@ -116,12 +116,16 @@ export default function Pricing() {
             
             <CardFooter>
               <Button 
-                className="w-full h-11 text-base rounded-xl"
-                variant={plan.popular ? "default" : "outline"}
-                disabled={currentPlan.toLowerCase() === plan.name.toLowerCase()}
+                className={`w-full h-11 text-base rounded-xl ${
+                  (currentPlan || "").toLowerCase() === (plan.name || "").toLowerCase() 
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" 
+                    : ""
+                }`}
+                variant={(currentPlan || "").toLowerCase() === (plan.name || "").toLowerCase() ? "default" : (plan.popular ? "default" : "outline")}
+                disabled={(currentPlan || "").toLowerCase() === (plan.name || "").toLowerCase()}
                 onClick={() => handleUpgrade(plan)}
               >
-                {currentPlan.toLowerCase() === plan.name.toLowerCase() 
+                {(currentPlan || "").toLowerCase() === (plan.name || "").toLowerCase() 
                   ? "Active Plan" 
                   : plan.price === 0 
                     ? "Get Started" 

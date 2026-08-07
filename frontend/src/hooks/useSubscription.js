@@ -25,13 +25,13 @@ export function useSubscription() {
   const { user, hydrated } = useMockAuth();
   
   const isAdmin = user?.role?.toLowerCase() === "admin";
-  
-  // Default to Free plan if no subscription object exists
-  const currentPlan = isAdmin ? "None" : (user?.subscription?.plan || PLANS.FREE);
-  const planStatus = isAdmin ? "inactive" : (user?.subscription?.status || "active");
 
-  const isFree = !isAdmin && currentPlan === PLANS.FREE;
-  const isPremium = !isAdmin && currentPlan !== PLANS.FREE && planStatus === "active";
+  // Read actual subscription from user object (whether object or string format)
+  const currentPlan = (typeof user?.subscription === 'string' ? user.subscription : user?.subscription?.plan) || PLANS.FREE;
+  const planStatus = user?.subscription?.status || "active";
+
+  const isFree = currentPlan === PLANS.FREE;
+  const isPremium = currentPlan !== PLANS.FREE && planStatus === "active";
 
   const canAccessFeature = (featureName) => {
     if (isAdmin) return true; // Admins have bypass access to all features
@@ -43,9 +43,14 @@ export function useSubscription() {
     return allowedPlans.includes(currentPlan);
   };
 
+  const platforms = user?.subscription?.platforms || (currentPlan === PLANS.FREE ? "Mobile Only" : "Mobile + Desktop");
+  const isMobileOnly = !isAdmin && platforms.toLowerCase().includes("mobile only");
+
   return {
     currentPlan,
     planStatus,
+    platforms,
+    isMobileOnly,
     isFree,
     isPremium,
     canAccessFeature,

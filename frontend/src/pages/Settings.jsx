@@ -16,7 +16,7 @@ import { usePlatformSettings } from "@/lib/platform-settings";
 import { platformSettings } from "@/lib/platform-settings";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSubscription, PLANS } from "@/hooks/useSubscription";
-import { Crown, Play, Plus, Edit2, Trash2, Smartphone, Monitor } from "lucide-react";
+import { Crown, Play, Plus, Edit2, Trash2, Smartphone, Monitor, Lock } from "lucide-react";
 import { PrintSettingsTab } from "@/components/PrintSettingsTab";
 import { useMockAuth, mockAuth } from "@/lib/auth-store";
 import api from "@/lib/api";
@@ -189,22 +189,39 @@ export default function Settings() {
     updateSettings("itemSettings", { customFields: updated });
   };
 
-  // Toggle/Checkbox Component Builder
-  const renderControl = (section, key, label, disabled = false) => {
+  // Toggle/Checkbox Component Builder with Subscription Lock
+  const renderControl = (section, key, label, requiredPlan = null) => {
+    const isLocked = requiredPlan ? (
+      requiredPlan === "GOLD" ? (currentPlan !== PLANS.GOLD && currentPlan !== PLANS.ENTERPRISE) :
+      requiredPlan === "SILVER" ? (currentPlan === PLANS.FREE) : false
+    ) : false;
+
     const checked = settings[section][key];
     const onChange = (val) => {
+      if (isLocked) {
+        toast.info(`'${label}' feature is locked. Please upgrade to ${requiredPlan} plan.`);
+        return;
+      }
       updateSettings(section, { [key]: val });
     };
 
     return (
-      <div className="flex items-center justify-between py-1.5 hover:bg-muted/10 px-2 rounded-lg transition-colors">
-        <Label className={`text-sm font-medium cursor-pointer ${disabled ? "opacity-40" : ""}`}>
-          {label}
-        </Label>
+      <div 
+        onClick={() => { if (isLocked) toast.info(`'${label}' feature is locked. Please upgrade your subscription plan.`); }}
+        className={`flex items-center justify-between py-1.5 hover:bg-muted/10 px-2 rounded-lg transition-colors ${isLocked ? "opacity-60 cursor-pointer" : ""}`}
+      >
+        <div className="flex items-center gap-2">
+          <Label className={`text-sm font-medium ${isLocked ? "cursor-pointer text-slate-500" : "cursor-pointer"}`}>
+            {label}
+          </Label>
+          {isLocked && (
+            <Lock className="h-3.5 w-3.5 text-amber-500" />
+          )}
+        </div>
         {isMobile ? (
-          <Switch checked={!!checked} onCheckedChange={onChange} disabled={disabled} />
+          <Switch checked={!!checked} onCheckedChange={onChange} disabled={isLocked} />
         ) : (
-          <Checkbox checked={!!checked} onCheckedChange={(c) => onChange(!!c)} disabled={disabled} />
+          <Checkbox checked={!!checked} onCheckedChange={(c) => onChange(!!c)} disabled={isLocked} />
         )}
       </div>
     );
@@ -824,12 +841,12 @@ export default function Settings() {
                     {renderControl("itemSettings", "calculateTaxOnMrp", "Calculate Tax based on MRP value")}
                     <Separator className="my-2" />
                     <Label className="text-xs font-bold text-muted-foreground uppercase">Tracking & Size Options</Label>
-                    {renderControl("itemSettings", "serialNo", "Serial No./ IMEI No. tracking")}
-                    {renderControl("itemSettings", "batchNo", "Batch Number tracking")}
-                    {renderControl("itemSettings", "expDate", "Enable Batch Expiry Dates")}
-                    {renderControl("itemSettings", "mfgDate", "Enable Batch Manufacturing Dates")}
-                    {renderControl("itemSettings", "modelNo", "Model Number tracking")}
-                    {renderControl("itemSettings", "size", "Size / Dimension tracking")}
+                    {renderControl("itemSettings", "serialNo", "Serial No./ IMEI No. tracking", "GOLD")}
+                    {renderControl("itemSettings", "batchNo", "Batch Number tracking", "SILVER")}
+                    {renderControl("itemSettings", "expDate", "Enable Batch Expiry Dates", "SILVER")}
+                    {renderControl("itemSettings", "mfgDate", "Enable Batch Manufacturing Dates", "SILVER")}
+                    {renderControl("itemSettings", "modelNo", "Model Number tracking", "SILVER")}
+                    {renderControl("itemSettings", "size", "Size / Dimension tracking", "GOLD")}
                   </CardContent>
                 </Card>
               </div>

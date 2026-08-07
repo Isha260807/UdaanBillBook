@@ -93,6 +93,8 @@ export function CheckoutModal({ isOpen, onClose, selectedPlan, planPrice }) {
       };
 
       const rzp1 = new window.Razorpay(options);
+      onClose();
+      setIsProcessing(false);
       rzp1.open();
 
     } catch (error) {
