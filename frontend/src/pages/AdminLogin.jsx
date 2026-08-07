@@ -32,7 +32,7 @@ export default function AdminLogin() {
       });
 
       const user = res.data;
-      mockAuth.signIn({
+      const adminSession = {
         name: user.name,
         business: user.businessName,
         phone: user.phone,
@@ -40,7 +40,9 @@ export default function AdminLogin() {
         role: user.role,
         token: user.token,
         subscription: user.subscription
-      });
+      };
+      window.localStorage.setItem("Udaan.admin_auth", JSON.stringify(adminSession));
+      mockAuth.signIn(adminSession);
 
       // Redirect to Admin dashboard
       navigate("/admin");

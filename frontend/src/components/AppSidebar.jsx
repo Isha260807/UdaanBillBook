@@ -156,16 +156,27 @@ export function AppSidebar() {
             <SidebarGroupLabel>Administration</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title} onClick={closeSidebar}>
-                      <Link to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {adminItems.map((item) => {
+                  const featureKey = item.url.split("/").pop() || "settings";
+                  const hasAccess = canAccessFeature(featureKey);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton 
+                        asChild 
+                        isActive={isActive(item.url)} 
+                        tooltip={item.title} 
+                        onClick={closeSidebar}
+                        className={!hasAccess ? "opacity-50 hover:opacity-100" : ""}
+                      >
+                        <Link to={hasAccess ? item.url : `${rolePrefix}/pricing`}>
+                          <item.icon className="h-4 w-4" />
+                          <span className="flex-1">{item.title}</span>
+                          {!hasAccess && <Lock className="h-3 w-3 text-muted-foreground ml-auto" />}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

@@ -402,6 +402,7 @@ const getAdminSubscriptions = async (req, res) => {
         description: plan.description || '',
         platforms: plan.platforms || 'Mobile + Desktop',
         allowedTemplates: plan.allowedTemplates || [],
+        allowedModules: plan.allowedModules || (plan.name === 'Free' ? ['dashboard', 'billing', 'parties', 'admin', 'support', 'settings'] : ['dashboard', 'billing', 'inventory', 'parties', 'expenses', 'accounting', 'gst', 'reports', 'admin', 'support', 'settings']),
         showUdaanLogo: plan.showUdaanLogo !== undefined ? plan.showUdaanLogo : true,
         activeSubscribers,
         monthlyRevenue: activeSubscribers * plan.price
@@ -419,7 +420,7 @@ const getAdminSubscriptions = async (req, res) => {
 // @access  Private
 const createSubscriptionPlan = async (req, res) => {
   try {
-    const { name, price, interval, features, popular, description, platforms, allowedTemplates, showUdaanLogo } = req.body;
+    const { name, price, interval, features, popular, description, platforms, allowedTemplates, allowedModules, showUdaanLogo } = req.body;
     if (!name || price === undefined) {
       return res.status(400).json({ message: 'Name and price are required' });
     }
@@ -436,6 +437,7 @@ const createSubscriptionPlan = async (req, res) => {
       description,
       platforms: platforms || 'Mobile + Desktop',
       allowedTemplates: allowedTemplates || [],
+      allowedModules: allowedModules || ['dashboard', 'billing', 'parties', 'admin', 'support', 'settings', 'inventory', 'expenses', 'reports', 'accounting', 'gst'],
       showUdaanLogo: showUdaanLogo !== undefined ? !!showUdaanLogo : true
     });
     res.status(201).json(newPlan);
@@ -449,7 +451,7 @@ const createSubscriptionPlan = async (req, res) => {
 // @access  Private
 const updateSubscriptionPlan = async (req, res) => {
   try {
-    const { name, price, interval, features, popular, description, platforms, allowedTemplates, showUdaanLogo } = req.body;
+    const { name, price, interval, features, popular, description, platforms, allowedTemplates, allowedModules, showUdaanLogo } = req.body;
     const plan = await Plan.findById(req.params.id);
     if (!plan) {
       return res.status(404).json({ message: 'Plan not found' });
@@ -462,6 +464,7 @@ const updateSubscriptionPlan = async (req, res) => {
     if (description !== undefined) plan.description = description;
     if (platforms) plan.platforms = platforms;
     if (allowedTemplates) plan.allowedTemplates = allowedTemplates;
+    if (allowedModules) plan.allowedModules = allowedModules;
     if (showUdaanLogo !== undefined) plan.showUdaanLogo = !!showUdaanLogo;
 
     await plan.save();

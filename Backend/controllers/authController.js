@@ -14,13 +14,28 @@ const generateToken = (id) => {
 };
 
 const getSubscriptionWithLogo = async (subscription) => {
-  if (!subscription) return { plan: 'Free', status: 'active', showUdaanLogo: true };
-  const planDetails = await Plan.findOne({ name: subscription.plan, status: 'Active' });
+  let planName = !subscription ? 'Free' : (typeof subscription === 'string' ? subscription : (subscription?.plan || 'Free'));
+  if (!planName || planName.toLowerCase() === 'none' || planName.toLowerCase() === 'none plan') {
+    planName = 'Free';
+  }
+  
+  // Find matching plan case-insensitively from MongoDB
+  let planDetails = await Plan.findOne({ name: { $regex: new RegExp(`^${planName}$`, 'i') }, status: 'Active' });
+  if (!planDetails) {
+    planDetails = await Plan.findOne({ name: 'Free', status: 'Active' });
+  }
+
+  const defaultModules = (planName.toLowerCase() === 'free')
+    ? ['dashboard', 'billing', 'parties', 'admin', 'support', 'settings']
+    : ['dashboard', 'billing', 'inventory', 'parties', 'expenses', 'accounting', 'gst', 'reports', 'admin', 'support', 'settings'];
+
   return {
-    plan: subscription.plan || 'Free',
-    status: subscription.status || 'active',
-    validUntil: subscription.validUntil,
-    showUdaanLogo: planDetails ? (planDetails.showUdaanLogo !== undefined ? planDetails.showUdaanLogo : true) : true
+    plan: planDetails?.name || planName,
+    status: (typeof subscription === 'object' && subscription) ? (subscription.status || 'active') : 'active',
+    validUntil: (typeof subscription === 'object' && subscription) ? subscription.validUntil : undefined,
+    platforms: planDetails?.platforms || (planName.toLowerCase() === 'free' ? 'Mobile Only' : 'Mobile + Desktop'),
+    showUdaanLogo: planDetails ? (planDetails.showUdaanLogo !== undefined ? planDetails.showUdaanLogo : true) : true,
+    allowedModules: (planDetails?.allowedModules && planDetails.allowedModules.length > 0) ? planDetails.allowedModules : defaultModules
   };
 };
 
@@ -150,6 +165,20 @@ const verifyOtp = async (req, res) => {
 // @access  Private
 const getMe = async (req, res) => {
   try {
+    // Auto-heal empty name or missing/invalid subscription in database
+    let updated = false;
+    if (!req.user.name || !req.user.name.trim()) {
+      req.user.name = req.user.businessName && req.user.businessName.trim() ? req.user.businessName : `Vendor ${req.user.phone ? req.user.phone.slice(-4) : ''}`;
+      updated = true;
+    }
+    if (!req.user.subscription || !req.user.subscription.plan || req.user.subscription.plan.toLowerCase().includes('none')) {
+      req.user.subscription = { plan: 'Free', status: 'active' };
+      updated = true;
+    }
+    if (updated) {
+      await req.user.save();
+    }
+
     const responseSubscription = await getSubscriptionWithLogo(req.user.subscription);
     const user = {
       _id: req.user.id,

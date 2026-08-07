@@ -60,6 +60,7 @@ export function SubscriptionManager() {
       platforms: "Mobile + Desktop",
       description: "",
       allowedTemplates: ["GST Boxed", "Classic White"],
+      allowedModules: ["dashboard", "billing", "parties", "admin", "support", "settings", "inventory", "expenses", "reports", "accounting", "gst"],
       showUdaanLogo: true
     });
     setIsOpen(true);
@@ -76,9 +77,19 @@ export function SubscriptionManager() {
       platforms: plan.platforms,
       description: plan.description || "",
       allowedTemplates: plan.allowedTemplates || [],
+      allowedModules: plan.allowedModules || (plan.name === 'Free' ? ['dashboard', 'billing', 'parties', 'admin', 'support', 'settings'] : ['dashboard', 'billing', 'inventory', 'parties', 'expenses', 'accounting', 'gst', 'reports', 'admin', 'support', 'settings']),
       showUdaanLogo: plan.showUdaanLogo !== undefined ? plan.showUdaanLogo : true
     });
     setIsOpen(true);
+  };
+
+  const handleToggleModule = (modKey) => {
+    setFormData(prev => {
+      const current = prev.allowedModules || [];
+      const exists = current.includes(modKey);
+      const next = exists ? current.filter(m => m !== modKey) : [...current, modKey];
+      return { ...prev, allowedModules: next };
+    });
   };
 
   const handleAddFeatureItem = () => {
@@ -122,6 +133,7 @@ export function SubscriptionManager() {
       platforms: formData.platforms,
       description: formData.description.trim(),
       allowedTemplates: formData.allowedTemplates,
+      allowedModules: formData.allowedModules,
       showUdaanLogo: formData.showUdaanLogo
     };
 
@@ -397,7 +409,52 @@ export function SubscriptionManager() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+
+              {/* Feature Locking & Module Access Control Section */}
+              <div className="border-t border-white/10 pt-3 space-y-2">
+                <label className="block text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center justify-between">
+                  <span>🔒 Feature Locking & Module Access Control</span>
+                  <span className="text-[10px] font-normal text-slate-400">Checked = Allowed | Unchecked = Locked</span>
+                </label>
+                <p className="text-[11px] text-slate-400">Select which vendor sidebar sections users on this plan are allowed to access:</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                  {[
+                    { key: "dashboard", label: "Dashboard" },
+                    { key: "billing", label: "Billing & Invoices" },
+                    { key: "inventory", label: "Inventory Stock" },
+                    { key: "parties", label: "Parties & Customers" },
+                    { key: "expenses", label: "Expenses Tracker" },
+                    { key: "accounting", label: "Accounting & Ledgers" },
+                    { key: "gst", label: "GST & Tax Filing" },
+                    { key: "reports", label: "Reports & Analytics" },
+                    { key: "admin", label: "Staff Management" },
+                    { key: "support", label: "Support Tickets" },
+                    { key: "settings", label: "Business Settings" },
+                  ].map((mod) => {
+                    const isChecked = (formData.allowedModules || []).includes(mod.key);
+                    return (
+                      <label 
+                        key={mod.key} 
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs cursor-pointer transition-all ${
+                          isChecked 
+                            ? "bg-emerald-500/15 border-emerald-500/40 text-white font-medium" 
+                            : "bg-white/5 border-white/10 text-slate-500 hover:text-slate-300"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleToggleModule(mod.key)}
+                          className="rounded bg-white/10 border-white/20 text-emerald-500 focus:ring-emerald-500 h-3.5 w-3.5"
+                        />
+                        <span className="truncate">{mod.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
                 <input
                   type="checkbox"
                   id="popular"

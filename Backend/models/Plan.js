@@ -36,6 +36,9 @@ const planSchema = new mongoose.Schema({
   allowedTemplates: [{
     type: String
   }],
+  allowedModules: [{
+    type: String
+  }],
   showUdaanLogo: {
     type: Boolean,
     default: true

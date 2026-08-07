@@ -7,7 +7,11 @@ const api = axios.create({
 // Add a request interceptor to attach the JWT token
 api.interceptors.request.use(
   (config) => {
-    const authData = localStorage.getItem('Udaan.auth');
+    const isAdminReq = (config.url && config.url.includes('/admin')) || (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin'));
+    const adminAuth = localStorage.getItem('Udaan.admin_auth');
+    const vendorAuth = localStorage.getItem('Udaan.auth');
+    
+    const authData = isAdminReq ? (adminAuth || vendorAuth) : vendorAuth;
     if (authData) {
       try {
         const parsed = JSON.parse(authData);

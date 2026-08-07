@@ -35,8 +35,17 @@ export function useSubscription() {
 
   const canAccessFeature = (featureName) => {
     if (isAdmin) return true; // Admins have bypass access to all features
+    let featKey = (featureName || "").toLowerCase();
+    if (featKey === "staff-management" || featKey === "staff") featKey = "admin";
+    if (featKey === "tickets") featKey = "support";
+
+    // Check dynamic allowedModules if set on user subscription
+    const allowedMods = user?.subscription?.allowedModules;
+    if (Array.isArray(allowedMods) && allowedMods.length > 0) {
+      return allowedMods.includes(featKey);
+    }
     
-    const allowedPlans = FEATURE_ACCESS[featureName.toLowerCase()];
+    const allowedPlans = FEATURE_ACCESS[featKey];
     if (!allowedPlans) return true; // If feature isn't defined, allow access
     
     // If the user's plan is in the allowed plans, they can access it

@@ -59,17 +59,19 @@ export default function Layout() {
     if (isAuthenticated) {
       api.get("/auth/me")
         .then((res) => {
+          const userName = res.data.name && res.data.name.trim() ? res.data.name : (res.data.businessName || res.data.phone || "Vendor");
+          const bizName = res.data.businessName && res.data.businessName.trim() ? res.data.businessName : "My Business";
           mockAuth.updateUser({
             subscription: res.data.subscription,
             role: res.data.role,
-            name: res.data.name,
-            business: res.data.businessName,
-            businessName: res.data.businessName,
-            address: res.data.businessAddress,
-            businessAddress: res.data.businessAddress,
-            gstin: res.data.gstin,
+            name: userName,
+            business: bizName,
+            businessName: bizName,
+            address: res.data.businessAddress || "",
+            businessAddress: res.data.businessAddress || "",
+            gstin: res.data.gstin || "",
             phone: res.data.phone,
-            email: res.data.email
+            email: res.data.email || ""
           });
         })
         .catch((err) => {
@@ -90,33 +92,11 @@ export default function Layout() {
   // Avoid flashing protected layout before redirect
   if (hydrated && !isAuthenticated) return null;
 
-  const isImpersonating = !!localStorage.getItem("Udaan.admin_auth");
-
-  const handleStopImpersonating = () => {
-    const adminAuth = localStorage.getItem("Udaan.admin_auth");
-    if (adminAuth) {
-      localStorage.setItem("Udaan.auth", adminAuth);
-      localStorage.removeItem("Udaan.admin_auth");
-      window.location.href = "/admin";
-    }
-  };
-
   const showMobileOnlyRestriction = isMobileOnly && isDesktopScreen && !isPricingPage;
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full flex-col">
-        {isImpersonating && (
-          <div className="bg-amber-600 text-white text-xs font-semibold py-2.5 px-4 flex justify-between items-center z-50 shadow-md">
-            <span>⚠️ Impersonation Mode: You are viewing the app as a vendor.</span>
-            <button 
-              onClick={handleStopImpersonating} 
-              className="bg-white text-amber-950 px-3 py-1 rounded-lg hover:bg-white/90 transition-all font-bold shadow-sm"
-            >
-              Stop Impersonating
-            </button>
-          </div>
-        )}
 
         {showMobileOnlyRestriction ? (
           <div className="flex flex-1 items-center justify-center bg-slate-50 p-6 min-h-screen">
