@@ -739,12 +739,6 @@ export default function NewSale() {
 
     try {
       const { data: userData } = await api.get('/auth/me');
-
-      if (userData.showAds) {
-        setShowAdModal(true);
-        return; // wait for ad to finish
-      }
-
       continueFlow(userData, false, currentSave);
     } catch (err) {
       // Fallback if auth check fails or offline
@@ -1164,7 +1158,7 @@ export default function NewSale() {
 
                       {printSet.printCompanyLogo && (
                         <div className="space-y-2">
-                          <Label className="text-xs font-semibold text-slate-700">Company Logo</Label>
+                          <Label className="text-xs font-semibold text-slate-700">Your Shop Logo (Optional)</Label>
                           <div className="flex items-center gap-3">
                             <label className="text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 cursor-pointer font-semibold transition-all">
                               Upload Logo

@@ -12,16 +12,39 @@ import api from "@/lib/api";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Smartphone, Monitor } from "lucide-react";
+import { Smartphone, Monitor, Clock, ShieldAlert, RefreshCw, LogOut, CheckCircle2, XCircle } from "lucide-react";
 
 const PUBLIC_ROUTES = ["/login", "/register", "/verify-otp", "/admin/login", "/user/login", "/vendor", "/staff"];
 
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, hydrated } = useMockAuth();
+  const { isAuthenticated, hydrated, user } = useMockAuth();
   const { isMobileOnly, currentPlan } = useSubscription();
   const [isDesktopScreen, setIsDesktopScreen] = React.useState(false);
+  const [checkingStatus, setCheckingStatus] = React.useState(false);
+  const [authSynced, setAuthSynced] = React.useState(false);
+
+  const handleCheckStatus = async () => {
+    try {
+      setCheckingStatus(true);
+      const res = await api.get("/auth/me");
+      if (res.data.status === "Active") {
+        mockAuth.updateUser({ status: "Active" });
+        toast.success("Congratulations! Your account has been approved by SuperAdmin!");
+        window.location.reload();
+      } else if (res.data.status === "Rejected") {
+        mockAuth.updateUser({ status: "Rejected" });
+        toast.error("Your account registration was not approved.");
+      } else {
+        toast.info("Your registration is still under review. We will notify you once approved.");
+      }
+    } catch (err) {
+      toast.error("Failed to check status. Please try again.");
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
 
   useEffect(() => {
     const checkDevice = () => {
@@ -49,36 +72,53 @@ export default function Layout() {
     if (!isAuthenticated && !isPublic) {
       navigate("/login");
     } else if (isAuthenticated && (pathname === "/login" || pathname === "/register" || pathname === "/verify-otp")) {
-      const user = mockAuth.get();
-      const redirectPath = (user?.role?.toLowerCase() === "staff" || user?.role?.toLowerCase() === "viewer") ? "/staff/dashboard" : (user?.role?.toLowerCase() === "admin" ? "/admin" : "/vendor/dashboard");
+      const userObj = mockAuth.get();
+      const redirectPath = (userObj?.role?.toLowerCase() === "staff" || userObj?.role?.toLowerCase() === "viewer") ? "/staff/dashboard" : (userObj?.role?.toLowerCase() === "admin" ? "/admin" : "/vendor/dashboard");
       navigate(redirectPath, { replace: true });
     }
   }, [hydrated, isAuthenticated, isPublic, navigate, pathname]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      api.get("/auth/me")
-        .then((res) => {
-          const userName = res.data.name && res.data.name.trim() ? res.data.name : (res.data.businessName || res.data.phone || "Vendor");
-          const bizName = res.data.businessName && res.data.businessName.trim() ? res.data.businessName : "My Business";
-          mockAuth.updateUser({
-            subscription: res.data.subscription,
-            role: res.data.role,
-            name: userName,
-            business: bizName,
-            businessName: bizName,
-            address: res.data.businessAddress || "",
-            businessAddress: res.data.businessAddress || "",
-            gstin: res.data.gstin || "",
-            phone: res.data.phone,
-            email: res.data.email || ""
-          });
-        })
-        .catch((err) => {
-          console.error("Failed to sync user profile with database:", err);
+  const syncProfile = React.useCallback(() => {
+    if (!isAuthenticated) return;
+    api.get("/auth/me")
+      .then((res) => {
+        const userName = res.data.name && res.data.name.trim() ? res.data.name : (res.data.businessName || res.data.phone || "Vendor");
+        const bizName = res.data.businessName && res.data.businessName.trim() ? res.data.businessName : "My Business";
+        mockAuth.updateUser({
+          subscription: res.data.subscription,
+          role: res.data.role,
+          status: res.data.status || "Active",
+          permissions: res.data.permissions || [],
+          name: userName,
+          business: bizName,
+          businessName: bizName,
+          address: res.data.businessAddress || "",
+          businessAddress: res.data.businessAddress || "",
+          gstin: res.data.gstin || "",
+          phone: res.data.phone,
+          email: res.data.email || ""
         });
-    }
+        setAuthSynced(true);
+      })
+      .catch((err) => {
+        console.error("Failed to sync user profile with database:", err);
+        setAuthSynced(true);
+      });
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    syncProfile();
+
+    if (!isAuthenticated) return;
+
+    // Real-time permission sync only when user focuses the tab
+    const onFocus = () => syncProfile();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [isAuthenticated, syncProfile]);
 
   if (isPublic) {
     return (
@@ -89,8 +129,105 @@ export default function Layout() {
     );
   }
 
-  // Avoid flashing protected layout before redirect
-  if (hydrated && !isAuthenticated) return null;
+  // Avoid flashing protected layout before redirect / sync
+  if ((hydrated && !isAuthenticated) || (isAuthenticated && !authSynced)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Compact Light-Theme Account Under Review Screen for Pending Vendors
+  if (user?.role !== "admin" && user?.status === "Pending") {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 text-slate-900">
+        <div className="max-w-sm w-full bg-white border border-slate-200 rounded-3xl p-6 text-center space-y-4 shadow-xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 shadow-sm">
+            <Clock className="h-7 w-7 animate-pulse" />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Account Under Review</h2>
+            <p className="text-xs text-slate-500 leading-relaxed px-1">
+              Welcome, <strong className="text-slate-800">{user?.name || user?.businessName}</strong>! Your registration has been submitted and is currently being reviewed by SuperAdmin.
+            </p>
+          </div>
+
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs space-y-2 text-left">
+            <div className="flex justify-between items-center pb-1.5 border-b border-slate-200/80">
+              <span className="text-slate-500">Mobile Number:</span>
+              <span className="font-semibold text-slate-900">+91 {user?.phone}</span>
+            </div>
+            <div className="flex justify-between items-center pb-1.5 border-b border-slate-200/80">
+              <span className="text-slate-500">Business Name:</span>
+              <span className="font-semibold text-slate-900 truncate max-w-[150px]">{user?.businessName || "My Business"}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500">Current Status:</span>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200 flex items-center gap-1">
+                <Clock className="h-3 w-3" /> Pending Approval
+              </span>
+            </div>
+          </div>
+
+          <div className="pt-1 flex flex-col gap-2">
+            <Button
+              onClick={handleCheckStatus}
+              disabled={checkingStatus}
+              className="w-full h-10 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow flex items-center justify-center gap-1.5 text-xs"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${checkingStatus ? "animate-spin" : ""}`} />
+              {checkingStatus ? "Checking Status..." : "Check Approval Status"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                mockAuth.signOut();
+                navigate("/login");
+              }}
+              className="w-full h-10 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold flex items-center justify-center gap-1.5 text-xs"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Logout
+            </Button>
+          </div>
+        </div>
+        <Toaster richColors position="top-right" />
+      </div>
+    );
+  }
+
+  // Compact Light-Theme Account Rejected Screen
+  if (user?.role !== "admin" && user?.status === "Rejected") {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 p-4 text-slate-900">
+        <div className="max-w-sm w-full bg-white border border-rose-200 rounded-3xl p-6 text-center space-y-4 shadow-xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 border border-rose-200 text-rose-600">
+            <XCircle className="h-7 w-7" />
+          </div>
+
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-rose-600 tracking-tight">Registration Not Approved</h2>
+            <p className="text-xs text-slate-500 leading-relaxed px-1">
+              Your vendor registration request for <strong className="text-slate-800">{user?.businessName}</strong> could not be approved at this time.
+            </p>
+          </div>
+
+          <Button
+            variant="outline"
+            onClick={() => {
+              mockAuth.signOut();
+              navigate("/login");
+            }}
+            className="w-full h-10 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold flex items-center justify-center gap-1.5 text-xs"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Return to Login
+          </Button>
+        </div>
+        <Toaster richColors position="top-right" />
+      </div>
+    );
+  }
 
   const showMobileOnlyRestriction = isMobileOnly && isDesktopScreen && !isPricingPage;
 

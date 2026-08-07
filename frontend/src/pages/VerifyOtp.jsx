@@ -111,7 +111,12 @@ export default function VerifyOtp() {
       window.location.href = state.returnUrl || redirectPath;
 
     } catch (error) {
-      toast.error(error.response?.data?.message || "Invalid OTP");
+      if (error.response && error.response.status === 404) {
+        toast.error("No account found for this number. Please create a new account.");
+        navigate(`/register?phone=${search.phone}`);
+      } else {
+        toast.error(error.response?.data?.message || "Invalid OTP");
+      }
     }
   };
 

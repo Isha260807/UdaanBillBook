@@ -7,6 +7,8 @@ const {
   getAdminDashboardData,
   getAdminAnalyticsData,
   getAdminBusinesses,
+  approveVendor,
+  rejectVendor,
   getAdminSubscriptions,
   impersonateUser,
   getAdminRevenueData,
@@ -40,6 +42,8 @@ router.delete('/users/:id', deleteUser);
 router.get('/dashboard', getAdminDashboardData);
 router.get('/analytics', getAdminAnalyticsData);
 router.get('/businesses', getAdminBusinesses);
+router.put('/vendors/:id/approve', approveVendor);
+router.put('/vendors/:id/reject', rejectVendor);
 router.get('/subscriptions', getAdminSubscriptions);
 router.post('/subscriptions', createSubscriptionPlan);
 router.put('/subscriptions/:id', updateSubscriptionPlan);

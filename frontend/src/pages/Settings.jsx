@@ -51,6 +51,9 @@ export default function Settings() {
   }, [searchParams]);
 
   const { user } = useMockAuth();
+  const userRole = user?.role?.toLowerCase() || "vendor";
+  const isStaff = userRole === "staff" || userRole === "viewer";
+  const hasSettingsPerm = !isStaff || (user?.permissions || []).includes("settings");
   const [bizName, setBizName] = useState("");
   const [bizGstin, setBizGstin] = useState("");
   const [bizPhone, setBizPhone] = useState("");
@@ -226,6 +229,20 @@ export default function Settings() {
       </div>
     );
   };
+
+  if (!hasSettingsPerm) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3 p-6 text-center">
+        <div className="p-4 rounded-full bg-amber-50 text-amber-500 border border-amber-200">
+          <Lock className="h-8 w-8" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-800">Settings Access Restricted</h2>
+        <p className="text-xs text-slate-500 max-w-sm">
+          You do not have permission to access Business Settings. Please contact your business owner.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12">

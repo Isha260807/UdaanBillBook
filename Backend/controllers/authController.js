@@ -26,8 +26,12 @@ const getSubscriptionWithLogo = async (subscription) => {
   }
 
   const defaultModules = (planName.toLowerCase() === 'free')
-    ? ['dashboard', 'billing', 'parties', 'admin', 'support', 'settings']
+    ? ['dashboard', 'billing', 'parties', 'expenses', 'reports', 'admin', 'support', 'settings']
     : ['dashboard', 'billing', 'inventory', 'parties', 'expenses', 'accounting', 'gst', 'reports', 'admin', 'support', 'settings'];
+
+  const baseMods = (planDetails?.allowedModules && planDetails.allowedModules.length > 0) ? planDetails.allowedModules : defaultModules;
+  const withExpenses = baseMods.includes('expenses') ? baseMods : [...baseMods, 'expenses'];
+  const finalMods = withExpenses.includes('reports') ? withExpenses : [...withExpenses, 'reports'];
 
   return {
     plan: planDetails?.name || planName,
@@ -35,7 +39,7 @@ const getSubscriptionWithLogo = async (subscription) => {
     validUntil: (typeof subscription === 'object' && subscription) ? subscription.validUntil : undefined,
     platforms: planDetails?.platforms || (planName.toLowerCase() === 'free' ? 'Mobile Only' : 'Mobile + Desktop'),
     showUdaanLogo: planDetails ? (planDetails.showUdaanLogo !== undefined ? planDetails.showUdaanLogo : true) : true,
-    allowedModules: (planDetails?.allowedModules && planDetails.allowedModules.length > 0) ? planDetails.allowedModules : defaultModules
+    allowedModules: finalMods
   };
 };
 
@@ -71,14 +75,13 @@ const sendOtp = async (req, res) => {
 
     const user = await User.findOne({ phone });
 
-    // Allow all modes to send OTP
-    // if (mode === 'register' && user) {
-    //   return res.status(400).json({ message: 'User already exists. Please login instead.' });
-    // }
+    if (mode === 'register' && user) {
+      return res.status(400).json({ message: 'Account already exists for this mobile number. Please login instead.', exists: true });
+    }
 
-    // if (mode === 'login' && !user) {
-    //   return res.status(404).json({ message: 'User not found. Please register first.' });
-    // }
+    if (mode === 'login' && !user) {
+      return res.status(404).json({ message: 'No Udaan BillBook account found for this mobile number.', exists: false, success: false });
+    }
 
     // Generate simulated dynamic 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -86,7 +89,7 @@ const sendOtp = async (req, res) => {
 
     console.log(`\n========================================\n[DEMO OTP SERVICE] Generated OTP for +91 ${phone}: ${otp}\n========================================\n`);
 
-    res.status(200).json({ message: `OTP sent to ${phone}`, success: true, otp });
+    res.status(200).json({ message: `OTP sent to ${phone}`, success: true, exists: !!user, otp });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -112,25 +115,34 @@ const verifyOtp = async (req, res) => {
 
     let user = await User.findOne({ phone });
 
+    if (!user && mode === 'login') {
+      return res.status(404).json({ message: 'Account not found. Please create a new account.', exists: false, isNewUser: true });
+    }
+
     if (!user) {
-      // Auto-create new user
+      // Platform Owner SuperAdmin (9876543210) gets 'admin' role; All public signups get 'vendor' role
+      const isPlatformAdmin = phone === "9876543210";
+      const userRole = isPlatformAdmin ? "admin" : "vendor";
+      const initialStatus = isPlatformAdmin ? "Active" : "Pending";
+
       user = await User.create({
         phone,
-        name: name || "User",
-        businessName: business,
+        name: name && name.trim() ? name.trim() : (business && business.trim() ? business.trim() : `Vendor ${phone.slice(-4)}`),
+        businessName: business && business.trim() ? business.trim() : "My Business",
         businessAddress: address,
         businessType: businessType,
-        email,
-        role: (phone === "9876543210" ? "admin" : "vendor")
+        email: email && email.trim() ? email.trim() : "",
+        role: userRole,
+        status: initialStatus,
+        subscription: { plan: (isPlatformAdmin ? "Enterprise" : "Free"), status: "active" }
       });
     } else if (mode === 'register') {
-      // If user already exists but trying to register, just update them
-      user.name = name || user.name;
-      user.businessName = business || user.businessName;
+      // If user already exists but registering, update details
+      user.name = name && name.trim() ? name.trim() : user.name;
+      user.businessName = business && business.trim() ? business.trim() : user.businessName;
       user.businessAddress = address || user.businessAddress;
       user.businessType = businessType || user.businessType;
       user.email = email || user.email;
-      user.role = (phone === "9876543210" ? "admin" : "vendor");
       await user.save();
     }
     
@@ -143,7 +155,15 @@ const verifyOtp = async (req, res) => {
       return res.status(403).json({ message: 'Your account has been banned. Please contact support.' });
     }
 
-    const responseSubscription = await getSubscriptionWithLogo(user.subscription);
+    let targetSub = user.subscription;
+    if (user.ownerId) {
+      const ownerUser = await User.findById(user.ownerId);
+      if (ownerUser && ownerUser.subscription) {
+        targetSub = ownerUser.subscription;
+      }
+    }
+
+    const responseSubscription = await getSubscriptionWithLogo(targetSub);
 
     res.json({
       _id: user.id,
@@ -152,6 +172,8 @@ const verifyOtp = async (req, res) => {
       email: user.email,
       businessName: user.businessName,
       role: user.role,
+      status: user.status || "Active",
+      permissions: user.permissions || [],
       token: generateToken(user._id),
       subscription: responseSubscription,
     });
@@ -179,16 +201,26 @@ const getMe = async (req, res) => {
       await req.user.save();
     }
 
-    const responseSubscription = await getSubscriptionWithLogo(req.user.subscription);
+    let targetSub = req.user.subscription;
+    if (req.user.ownerId) {
+      const ownerUser = await User.findById(req.user.ownerId);
+      if (ownerUser && ownerUser.subscription) {
+        targetSub = ownerUser.subscription;
+      }
+    }
+
+    const responseSubscription = await getSubscriptionWithLogo(targetSub);
     const user = {
       _id: req.user.id,
-      name: req.user.name,
+      name: req.user.name || req.user.businessName || 'Vendor',
       phone: req.user.phone,
       email: req.user.email,
-      businessName: req.user.businessName,
+      businessName: req.user.businessName || 'My Business',
       businessAddress: req.user.businessAddress,
       gstin: req.user.gstin,
       role: req.user.role,
+      status: req.user.status || "Active",
+      permissions: req.user.permissions || [],
       showAds: req.user.showAds,
       billLimit: req.user.billLimit,
       billsGenerated: req.user.billsGenerated,
@@ -343,16 +375,33 @@ const addStaff = async (req, res) => {
 const updateStaff = async (req, res) => {
   try {
     const staff = await User.findById(req.params.id);
-    if (!staff || staff.ownerId?.toString() !== req.user.id) {
+    if (!staff) {
       return res.status(404).json({ message: 'Staff not found' });
     }
     
-    const updatedStaff = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
-    res.status(200).json(updatedStaff);
+    // Set ownerId if missing for legacy/preset staff
+    if (!staff.ownerId) {
+      staff.ownerId = req.user.id;
+    }
+
+    if (req.body.permissions) {
+      staff.permissions = req.body.permissions;
+    }
+    if (req.body.role) {
+      staff.role = req.body.role.toLowerCase();
+    }
+    if (req.body.name) {
+      staff.name = req.body.name;
+    }
+    if (req.body.email) {
+      staff.email = req.body.email;
+    }
+    if (req.body.phone) {
+      staff.phone = req.body.phone;
+    }
+
+    await staff.save();
+    res.status(200).json(staff);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

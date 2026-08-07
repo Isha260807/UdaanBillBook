@@ -61,6 +61,9 @@ export function AppTopbar() {
   const path = location.pathname;
   if (path.endsWith('/sale/new') || path.endsWith('/purchase/new')) return null;
 
+  const userRole = user?.role?.toLowerCase() || "vendor";
+  const isStaff = userRole === "staff" || userRole === "viewer";
+
   const initials = (user?.name || "RK")
     .split(" ")
     .map((s) => s[0])
@@ -74,8 +77,7 @@ export function AppTopbar() {
     navigate("/login");
   };
 
-  const userRole = user?.role?.toLowerCase() || "user";
-  const rolePrefix = (userRole === "staff" || userRole === "viewer") ? "/staff" : "/vendor";
+  const rolePrefix = isStaff ? "/staff" : "/vendor";
 
   return (
     <>
@@ -226,12 +228,16 @@ export function AppTopbar() {
                     {user?.phone ? `+91 ${user.phone}` : "Not signed in"}
                   </span>
                 </DropdownMenuLabel>
-                <DropdownMenuItem asChild>
-                  <Link to={`${user?.role?.toLowerCase() === "staff" ? "/staff" : "/vendor"}/settings`}><User className="mr-2 h-4 w-4" /> Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to={`${user?.role?.toLowerCase() === "staff" ? "/staff" : "/vendor"}/settings`}><SettingsIcon className="mr-2 h-4 w-4" /> Settings</Link>
-                </DropdownMenuItem>
+                {(!isStaff || (user?.permissions || []).includes("settings")) && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to={`${isStaff ? "/staff" : "/vendor"}/settings`}><User className="mr-2 h-4 w-4" /> Profile</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to={`${isStaff ? "/staff" : "/vendor"}/settings`}><SettingsIcon className="mr-2 h-4 w-4" /> Settings</Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={onLogout} className="text-destructive focus:text-destructive">
                   <LogOut className="mr-2 h-4 w-4" /> Sign out

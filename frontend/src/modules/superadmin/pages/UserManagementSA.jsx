@@ -6,6 +6,8 @@ import api from "@/lib/api";
 const statusStyles = {
   Active: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
   Banned: "bg-rose-500/15 text-rose-400 border-rose-500/30",
+  Pending: "bg-amber-500/20 text-amber-400 border-amber-500/40 font-bold",
+  Rejected: "bg-slate-500/20 text-slate-400 border-slate-500/30"
 };
 
 const formatLastLogin = (lastLogin, createdAt) => {
@@ -49,6 +51,26 @@ export function UserManagementSA() {
     fetchUsers();
   }, []);
 
+  const handleApproveVendor = async (id) => {
+    try {
+      await api.put(`/admin/vendors/${id}/approve`);
+      toast.success("Vendor approved successfully!");
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to approve vendor");
+    }
+  };
+
+  const handleRejectVendor = async (id) => {
+    try {
+      await api.put(`/admin/vendors/${id}/reject`);
+      toast.success("Vendor registration rejected");
+      fetchUsers();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to reject vendor");
+    }
+  };
+
   const handleToggleStatus = async (user) => {
     const newStatus = user.status === "Active" || !user.status ? "Banned" : "Active";
     try {
@@ -66,14 +88,13 @@ export function UserManagementSA() {
   const handleUpdateBilling = async () => {
     try {
       const res = await api.put(`/admin/users/${selectedUser._id}/billing-settings`, {
-        billLimit: selectedUser.billLimit,
-        showAds: selectedUser.showAds
+        billLimit: selectedUser.billLimit
       });
-      toast.success(`Billing settings updated for ${selectedUser.name}`);
+      toast.success(`Bill limit updated for ${selectedUser.name}`);
       setUsers(prev => prev.map(u => u._id === selectedUser._id ? res.data : u));
       setSelectedUser(res.data);
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update billing settings");
+      toast.error(error.response?.data?.message || "Failed to update bill limit");
     }
   };
 
@@ -159,20 +180,20 @@ export function UserManagementSA() {
             <tbody>
               {paginatedUsers.map(u => (
                 <tr key={u._id || u.id} className="border-b border-white/5 hover:bg-white/3 transition-colors">
-                  <td className="px-4 py-3.5">
+                  <td className="px-4 py-3.5 cursor-pointer group/name hover:opacity-90" onClick={() => setSelectedUser(u)}>
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-xs font-bold text-blue-400">
                         {(u.name || "U").split(" ").map(w => w[0]).join("")}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-white">{u.name}</p>
+                        <p className="text-sm font-semibold text-white group-hover/name:text-emerald-400 group-hover/name:underline transition-all">{u.name}</p>
                         <div className="flex items-center gap-3 text-[11px] text-slate-500">
-                          <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{u.email || u.phone}</span>
+                          <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{(!u.email || u.email.includes("@udaan.com")) ? u.phone : u.email}</span>
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5 text-xs text-slate-300">{u.businessName || u.business || "N/A"}</td>
+                  <td className="px-4 py-3.5 text-xs text-slate-300 cursor-pointer" onClick={() => setSelectedUser(u)}>{u.businessName || u.business || "N/A"}</td>
                   <td className="px-4 py-3.5">
                     {u.role === "admin" || u.role === "staff" ? (
                       <span className="text-slate-500">-</span>
@@ -206,14 +227,37 @@ export function UserManagementSA() {
                     <div className="flex items-center gap-1.5 text-xs text-slate-500"><Monitor className="h-3 w-3" />{u.device || "Chrome / Windows"}</div>
                   </td>
                   <td className="px-4 py-3.5">
-                    <div className="flex gap-1">
-                      <button className="rounded-lg p-1.5 text-slate-500 hover:text-white hover:bg-white/10 transition-colors" title="View" onClick={() => setSelectedUser(u)}><Eye className="h-3.5 w-3.5" /></button>
-                      {u.status !== "Banned" ? (
-                        <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" title="Ban" onClick={() => handleToggleStatus(u)}><Ban className="h-3.5 w-3.5" /></button>
+                    <div className="flex items-center gap-1.5">
+                      <button className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors" title="View Profile Details" onClick={() => setSelectedUser(u)}>
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      {u.status === "Pending" ? (
+                        <>
+                          <button
+                            onClick={() => handleApproveVendor(u._id)}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1 transition-colors"
+                            title="Approve Registration"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Approve
+                          </button>
+                          <button
+                            onClick={() => handleRejectVendor(u._id)}
+                            className="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-semibold flex items-center gap-1 transition-colors"
+                            title="Reject Registration"
+                          >
+                            <X className="h-3.5 w-3.5" /> Reject
+                          </button>
+                        </>
                       ) : (
-                        <button className="rounded-lg p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors" title="Unban" onClick={() => handleToggleStatus(u)}><CheckCircle2 className="h-3.5 w-3.5" /></button>
+                        <>
+                          {u.status !== "Banned" ? (
+                            <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" title="Ban" onClick={() => handleToggleStatus(u)}><Ban className="h-3.5 w-3.5" /></button>
+                          ) : (
+                            <button className="rounded-lg p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors" title="Unban" onClick={() => handleToggleStatus(u)}><CheckCircle2 className="h-3.5 w-3.5" /></button>
+                          )}
+                          <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Delete" onClick={() => handleDeleteUser(u)}><Trash2 className="h-3.5 w-3.5" /></button>
+                        </>
                       )}
-                      <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Delete" onClick={() => handleDeleteUser(u)}><Trash2 className="h-3.5 w-3.5" /></button>
                     </div>
                   </td>
                 </tr>
@@ -296,7 +340,7 @@ export function UserManagementSA() {
 
                 <div className="space-y-1">
                   <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Email Address</p>
-                  <p className="text-white font-medium">{selectedUser.email || "N/A"}</p>
+                  <p className="text-white font-medium">{(!selectedUser.email || selectedUser.email.includes("@udaan.com")) ? "Not Provided" : selectedUser.email}</p>
                 </div>
 
                 <div className="space-y-1">
@@ -352,7 +396,7 @@ export function UserManagementSA() {
 
               {/* Billing Settings */}
               <div className="mt-6 pt-6 border-t border-white/8 space-y-4">
-                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Billing & Ads Settings</h4>
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider">Billing Limit Settings</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div className="space-y-1.5">
                     <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Bill Limit (-1 for unlimited)</label>
@@ -364,20 +408,8 @@ export function UserManagementSA() {
                     />
                   </div>
                   <div className="space-y-1.5 flex flex-col justify-center">
-                    <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Show Ads Before Billing</label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedUser.showAds || false}
-                        onChange={(e) => setSelectedUser({ ...selectedUser, showAds: e.target.checked })}
-                        className="rounded border-white/20 bg-white/5 text-emerald-500 focus:ring-emerald-500/30 h-4 w-4"
-                      />
-                      <span className="text-white text-sm">Enable Ads</span>
-                    </label>
-                  </div>
-                  <div className="space-y-1.5">
                     <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Bills Generated</p>
-                    <p className="text-white font-medium text-lg">{selectedUser.billsGenerated || 0}</p>
+                    <p className="text-emerald-400 font-bold text-xl">{selectedUser.billsGenerated || 0}</p>
                   </div>
                 </div>
                 <div className="flex justify-end pt-2">
@@ -385,14 +417,35 @@ export function UserManagementSA() {
                     onClick={handleUpdateBilling}
                     className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 text-sm font-semibold transition-colors"
                   >
-                    Save Billing Settings
+                    Save Billing Limit
                   </button>
                 </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-white/8 flex justify-end shrink-0 bg-slate-900/40">
+            <div className="px-6 py-4 border-t border-white/8 flex items-center justify-between shrink-0 bg-slate-900/40">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={async () => {
+                    await handleApproveVendor(selectedUser._id);
+                    setSelectedUser(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow transition-all"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Approve Registration
+                </button>
+                <button
+                  onClick={async () => {
+                    await handleRejectVendor(selectedUser._id);
+                    setSelectedUser(null);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                >
+                  <X className="h-4 w-4" /> Reject
+                </button>
+              </div>
+
               <button 
                 onClick={() => setSelectedUser(null)}
                 className="rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 text-sm font-semibold transition-colors"

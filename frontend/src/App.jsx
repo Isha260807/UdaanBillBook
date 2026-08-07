@@ -46,10 +46,37 @@ import { SASettings } from "./modules/superadmin/pages/SASettings";
 import { BusinessCategories } from "./modules/superadmin/pages/BusinessCategories";
 import { InvoiceTemplateManager } from "./modules/superadmin/pages/InvoiceTemplateManager";
 
-function SubscriptionGuard({ children, feature }) {
-  const { canAccessFeature, hydrated } = useSubscription();
+import { toast } from "sonner";
+
+function StaffPermissionGuard({ children, feature }) {
+  const { user, hydrated } = useMockAuth();
+  const { canAccessFeature } = useSubscription();
+
   if (!hydrated) return null;
-  if (!canAccessFeature(feature)) return <Navigate to="/vendor/pricing" replace />;
+
+  const role = user?.role?.toLowerCase();
+  const isStaff = role === "staff" || role === "viewer";
+
+  if (isStaff && feature) {
+    if (feature === "pricing") {
+      toast.error("Access Restricted: Staff members cannot access the Pricing section.");
+      return <Navigate to="/staff/dashboard" replace />;
+    }
+
+    const permissions = user?.permissions || [];
+    const hasPermission = feature === "dashboard" || permissions.includes(feature);
+
+    if (!hasPermission) {
+      toast.error(`Access Restricted: You do not have permission to access '${feature}'.`);
+      return <Navigate to="/staff/dashboard" replace />;
+    }
+  }
+
+  // Pricing page is always accessible to Vendors
+  if (feature && feature !== "pricing" && !canAccessFeature(feature)) {
+    return <Navigate to={isStaff ? "/staff/dashboard" : "/vendor/pricing"} replace />;
+  }
+
   return children;
 }
 
@@ -154,18 +181,18 @@ export default function App() {
 
           {/* Protected Business Routes */}
           <Route path="/:roleType/dashboard" element={<MainDashboard />} />
-          <Route path="/:roleType/accounting" element={<SubscriptionGuard feature="accounting"><AccountingDashboard /></SubscriptionGuard>} />
-          <Route path="/:roleType/staff-management" element={<SubscriptionGuard feature="admin"><UserManagement /></SubscriptionGuard>} />
-          <Route path="/:roleType/billing" element={<BillingDashboard />} />
-          <Route path="/:roleType/sale/new" element={<NewSale />} />
-          <Route path="/:roleType/purchase/new" element={<NewPurchase />} />
-          <Route path="/:roleType/expenses" element={<SubscriptionGuard feature="expenses"><ExpensesDashboard /></SubscriptionGuard>} />
-          <Route path="/:roleType/gst" element={<SubscriptionGuard feature="gst"><GstDashboard /></SubscriptionGuard>} />
-          <Route path="/:roleType/inventory" element={<SubscriptionGuard feature="inventory"><InventoryDashboard /></SubscriptionGuard>} />
-          <Route path="/:roleType/parties" element={<PartiesDashboard />} />
-          <Route path="/:roleType/reports" element={<SubscriptionGuard feature="reports"><ReportsDashboard /></SubscriptionGuard>} />
-          <Route path="/:roleType/settings" element={<Settings />} />
-          <Route path="/:roleType/pricing" element={<Pricing />} />
+          <Route path="/:roleType/accounting" element={<StaffPermissionGuard feature="accounting"><AccountingDashboard /></StaffPermissionGuard>} />
+          <Route path="/:roleType/staff-management" element={<StaffPermissionGuard feature="admin"><UserManagement /></StaffPermissionGuard>} />
+          <Route path="/:roleType/billing" element={<StaffPermissionGuard feature="billing"><BillingDashboard /></StaffPermissionGuard>} />
+          <Route path="/:roleType/sale/new" element={<StaffPermissionGuard feature="billing"><NewSale /></StaffPermissionGuard>} />
+          <Route path="/:roleType/purchase/new" element={<StaffPermissionGuard feature="billing"><NewPurchase /></StaffPermissionGuard>} />
+          <Route path="/:roleType/expenses" element={<StaffPermissionGuard feature="expenses"><ExpensesDashboard /></StaffPermissionGuard>} />
+          <Route path="/:roleType/gst" element={<StaffPermissionGuard feature="gst"><GstDashboard /></StaffPermissionGuard>} />
+          <Route path="/:roleType/inventory" element={<StaffPermissionGuard feature="inventory"><InventoryDashboard /></StaffPermissionGuard>} />
+          <Route path="/:roleType/parties" element={<StaffPermissionGuard feature="parties"><PartiesDashboard /></StaffPermissionGuard>} />
+          <Route path="/:roleType/reports" element={<StaffPermissionGuard feature="reports"><ReportsDashboard /></StaffPermissionGuard>} />
+          <Route path="/:roleType/settings" element={<StaffPermissionGuard feature="settings"><Settings /></StaffPermissionGuard>} />
+          <Route path="/:roleType/pricing" element={<StaffPermissionGuard feature="pricing"><Pricing /></StaffPermissionGuard>} />
           <Route path="/:roleType/notifications" element={<NotificationsPage />} />
           <Route path="/:roleType/tickets" element={<UserTickets />} />
 

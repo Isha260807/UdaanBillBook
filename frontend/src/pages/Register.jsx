@@ -38,6 +38,14 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const phoneParam = searchParams.get("phone");
+    if (phoneParam) {
+      setForm(f => ({ ...f, phone: phoneParam }));
+    }
+  }, [location.search]);
+
+  useEffect(() => {
     const fetchPublicSettings = async () => {
       try {
         const res = await api.get("/auth/settings");

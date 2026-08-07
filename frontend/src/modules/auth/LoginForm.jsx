@@ -3,8 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Phone, ShieldCheck, Mail, Lock } from "lucide-react";
+import { ArrowRight, Phone, ShieldCheck, Mail, Lock, UserPlus, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { mockAuth } from "@/lib/auth-store";
 import api from "@/lib/api";
@@ -16,6 +17,8 @@ export function LoginForm({ role }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [unregisteredPhone, setUnregisteredPhone] = useState("");
 
   const onOtpSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +39,11 @@ export function LoginForm({ role }) {
         }
       });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send OTP");
+      if (error.response && error.response.status === 404) {
+        toast.error("Account not found. Please signup first!!!");
+      } else {
+        toast.error(error.response?.data?.message || "Failed to send OTP");
+      }
     } finally {
       setLoading(false);
     }

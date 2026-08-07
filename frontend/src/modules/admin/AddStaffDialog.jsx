@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
-import { Lock } from "lucide-react";
+import { Lock as LockIcon } from "lucide-react";
 
 export function AddStaffDialog({ open, onOpenChange, onAdd }) {
   const { canAccessFeature } = useSubscription();
@@ -172,7 +172,7 @@ export function AddStaffDialog({ open, onOpenChange, onAdd }) {
                       </div>
                       {!isAllowedByPlan && (
                         <span className="flex items-center gap-1 text-[10px] text-amber-500 font-semibold shrink-0" title="Locked in your subscription plan">
-                          <Lock className="h-3 w-3" /> Locked
+                          <LockIcon className="h-3 w-3" /> Locked
                         </span>
                       )}
                     </label>

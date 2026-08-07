@@ -14,10 +14,10 @@ const FEATURE_ACCESS = {
   billing: [PLANS.FREE, PLANS.SILVER, PLANS.GOLD, PLANS.ENTERPRISE],
   inventory: [PLANS.SILVER, PLANS.GOLD, PLANS.ENTERPRISE], // Basic inventory starts at Silver
   parties: [PLANS.FREE, PLANS.SILVER, PLANS.GOLD, PLANS.ENTERPRISE],
-  expenses: [PLANS.SILVER, PLANS.GOLD, PLANS.ENTERPRISE],
+  expenses: [PLANS.FREE, PLANS.SILVER, PLANS.GOLD, PLANS.ENTERPRISE],
   accounting: [PLANS.GOLD, PLANS.ENTERPRISE], // Advanced accounting in Gold+
   gst: [PLANS.GOLD, PLANS.ENTERPRISE], // GST in Gold+
-  reports: [PLANS.SILVER, PLANS.GOLD, PLANS.ENTERPRISE], // Standard reports in Silver+
+  reports: [PLANS.FREE, PLANS.SILVER, PLANS.GOLD, PLANS.ENTERPRISE], // Standard reports in Silver+
   admin: [PLANS.FREE, PLANS.SILVER, PLANS.GOLD, PLANS.ENTERPRISE], // Staff management in all plans
 };
 

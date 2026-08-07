@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Shield, ShieldCheck, Eye } from "lucide-react";
+import { Shield, ShieldCheck, Eye, Lock as LockIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
 
@@ -55,10 +55,10 @@ export function ChangePermissionsDialog({ open, onOpenChange, staff, onSave }) {
       const permissionsArray = Array.isArray(staff.permissions) ? staff.permissions : [];
       const permissionsObject = {};
       PERMISSIONS.forEach((p) => {
-        permissionsObject[p.key] = permissionsArray.includes(p.key) && canAccessFeature(p.key);
+        permissionsObject[p.key] = permissionsArray.includes(p.key);
       });
-      // Always include dashboard if allowed
-      permissionsObject["dashboard"] = (permissionsArray.includes("dashboard") || capitalizedRole === "Admin") && canAccessFeature("dashboard");
+      // Always include dashboard
+      permissionsObject["dashboard"] = true;
       
       setPerms(permissionsObject);
     }
@@ -70,12 +70,11 @@ export function ChangePermissionsDialog({ open, onOpenChange, staff, onSave }) {
   };
 
   const togglePerm = (key) => {
-    if (!canAccessFeature(key)) return;
     setPerms((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handleSave = () => {
-    const permissionsArray = Object.keys(perms).filter((key) => perms[key] && (key === "dashboard" || canAccessFeature(key)));
+    const permissionsArray = Object.keys(perms).filter((key) => perms[key]);
     if (!permissionsArray.includes("dashboard")) {
       permissionsArray.push("dashboard");
     }
@@ -140,7 +139,7 @@ export function ChangePermissionsDialog({ open, onOpenChange, staff, onSave }) {
                         <p className="text-sm font-medium">{p.label}</p>
                         {!isAllowedByPlan && (
                           <span className="inline-flex items-center gap-1 text-[10px] text-amber-500 font-semibold border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
-                            <Lock className="h-2.5 w-2.5" /> Locked in Plan
+                            <LockIcon className="h-2.5 w-2.5" /> Locked in Plan
                           </span>
                         )}
                       </div>

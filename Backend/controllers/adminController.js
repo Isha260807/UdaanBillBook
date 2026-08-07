@@ -183,6 +183,7 @@ const getAdminDashboardData = async (req, res) => {
 
     const failedPaymentsCount = await Payment.countDocuments({ status: 'Failed' });
     const supportTicketsCount = await Ticket.countDocuments({});
+    const pendingApprovalsCount = await User.countDocuments({ role: 'vendor', status: 'Pending' });
 
     res.status(200).json({
       platformKPIs: {
@@ -191,7 +192,7 @@ const getAdminDashboardData = async (req, res) => {
         monthlyRevenue,
         platformGrowth: totalBusinessesCount ? 10 : 0,
         activeUsers: activeUsersCount,
-        pendingApprovals: 0,
+        pendingApprovals: pendingApprovalsCount,
         failedPayments: failedPaymentsCount,
         supportTickets: supportTicketsCount,
       },
@@ -366,6 +367,40 @@ const getAdminBusinesses = async (req, res) => {
   }
 };
 
+// @desc    Approve pending vendor registration (SuperAdmin only)
+// @route   PUT /api/admin/vendors/:id/approve
+// @access  Private
+const approveVendor = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+    user.status = 'Active';
+    await user.save();
+    res.status(200).json({ message: 'Vendor approved successfully', user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Reject pending vendor registration (SuperAdmin only)
+// @route   PUT /api/admin/vendors/:id/reject
+// @access  Private
+const rejectVendor = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+    user.status = 'Rejected';
+    await user.save();
+    res.status(200).json({ message: 'Vendor rejected successfully', user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get Admin Subscriptions (SuperAdmin only)
 // @route   GET /api/admin/subscriptions
 // @access  Private
@@ -402,7 +437,7 @@ const getAdminSubscriptions = async (req, res) => {
         description: plan.description || '',
         platforms: plan.platforms || 'Mobile + Desktop',
         allowedTemplates: plan.allowedTemplates || [],
-        allowedModules: plan.allowedModules || (plan.name === 'Free' ? ['dashboard', 'billing', 'parties', 'admin', 'support', 'settings'] : ['dashboard', 'billing', 'inventory', 'parties', 'expenses', 'accounting', 'gst', 'reports', 'admin', 'support', 'settings']),
+        allowedModules: plan.allowedModules || (plan.name === 'Free' ? ['dashboard', 'billing', 'parties', 'expenses', 'admin', 'support', 'settings'] : ['dashboard', 'billing', 'inventory', 'parties', 'expenses', 'accounting', 'gst', 'reports', 'admin', 'support', 'settings']),
         showUdaanLogo: plan.showUdaanLogo !== undefined ? plan.showUdaanLogo : true,
         activeSubscribers,
         monthlyRevenue: activeSubscribers * plan.price
@@ -1040,6 +1075,8 @@ module.exports = {
   getAdminDashboardData,
   getAdminAnalyticsData,
   getAdminBusinesses,
+  approveVendor,
+  rejectVendor,
   getAdminSubscriptions,
   impersonateUser,
   getAdminRevenueData,
