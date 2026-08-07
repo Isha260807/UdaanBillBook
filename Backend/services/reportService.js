@@ -4,6 +4,8 @@ const Expense = require('../models/Expense');
 const Payment = require('../models/Payment');
 const Item = require('../models/Item');
 const Party = require('../models/Party');
+const User = require('../models/User');
+const Journal = require('../models/Journal');
 
 const getDashboardSummary = async (userId) => {
   const currentDate = new Date();
@@ -188,17 +190,29 @@ const getAccountingData = async (userId) => {
 
   let cashInHand = 0;
   let bankBalance = 0;
+  let banks = {};
   let entries = [];
 
   // Process Payments
   payments.forEach(p => {
-    const isBank = ['Bank', 'UPI', 'Cheque'].includes(p.paymentMode);
+    const mode = p.paymentMode || 'Cash';
+    const isBank = mode !== 'Cash';
     const amount = p.amount;
     
     if (p.type === 'Payment In') {
-      if (isBank) bankBalance += amount; else cashInHand += amount;
+      if (isBank) {
+        bankBalance += amount;
+        banks[mode] = (banks[mode] || 0) + amount;
+      } else {
+        cashInHand += amount;
+      }
     } else {
-      if (isBank) bankBalance -= amount; else cashInHand -= amount;
+      if (isBank) {
+        bankBalance -= amount;
+        banks[mode] = (banks[mode] || 0) - amount;
+      } else {
+        cashInHand -= amount;
+      }
     }
 
     entries.push({
@@ -207,14 +221,20 @@ const getAccountingData = async (userId) => {
       amount: amount,
       type: p.type === 'Payment In' ? 'IN' : 'OUT',
       party: p.partyName || p.party?.name || 'General',
-      mode: p.paymentMode
+      mode: mode
     });
   });
 
   // Process Expenses
   expenses.forEach(e => {
-    const isBank = ['Bank', 'UPI', 'Cheque'].includes(e.paymentMode);
-    if (isBank) bankBalance -= e.amount; else cashInHand -= e.amount;
+    const mode = e.paymentMode || 'Cash';
+    const isBank = mode !== 'Cash';
+    if (isBank) {
+      bankBalance -= e.amount;
+      banks[mode] = (banks[mode] || 0) - e.amount;
+    } else {
+      cashInHand -= e.amount;
+    }
     
     entries.push({
       desc: e.category || 'Expense',
@@ -222,18 +242,55 @@ const getAccountingData = async (userId) => {
       amount: e.amount,
       type: 'OUT',
       party: e.merchant || 'General',
-      mode: e.paymentMode || 'Cash'
+      mode: mode
+    });
+  });
+
+  // Process Journal Vouchers
+  const userDoc = await User.findById(objectId).lean();
+  const journals = await Journal.find({ user: objectId }).sort({ createdAt: -1 }).lean();
+
+  journals.forEach(j => {
+    const amt = j.amount || 0;
+    const debit = j.debitAcc;
+    const credit = j.creditAcc;
+
+    if (debit === 'Cash') {
+      cashInHand += amt;
+    } else if (debit) {
+      bankBalance += amt;
+      banks[debit] = (banks[debit] || 0) + amt;
+    }
+
+    if (credit === 'Cash') {
+      cashInHand -= amt;
+    } else if (credit) {
+      bankBalance -= amt;
+      banks[credit] = (banks[credit] || 0) - amt;
+    }
+
+    entries.push({
+      desc: j.narration || `Journal: Dr ${debit} / Cr ${credit}`,
+      date: j.date || j.createdAt,
+      amount: amt,
+      type: 'Journal',
+      party: 'Adjustment Entry',
+      mode: `${debit} -> ${credit}`
     });
   });
 
   // Sort entries by date descending
   entries.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  // Format dates for frontend
-  entries = entries.map(e => ({
-    ...e,
-    date: new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-  }));
+  // Format dates safely for frontend
+  entries = entries.map(e => {
+    let d = new Date(e.date || Date.now());
+    if (isNaN(d.getTime())) d = new Date();
+    return {
+      ...e,
+      date: d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    };
+  });
 
   // Receivables & Payables
   const receivablesResult = await Party.aggregate([
@@ -249,14 +306,26 @@ const getAccountingData = async (userId) => {
   // P&L
   let totalRevenue = 0;
   let cogs = 0; // Simplified
-  invoices.filter(i => i.type === 'Sale').forEach(i => totalRevenue += i.grandTotal);
-  invoices.filter(i => i.type === 'Purchase').forEach(i => cogs += i.grandTotal);
+  invoices.filter(i => i.type === 'Sale').forEach(i => totalRevenue += (i.grandTotal || 0));
+  invoices.filter(i => i.type === 'Purchase').forEach(i => cogs += (i.grandTotal || 0));
   
-  const totalOpExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalOpExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
 
   return {
     cashInHand,
     bankBalance,
+    banks,
+    openingBalance: userDoc?.openingBalance || 0,
+    customBanks: userDoc?.bankAccounts?.map(b => b.name) || [],
+    journals: journals.map(j => ({
+      id: j._id.toString(),
+      voucher: j.voucher,
+      debitAcc: j.debitAcc,
+      creditAcc: j.creditAcc,
+      amount: j.amount,
+      narration: j.narration,
+      date: j.date
+    })),
     receivables: receivablesResult[0]?.total || 0,
     payables: payablesResult[0]?.total || 0,
     entries,

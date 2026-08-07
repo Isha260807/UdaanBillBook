@@ -65,22 +65,7 @@ export function BusinessManagement() {
     }
   };
 
-  const handleImpersonate = async (biz) => {
-    try {
-      const response = await api.post(`/admin/impersonate/${biz.id}`);
-      const adminAuth = window.localStorage.getItem("Udaan.auth");
-      if (adminAuth) {
-        window.localStorage.setItem("Udaan.admin_auth", adminAuth);
-      }
-      window.localStorage.setItem("Udaan.auth", JSON.stringify(response.data));
-      toast.success(`Impersonating ${biz.owner} / ${biz.name}`);
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 800);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to start impersonation");
-    }
-  };
+
 
   const handleDeleteBusiness = async (biz) => {
     if (window.confirm(`Are you sure you want to delete ${biz.name}? This will permanently remove the business user account.`)) {
@@ -102,6 +87,34 @@ export function BusinessManagement() {
     const matchesStatus = statusFilter === "All" || b.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const handleExportCSV = () => {
+    if (!businesses.length) {
+      toast.error("No businesses to export");
+      return;
+    }
+    const headers = ["Business Name", "Owner Name", "Phone", "Email", "Plan", "Revenue (INR)", "Status", "City"];
+    const rows = filtered.map(b => [
+      `"${b.name || ''}"`,
+      `"${b.owner || ''}"`,
+      `"${b.phone || ''}"`,
+      `"${b.email || ''}"`,
+      `"${b.plan || ''}"`,
+      b.revenue || 0,
+      `"${b.status || ''}"`,
+      `"${b.city || ''}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Registered_Businesses_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Business list CSV exported successfully!");
+  };
 
   if (loading) {
     return (
@@ -134,7 +147,7 @@ export function BusinessManagement() {
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
-          <Button size="sm" className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white gap-1.5" onClick={() => toast.info("Export started")}>
+          <Button size="sm" className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white gap-1.5" onClick={handleExportCSV}>
             <Download className="h-3.5 w-3.5" /> Export
           </Button>
         </div>
@@ -229,10 +242,6 @@ export function BusinessManagement() {
                             <CheckCircle2 className="h-3.5 w-3.5" />
                           </button>
                         )}
-                        <button className="rounded-lg p-1.5 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition-colors" title="Impersonate"
-                          onClick={() => handleImpersonate(biz)}>
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </button>
                         <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Delete Business"
                           onClick={() => handleDeleteBusiness(biz)}>
                           <Trash2 className="h-3.5 w-3.5" />
@@ -298,10 +307,6 @@ export function BusinessManagement() {
               </div>
               <div className="flex items-center gap-2 pt-3 border-t border-white/8">
                 <button className="flex-1 rounded-xl py-2 text-xs font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors" onClick={() => setSelectedBiz(biz)}>View Details</button>
-                <button className="rounded-xl py-2 px-3 text-xs text-slate-400 bg-white/5 hover:bg-white/10 transition-colors"
-                  onClick={() => handleImpersonate(biz)}>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </button>
               </div>
             </div>
           ))}
@@ -401,15 +406,6 @@ export function BusinessManagement() {
 
             {/* Modal Footer */}
             <div className="px-6 py-4 border-t border-white/8 flex justify-end gap-2">
-              <button 
-                onClick={() => {
-                  setSelectedBiz(null);
-                  handleImpersonate(selectedBiz);
-                }}
-                className="rounded-xl bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5"
-              >
-                <ExternalLink className="h-4 w-4" /> Impersonate
-              </button>
               <button 
                 onClick={() => setSelectedBiz(null)}
                 className="rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 text-sm font-semibold transition-colors"

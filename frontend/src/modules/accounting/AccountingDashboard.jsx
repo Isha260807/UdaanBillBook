@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { 
   Calculator, 
   ArrowUpCircle, 
@@ -44,8 +47,10 @@ export function AccountingDashboard() {
   const { user } = useMockAuth();
   const userName = user?.name || "Demo Admin";
   
-  // Navigation tabs
-  const [activeTab, setActiveTab] = useState("overview");
+  // Navigation tabs synced with URL search params
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "overview";
+  const setActiveTab = (tab) => setSearchParams({ tab }, { replace: true });
   
   // States for dynamic data fetching
   const [accountingData, setAccountingData] = useState(null);
@@ -75,11 +80,6 @@ export function AccountingDashboard() {
   const [newBankName, setNewBankName] = useState("");
   const [newBankBal, setNewBankBal] = useState("");
 
-  // Custom LocalStorage State Namespaced by User ID
-  const storageKey = `Udaan.accounting_logs_${user?._id || "default"}`;
-  const bankStorageKey = `Udaan.accounting_banks_${user?._id || "default"}`;
-  const openingBalanceKey = `Udaan.accounting_opBal_${user?._id || "default"}`;
-
   const [localLogs, setLocalLogs] = useState([]);
   const [bankBalances, setBankBalances] = useState({
     HDFC: 0,
@@ -90,50 +90,6 @@ export function AccountingDashboard() {
   });
 
   const [openingBalance, setOpeningBalance] = useState(0);
-
-  // Load from local storage when user hydrates
-  useEffect(() => {
-    if (user?._id) {
-      try {
-        const storedLogs = localStorage.getItem(storageKey);
-        if (storedLogs) setLocalLogs(JSON.parse(storedLogs));
-        
-        const storedBanks = localStorage.getItem(bankStorageKey);
-        if (storedBanks) {
-          const parsed = JSON.parse(storedBanks);
-          if (parsed.HDFC === 150000 || parsed.SBI === 75000) {
-            const cleanBanks = { HDFC: 0, SBI: 0, ICICI: 0, Axis: 0, Wallet: 0 };
-            setBankBalances(cleanBanks);
-            localStorage.setItem(bankStorageKey, JSON.stringify(cleanBanks));
-          } else {
-            setBankBalances(parsed);
-          }
-        }
-
-        const storedOp = localStorage.getItem(openingBalanceKey);
-        if (storedOp) {
-          if (Number(storedOp) === 100000) {
-            setOpeningBalance(0);
-            localStorage.setItem(openingBalanceKey, "0");
-          } else {
-            setOpeningBalance(Number(storedOp));
-          }
-        }
-      } catch (e) {
-        console.error("Failed to load user storage:", e);
-      }
-    }
-  }, [user?._id, storageKey, bankStorageKey, openingBalanceKey]);
-
-  const saveLocalLogs = (newLogs) => {
-    setLocalLogs(newLogs);
-    localStorage.setItem(storageKey, JSON.stringify(newLogs));
-  };
-
-  const saveBankBalances = (newBals) => {
-    setBankBalances(newBals);
-    localStorage.setItem(bankStorageKey, JSON.stringify(newBals));
-  };
 
   // Fetch all necessary data
   const fetchData = async () => {
@@ -147,6 +103,43 @@ export function AccountingDashboard() {
       setAccountingData(accRes.data);
       setParties(partiesRes.data || []);
       setInvoices(invRes.data || []);
+
+      if (accRes.data?.openingBalance !== undefined) {
+        setOpeningBalance(accRes.data.openingBalance);
+      }
+
+      if (accRes.data?.banks || accRes.data?.customBanks) {
+        setBankBalances(prev => {
+          const defaultBanks = { HDFC: 0, SBI: 0, ICICI: 0, Axis: 0, Wallet: 0 };
+          if (accRes.data.customBanks) {
+            accRes.data.customBanks.forEach(bName => {
+              defaultBanks[bName] = 0;
+            });
+          }
+          if (accRes.data.banks) {
+            Object.keys(accRes.data.banks).forEach(bName => {
+              defaultBanks[bName] = accRes.data.banks[bName];
+            });
+          }
+          return defaultBanks;
+        });
+      }
+
+      if (accRes.data?.journals) {
+        const dbJournals = accRes.data.journals.map(j => ({
+          id: j.id,
+          date: j.date,
+          voucher: j.voucher,
+          type: "Journal",
+          party: "Adjustment entry",
+          description: j.narration || `Debit: ${j.debitAcc} / Credit: ${j.creditAcc}`,
+          debit: j.amount,
+          credit: j.amount,
+          mode: "Journal",
+          createdBy: "System"
+        }));
+        setLocalLogs(dbJournals);
+      }
     } catch (err) {
       console.error(err);
       toast.error("Failed to load accounting data");
@@ -208,25 +201,32 @@ export function AccountingDashboard() {
       };
     });
 
-    // Local manual entries
-    const localEntries = localLogs.map((l) => {
-      const parsedDate = parseDate(l.date);
-      return {
-        id: l.id,
-        date: formatDate(l.date),
-        dateRaw: parsedDate,
-        voucher: l.voucher,
-        type: l.type,
-        party: l.party || "General",
-        description: l.description || "",
-        debit: l.debit || 0,
-        credit: l.credit || 0,
-        mode: l.mode || "Cash",
-        createdBy: l.createdBy || userName,
-        status: "Cleared",
-        createdTime: formatTime(l.date)
-      };
-    });
+    // Local manual entries (filtered to avoid duplicate entries synced with DB)
+    const localEntries = localLogs
+      .filter((l) => {
+        const amt = l.debit || l.credit || 0;
+        return !dbEntries.some(
+          (db) => db.party === l.party && (db.debit === amt || db.credit === amt) && db.mode === l.mode
+        );
+      })
+      .map((l) => {
+        const parsedDate = parseDate(l.date);
+        return {
+          id: l.id,
+          date: formatDate(l.date),
+          dateRaw: parsedDate,
+          voucher: l.voucher,
+          type: l.type,
+          party: l.party || "General",
+          description: l.description || "",
+          debit: l.debit || 0,
+          credit: l.credit || 0,
+          mode: l.mode || "Cash",
+          createdBy: l.createdBy || userName,
+          status: "Cleared",
+          createdTime: formatTime(l.date)
+        };
+      });
 
     // Sort by date descending
     const all = [...dbEntries, ...localEntries].sort((a, b) => b.dateRaw - a.dateRaw);
@@ -341,14 +341,13 @@ export function AccountingDashboard() {
   const handleReceipt = async (e) => {
     e.preventDefault();
     if (!receiptForm.partyId || !receiptForm.amount) {
-      toast.error("Party and Amount are required");
+      toast.error("Please select a party and enter an amount");
       return;
     }
     try {
       const selectedParty = parties.find(p => p._id === receiptForm.partyId);
       const amt = Number(receiptForm.amount);
 
-      // Call API to make it real and update backend party balance
       await api.post('/payments', {
         party: receiptForm.partyId,
         partyName: selectedParty?.name,
@@ -360,48 +359,25 @@ export function AccountingDashboard() {
         description: receiptForm.notes || "Received payment in accounting portal"
       });
 
-      // Save local log with voucher trail
-      const newLog = {
-        id: `local-${Date.now()}`,
-        date: new Date(),
-        voucher: receiptForm.ref || `REC-VCH-${Date.now().toString().slice(-4)}`,
-        type: "Receipt",
-        party: selectedParty?.name,
-        description: receiptForm.notes || "Receipt transaction",
-        debit: amt,
-        credit: 0,
-        mode: receiptForm.mode,
-        createdBy: userName
-      };
-      saveLocalLogs([newLog, ...localLogs]);
-
-      // If bank mode, deposit to specific mock bank account
-      if (receiptForm.mode !== "Cash" && bankBalances[receiptForm.mode] !== undefined) {
-        saveBankBalances({
-          ...bankBalances,
-          [receiptForm.mode]: bankBalances[receiptForm.mode] + amt
-        });
-      }
-
-      toast.success("Receipt entry successfully recorded!");
+      toast.success(`Receipt of ${fmt(amt)} recorded successfully!`);
       setReceiptForm({ partyId: "", partyName: "", amount: "", mode: "Cash", ref: "", notes: "" });
       fetchData();
     } catch (err) {
-      toast.error("Failed to submit receipt");
+      const msg = err.response?.data?.message || "Failed to record receipt";
+      toast.error(msg);
     }
   };
 
   const handlePayment = async (e) => {
     e.preventDefault();
     if (!paymentForm.amount) {
-      toast.error("Amount is required");
+      toast.error("Please enter a payment amount");
       return;
     }
     try {
       const selectedParty = parties.find(p => p._id === paymentForm.partyId);
       const amt = Number(paymentForm.amount);
 
-      // Call API to make it real and update backend
       await api.post('/payments', {
         party: paymentForm.partyId || undefined,
         partyName: selectedParty?.name || paymentForm.partyName || "General",
@@ -413,98 +389,81 @@ export function AccountingDashboard() {
         description: paymentForm.notes || `${paymentForm.category} payment`
       });
 
-      const newLog = {
-        id: `local-${Date.now()}`,
-        date: new Date(),
-        voucher: paymentForm.ref || `PAY-VCH-${Date.now().toString().slice(-4)}`,
-        type: "Payment",
-        party: selectedParty?.name || paymentForm.partyName || "General",
-        description: paymentForm.notes || `${paymentForm.category} payment`,
-        debit: 0,
-        credit: amt,
-        mode: paymentForm.mode,
-        createdBy: userName
-      };
-      saveLocalLogs([newLog, ...localLogs]);
-
-      // If bank mode, withdraw from bank
-      if (paymentForm.mode !== "Cash" && bankBalances[paymentForm.mode] !== undefined) {
-        saveBankBalances({
-          ...bankBalances,
-          [paymentForm.mode]: Math.max(0, bankBalances[paymentForm.mode] - amt)
-        });
-      }
-
-      toast.success("Payment entry successfully recorded!");
+      toast.success(`Payment of ${fmt(amt)} recorded successfully!`);
       setPaymentForm({ partyId: "", partyName: "", amount: "", mode: "Cash", ref: "", notes: "", category: "Supplier" });
       fetchData();
     } catch (err) {
-      toast.error("Failed to submit payment");
+      const msg = err.response?.data?.message || "Failed to record payment";
+      toast.error(msg);
     }
   };
 
-  const handleContra = (e) => {
+  const handleContra = async (e) => {
     e.preventDefault();
     const amt = Number(contraForm.amount);
-    if (!amt) {
-      toast.error("Please enter a valid amount");
+    if (!amt || amt <= 0) {
+      toast.error("Please enter a valid transfer amount");
+      return;
+    }
+    if (contraForm.from === contraForm.to) {
+      toast.error("Source and destination accounts must be different");
       return;
     }
 
-    // Process contra changes
-    const newBals = { ...bankBalances };
-    if (contraForm.from !== "Cash") {
-      newBals[contraForm.from] = Math.max(0, (newBals[contraForm.from] || 0) - amt);
+    try {
+      await api.post('/payments', {
+        type: 'Payment Out',
+        amount: amt,
+        paymentMode: contraForm.from,
+        date: new Date(),
+        referenceNumber: `CON-OUT-${Date.now().toString().slice(-4)}`,
+        description: contraForm.description || `Contra Transfer: Moved funds to ${contraForm.to}`
+      });
+
+      await api.post('/payments', {
+        type: 'Payment In',
+        amount: amt,
+        paymentMode: contraForm.to,
+        date: new Date(),
+        referenceNumber: `CON-IN-${Date.now().toString().slice(-4)}`,
+        description: contraForm.description || `Contra Transfer: Received funds from ${contraForm.from}`
+      });
+
+      toast.success(`Successfully transferred ${fmt(amt)} from ${contraForm.from} to ${contraForm.to}!`);
+      setContraForm({ from: "Cash", to: "HDFC", amount: "", description: "" });
+      fetchData();
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to submit contra transfer";
+      toast.error(msg);
     }
-    if (contraForm.to !== "Cash") {
-      newBals[contraForm.to] = (newBals[contraForm.to] || 0) + amt;
-    }
-
-    saveBankBalances(newBals);
-
-    // Save contra voucher log
-    const newLog = {
-      id: `local-${Date.now()}`,
-      date: new Date(),
-      voucher: `CON-VCH-${Date.now().toString().slice(-4)}`,
-      type: "Contra",
-      party: "Internal transfer",
-      description: contraForm.description || `Transfer from ${contraForm.from} to ${contraForm.to}`,
-      debit: contraForm.to === "Cash" ? amt : 0,
-      credit: contraForm.from === "Cash" ? amt : 0,
-      mode: contraForm.from === "Cash" ? contraForm.to : contraForm.from,
-      createdBy: userName
-    };
-    saveLocalLogs([newLog, ...localLogs]);
-
-    toast.success(`Transferred ${fmt(amt)} from ${contraForm.from} to ${contraForm.to}`);
-    setContraForm({ from: "Cash", to: "HDFC", amount: "", description: "" });
   };
 
-  const handleJournal = (e) => {
+  const handleJournal = async (e) => {
     e.preventDefault();
     const amt = Number(journalForm.amount);
-    if (!amt) {
-      toast.error("Please enter a valid amount");
+    if (!amt || amt <= 0) {
+      toast.error("Please enter a valid adjustment amount");
+      return;
+    }
+    if (journalForm.debitAcc === journalForm.creditAcc) {
+      toast.error("Debit and Credit accounts must be different");
       return;
     }
 
-    const newLog = {
-      id: `local-${Date.now()}`,
-      date: new Date(),
-      voucher: `JRN-VCH-${Date.now().toString().slice(-4)}`,
-      type: "Journal",
-      party: "Adjustment entry",
-      description: journalForm.narration || `Debit: ${journalForm.debitAcc} / Credit: ${journalForm.creditAcc}`,
-      debit: amt,
-      credit: amt,
-      mode: "Journal",
-      createdBy: userName
-    };
-    saveLocalLogs([newLog, ...localLogs]);
-
-    toast.success("Journal adjustment voucher recorded");
-    setJournalForm({ debitAcc: "Cash", creditAcc: "HDFC", amount: "", narration: "" });
+    try {
+      await api.post('/reports/accounting/journals', {
+        debitAcc: journalForm.debitAcc,
+        creditAcc: journalForm.creditAcc,
+        amount: amt,
+        narration: journalForm.narration
+      });
+      toast.success(`Journal Voucher of ${fmt(amt)} recorded successfully!`);
+      setJournalForm({ debitAcc: "Cash", creditAcc: "HDFC", amount: "", narration: "" });
+      fetchData();
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to record journal voucher";
+      toast.error(msg);
+    }
   };
 
   const handleOpeningBalance = () => {
@@ -512,18 +471,24 @@ export function AccountingDashboard() {
     setIsOpBalModalOpen(true);
   };
 
-  const handleSaveOpBal = (e) => {
+  const handleSaveOpBal = async (e) => {
     e?.preventDefault();
     const val = Number(opBalInput) || 0;
-    setOpeningBalance(val);
-    localStorage.setItem(openingBalanceKey, val.toString());
-    toast.success(`Opening balance updated to ${fmt(val)}`);
-    setIsOpBalModalOpen(false);
+    try {
+      await api.post('/reports/accounting/opening-balance', { amount: val });
+      setOpeningBalance(val);
+      toast.success(`Opening balance updated to ${fmt(val)}!`);
+      setIsOpBalModalOpen(false);
+      fetchData();
+    } catch (err) {
+      const msg = err.response?.data?.message || "Failed to save opening balance";
+      toast.error(msg);
+    }
   };
 
   const deleteLocalLog = (id) => {
     if (confirm("Are you sure you want to delete this manual transaction entry?")) {
-      saveLocalLogs(localLogs.filter(l => l.id !== id));
+      setLocalLogs(localLogs.filter(l => l.id !== id));
       toast.success("Transaction deleted");
     }
   };
@@ -534,7 +499,7 @@ export function AccountingDashboard() {
     setIsBankModalOpen(true);
   };
 
-  const handleSaveNewBank = (e) => {
+  const handleSaveNewBank = async (e) => {
     e?.preventDefault();
     const cleanName = newBankName.trim();
     if (!cleanName) {
@@ -542,27 +507,213 @@ export function AccountingDashboard() {
       return;
     }
 
-    if (bankBalances[cleanName] !== undefined) {
-      toast.error("Bank account with this name already exists");
-      return;
-    }
-
     const bal = Number(newBankBal) || 0;
-    const newBals = {
-      ...bankBalances,
-      [cleanName]: bal
-    };
-    saveBankBalances(newBals);
-    toast.success(`${cleanName} added with starting balance of ${fmt(bal)}`);
-    setIsBankModalOpen(false);
+    try {
+      await api.post('/reports/accounting/banks', { name: cleanName, balance: bal });
+      toast.success(`${cleanName} added in DB with starting balance of ${fmt(bal)}`);
+      setIsBankModalOpen(false);
+      fetchData();
+    } catch (err) {
+      toast.error("Failed to add bank account in DB");
+    }
   };
 
-  const handleDeleteBank = (bankName) => {
+  const handleDeleteBank = async (bankName) => {
     if (confirm(`Are you sure you want to delete ${bankName} account?`)) {
-      const newBals = { ...bankBalances };
-      delete newBals[bankName];
-      saveBankBalances(newBals);
-      toast.success(`${bankName} deleted successfully`);
+      try {
+        await api.delete(`/reports/accounting/banks/${encodeURIComponent(bankName)}`);
+        toast.success(`${bankName} deleted from DB`);
+        fetchData();
+      } catch (err) {
+        toast.error("Failed to delete bank account from DB");
+      }
+    }
+  };
+
+  const handleGenerateReport = (repTitle) => {
+    try {
+      const doc = new jsPDF();
+      const fileDate = new Date().toISOString().split("T")[0];
+
+      if (repTitle === "Trial Balance") {
+        doc.setFontSize(18);
+        doc.setTextColor(16, 185, 129);
+        doc.text("UdaanBillBook — Trial Balance Statement", 14, 18);
+
+        doc.setFontSize(10);
+        doc.setTextColor(70);
+        doc.text(`As of Date: ${new Date().toLocaleDateString('en-IN')}`, 14, 26);
+
+        let totalDr = 0;
+        let totalCr = 0;
+        const rows = [];
+
+        const cashBal = stats?.cashInHand || 0;
+        if (cashBal >= 0) { totalDr += cashBal; rows.push(["1", "Cash In Hand Account", `Rs. ${cashBal.toLocaleString('en-IN')}`, "-"]); }
+        else { totalCr += Math.abs(cashBal); rows.push(["1", "Cash In Hand Account", "-", `Rs. ${Math.abs(cashBal).toLocaleString('en-IN')}`]); }
+
+        Object.keys(bankBalances).forEach((bName, i) => {
+          const bal = bankBalances[bName] || 0;
+          if (bal >= 0) { totalDr += bal; rows.push([`${i + 2}`, `${bName} Bank Account`, `Rs. ${bal.toLocaleString('en-IN')}`, "-"]); }
+          else { totalCr += Math.abs(bal); rows.push([`${i + 2}`, `${bName} Bank Account`, "-", `Rs. ${Math.abs(bal).toLocaleString('en-IN')}`]); }
+        });
+
+        const rec = stats?.receivables || 0;
+        const pay = stats?.payables || 0;
+        if (rec > 0) { totalDr += rec; rows.push([`${rows.length + 1}`, "Accounts Receivable (Debtors)", `Rs. ${rec.toLocaleString('en-IN')}`, "-"]); }
+        if (pay > 0) { totalCr += pay; rows.push([`${rows.length + 1}`, "Accounts Payable (Creditors)", "-", `Rs. ${pay.toLocaleString('en-IN')}`]); }
+
+        rows.push(["TOTAL", "Reconciled Total Ledger Balance", `Rs. ${totalDr.toLocaleString('en-IN')}`, `Rs. ${totalCr.toLocaleString('en-IN')}`]);
+
+        autoTable(doc, {
+          startY: 32,
+          head: [["#", "Account Head / Ledger Particulars", "Debit (Dr)", "Credit (Cr)"]],
+          body: rows,
+          theme: "grid",
+          headStyles: { fillColor: [16, 185, 129] },
+          styles: { fontSize: 9 }
+        });
+
+        doc.save(`Trial_Balance_${fileDate}.pdf`);
+        toast.success("Trial Balance PDF generated successfully!");
+      }
+      else if (repTitle === "Day Book Ledger") {
+        doc.setFontSize(18);
+        doc.setTextColor(16, 185, 129);
+        doc.text("UdaanBillBook — Day Book Ledger Report", 14, 18);
+
+        doc.setFontSize(10);
+        doc.setTextColor(70);
+        doc.text(`Report Date: ${new Date().toLocaleDateString('en-IN')} | Total Entries: ${combinedEntries.length}`, 14, 26);
+
+        const rows = combinedEntries.map((e, idx) => [
+          idx + 1,
+          e.date,
+          e.voucher || "-",
+          e.party || "General",
+          e.type || "-",
+          e.mode || "Cash",
+          e.debit ? `Rs. ${e.debit.toLocaleString('en-IN')}` : "-",
+          e.credit ? `Rs. ${e.credit.toLocaleString('en-IN')}` : "-"
+        ]);
+
+        autoTable(doc, {
+          startY: 32,
+          head: [["#", "Date", "Voucher No", "Party", "Type", "Mode", "Debit (Dr)", "Credit (Cr)"]],
+          body: rows.length > 0 ? rows : [["-", "-", "-", "No transactions today", "-", "-", "-", "-"]],
+          theme: "grid",
+          headStyles: { fillColor: [16, 185, 129] },
+          styles: { fontSize: 8 }
+        });
+
+        doc.save(`Day_Book_Ledger_${fileDate}.pdf`);
+        toast.success("Day Book Ledger PDF generated successfully!");
+      }
+      else if (repTitle === "Outstanding Receivables") {
+        doc.setFontSize(18);
+        doc.setTextColor(16, 185, 129);
+        doc.text("UdaanBillBook — Outstanding Receivables Report", 14, 18);
+
+        // 1. Party-wise Receivables
+        const debtorParties = parties.filter(p => {
+          const bType = (p.balanceType || '').toLowerCase();
+          const amt = Number(p.balance) || Number(p.openingBalance) || 0;
+          return (bType.includes('receive') || bType.includes('customer') || p.type?.toLowerCase().includes('customer')) && amt > 0;
+        });
+
+        // 2. Unpaid Invoice Receivables
+        const unpaidInvoices = invoices.filter(i => 
+          (i.type === 'Sale' || i.type === 'Invoice') && 
+          i.paymentStatus !== 'Paid' && 
+          (Number(i.balanceAmount) > 0 || (i.paymentStatus === 'Unpaid' && Number(i.grandTotal) > 0))
+        );
+
+        const totalDebtors = debtorParties.length + unpaidInvoices.length;
+        doc.setFontSize(10);
+        doc.setTextColor(70);
+        doc.text(`Generated On: ${new Date().toLocaleDateString('en-IN')} | Total Pending Customers/Bills: ${totalDebtors}`, 14, 26);
+
+        const rows = [];
+
+        debtorParties.forEach((p, idx) => {
+          rows.push([
+            idx + 1,
+            p.name,
+            p.phone || "-",
+            "Party Ledger",
+            `Rs. ${(Number(p.balance) || 0).toLocaleString('en-IN')}`,
+            "Pending Receivable"
+          ]);
+        });
+
+        unpaidInvoices.forEach((i, idx) => {
+          const partyName = i.partyName || i.party?.name || "General Customer";
+          const pendingAmt = Number(i.balanceAmount) || Number(i.grandTotal) || 0;
+          rows.push([
+            debtorParties.length + idx + 1,
+            partyName,
+            i.invoiceNumber || `INV-${1000 + idx}`,
+            "Unpaid Bill",
+            `Rs. ${pendingAmt.toLocaleString('en-IN')}`,
+            i.paymentStatus || "Unpaid"
+          ]);
+        });
+
+        autoTable(doc, {
+          startY: 32,
+          head: [["#", "Customer / Party Name", "Ref / Phone", "Type", "Pending Amount (Rs.)", "Aging / Status"]],
+          body: rows.length > 0 ? rows : [["1", "No pending receivables found in DB", "-", "-", "Rs. 0", "Clear"]],
+          theme: "grid",
+          headStyles: { fillColor: [16, 185, 129] },
+          styles: { fontSize: 8 }
+        });
+
+        doc.save(`Outstanding_Receivables_${fileDate}.pdf`);
+        toast.success("Outstanding Receivables PDF generated successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to generate ${repTitle} report`);
+    }
+  };
+
+  const handleExportLedger = () => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.setTextColor(16, 185, 129);
+      doc.text(`UdaanBillBook — General Ledger Statement`, 14, 18);
+
+      doc.setFontSize(10);
+      doc.setTextColor(70);
+      doc.text(`Generated On: ${new Date().toLocaleDateString('en-IN')} | Total Entries: ${filteredEntries.length}`, 14, 26);
+
+      const rows = filteredEntries.map((e, idx) => [
+        idx + 1,
+        e.date,
+        e.voucher || "-",
+        e.party || "General",
+        e.type || "-",
+        e.mode || "Cash",
+        e.debit ? `Rs. ${e.debit.toLocaleString('en-IN')}` : "-",
+        e.credit ? `Rs. ${e.credit.toLocaleString('en-IN')}` : "-"
+      ]);
+
+      autoTable(doc, {
+        startY: 32,
+        head: [["#", "Date", "Voucher No", "Party", "Type", "Mode", "Debit (Rs.)", "Credit (Rs.)"]],
+        body: rows.length > 0 ? rows : [["-", "-", "-", "No records found", "-", "-", "-", "-"]],
+        theme: "grid",
+        headStyles: { fillColor: [16, 185, 129] },
+        styles: { fontSize: 8 }
+      });
+
+      const fileDate = new Date().toISOString().split("T")[0];
+      doc.save(`General_Ledger_${fileDate}.pdf`);
+      toast.success("General Ledger PDF downloaded successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export Ledger PDF");
     }
   };
 
@@ -764,7 +915,7 @@ export function AccountingDashboard() {
                     <CardTitle className="text-base">General Ledger Accounts</CardTitle>
                     <CardDescription>Consolidated journal, payments, invoice receipts history.</CardDescription>
                   </div>
-                  <Button variant="outline" className="h-8 rounded-lg text-xs" onClick={() => toast.success("Ledger exported successfully")}>
+                  <Button variant="outline" className="h-8 rounded-lg text-xs" onClick={handleExportLedger}>
                     <Download className="mr-1.5 h-3.5 w-3.5" /> Export Ledger
                   </Button>
                 </div>
@@ -974,8 +1125,18 @@ export function AccountingDashboard() {
                       <p className="text-sm font-bold">{bName} Bank Account</p>
                       <p className="text-2xl font-black text-slate-800 mt-2">{fmt(bBal)}</p>
                       <div className="mt-4 flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-[11px] h-8 rounded-lg" onClick={() => toast.success("Downloaded Mini Statement")}>Statement</Button>
-                        <Button variant="outline" size="sm" className="flex-1 text-[11px] h-8 rounded-lg" onClick={() => setActiveTab("contra")}>Contra Transfer</Button>
+                        <Button variant="outline" size="sm" className="flex-1 text-[11px] h-8 rounded-lg" onClick={() => handleDownloadBankStatement(bName, bBal)}>Statement</Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1 text-[11px] h-8 rounded-lg" 
+                          onClick={() => {
+                            setContraForm({ from: bName, to: "Cash", amount: "", description: "" });
+                            setActiveTab("contra");
+                          }}
+                        >
+                          Contra Transfer
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -1325,7 +1486,7 @@ export function AccountingDashboard() {
                   { title: "Day Book Ledger", desc: "List of all transaction vouchers posted today", icon: FileText },
                   { title: "Outstanding Receivables", desc: "Detailed customer aging bill-by-bill analysis", icon: History }
                 ].map((rep, idx) => (
-                  <Card key={idx} className="border shadow-sm bg-white rounded-xl hover:border-emerald-200 transition-colors cursor-pointer" onClick={() => toast.info(`Generating ${rep.title}...`)}>
+                  <Card key={idx} className="border shadow-sm bg-white rounded-xl hover:border-emerald-200 transition-colors cursor-pointer" onClick={() => handleGenerateReport(rep.title)}>
                     <CardHeader className="pb-2">
                       <rep.icon className="h-5 w-5 text-emerald-600" />
                       <CardTitle className="text-xs font-bold mt-2">{rep.title}</CardTitle>

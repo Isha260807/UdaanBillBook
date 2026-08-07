@@ -88,6 +88,14 @@ const userSchema = new mongoose.Schema({
       type: Date
     }
   },
+  openingBalance: {
+    type: Number,
+    default: 0
+  },
+  bankAccounts: [{
+    name: String,
+    balance: Number
+  }],
   // FCM tokens array - supports multiple devices (web + mobile)
   fcmTokens: [{ type: String }],
   fcmTokenMobile: [{ type: String }]

@@ -44,7 +44,6 @@ router.get('/subscriptions', getAdminSubscriptions);
 router.post('/subscriptions', createSubscriptionPlan);
 router.put('/subscriptions/:id', updateSubscriptionPlan);
 router.delete('/subscriptions/:id', deleteSubscriptionPlan);
-router.post('/impersonate/:id', impersonateUser);
 router.get('/revenue', getAdminRevenueData);
 router.get('/security', getAdminSecurityData);
 router.get('/tickets', getAdminTickets);

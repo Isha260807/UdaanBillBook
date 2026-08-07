@@ -8,6 +8,7 @@ const Payment = require('../models/Payment');
 const Item = require('../models/Item');
 const Party = require('../models/Party');
 const Expense = require('../models/Expense');
+const Journal = require('../models/Journal');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -99,11 +100,21 @@ const getAdminDashboardData = async (req, res) => {
       last6Months.push({ month: months[idx], revenue: 0, expenses: 0 });
     }
 
+    const allExpenses = await Expense.find({});
+
     allPayments.forEach(p => {
-      const pMonth = months[new Date(p.date).getMonth()];
+      const pMonth = months[new Date(p.date || p.createdAt).getMonth()];
       const chartItem = last6Months.find(item => item.month === pMonth);
       if (chartItem) {
-        chartItem.revenue += p.amount;
+        chartItem.revenue += (p.amount || 0);
+      }
+    });
+
+    allExpenses.forEach(e => {
+      const eMonth = months[new Date(e.date || e.createdAt).getMonth()];
+      const chartItem = last6Months.find(item => item.month === eMonth);
+      if (chartItem) {
+        chartItem.expenses += (e.amount || 0);
       }
     });
 
@@ -126,7 +137,7 @@ const getAdminDashboardData = async (req, res) => {
       allUsers
         .filter(u => u.role === 'vendor')
         .map(async (u, idx) => {
-          const userInvoices = allSales.filter(inv => inv.user.toString() === u._id.toString());
+          const userInvoices = allSales.filter(inv => inv.user && inv.user.toString() === u._id.toString());
           const rev = userInvoices.reduce((sum, inv) => sum + (inv.grandTotal || 0), 0);
           return {
             id: u._id,
@@ -145,7 +156,7 @@ const getAdminDashboardData = async (req, res) => {
     );
 
     const transactions = allPayments.slice(0, 6).map((p, idx) => {
-      const associatedUser = allUsers.find(u => u._id.toString() === p.user.toString());
+      const associatedUser = p.user ? allUsers.find(u => u._id.toString() === p.user.toString()) : null;
       return {
         id: p.referenceNumber || `TXN-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
         business: associatedUser?.businessName || "Walk-in Party",
@@ -213,15 +224,15 @@ const getAdminAnalyticsData = async (req, res) => {
     const expenseVendorsCount = await Expense.distinct('user');
     const partyVendorsCount = await Party.distinct('user');
     const itemVendorsCount = await Item.distinct('user');
+    const journalVendorsCount = await Journal.distinct('user');
 
     const featureUsage = [
       { feature: "Billing", usage: Math.round((billingVendorsCount.length / totalVendors) * 100) || 0 },
       { feature: "Parties", usage: Math.round((partyVendorsCount.length / totalVendors) * 100) || 0 },
       { feature: "Inventory", usage: Math.round((itemVendorsCount.length / totalVendors) * 100) || 0 },
       { feature: "Expenses", usage: Math.round((expenseVendorsCount.length / totalVendors) * 100) || 0 },
-      { feature: "GST", usage: totalVendors > 0 ? 10 : 0 }, 
-      { feature: "Reports", usage: totalVendors > 0 ? 15 : 0 },
-      { feature: "Accounting", usage: totalVendors > 0 ? 8 : 0 },
+      { feature: "Accounting", usage: Math.round((journalVendorsCount.length / totalVendors) * 100) || 0 },
+      { feature: "Reports", usage: Math.round((billingVendorsCount.length / totalVendors) * 100) || 0 }
     ];
 
     const allInvoices = await Invoice.find({ type: 'Sale' });
@@ -233,7 +244,7 @@ const getAdminAnalyticsData = async (req, res) => {
         geoMap[city] = { city, biz: 0, rev: 0 };
       }
       geoMap[city].biz++;
-      const userInvoices = allInvoices.filter(inv => inv.user.toString() === u._id.toString());
+      const userInvoices = allInvoices.filter(inv => inv.user && inv.user.toString() === u._id.toString());
       geoMap[city].rev += userInvoices.reduce((sum, inv) => sum + (inv.grandTotal || 0), 0);
     }
 
@@ -248,10 +259,11 @@ const getAdminAnalyticsData = async (req, res) => {
     const dauCount = allUsers.filter(u => ['vendor', 'admin', 'staff', 'user'].includes(u.role) && u.updatedAt >= oneDayAgo).length;
 
     const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const userEngagement = days.map((day, idx) => {
+    const userEngagement = days.map((day) => {
       const activeOnDay = allUsers.filter(u => {
         if (!['vendor', 'admin', 'staff', 'user'].includes(u.role)) return false;
-        const uDay = days[new Date(u.updatedAt).getDay()];
+        const dObj = new Date(u.updatedAt || u.createdAt || Date.now());
+        const uDay = isNaN(dObj.getTime()) ? days[0] : days[dObj.getDay()];
         return uDay === day;
       }).length;
       return {
@@ -265,26 +277,36 @@ const getAdminAnalyticsData = async (req, res) => {
     const trialCount = allUsers.filter(u => ['vendor', 'admin', 'staff', 'user'].includes(u.role) && (!u.subscription || u.subscription.plan === 'Free')).length;
 
     const conversionFunnel = [
-      { stage: "Visitors", value: totalUsersCount * 2 || 0, fill: "#3b82f6" },
+      { stage: "Visitors", value: totalUsersCount * 2 || 10, fill: "#3b82f6" },
       { stage: "Signups", value: totalUsersCount, fill: "#8b5cf6" },
       { stage: "Trial", value: trialCount, fill: "#f59e0b" },
       { stage: "Paid", value: paidCount, fill: "#10b981" },
     ];
 
-    const totalPaymentsAmount = (await Payment.find({ type: 'Payment In' })).reduce((sum, p) => sum + (p.amount || 0), 0);
-    const monthlyRevenue = totalPaymentsAmount;
-    
-    const forecastData = [
-      { m: "Jan", actual: Math.round(monthlyRevenue * 0.7) },
-      { m: "Feb", actual: Math.round(monthlyRevenue * 0.8) },
-      { m: "Mar", actual: Math.round(monthlyRevenue * 0.9) },
-      { m: "Apr", actual: Math.round(monthlyRevenue * 0.95) },
-      { m: "May", actual: Math.round(monthlyRevenue * 1.0) },
-      { m: "Jun", actual: monthlyRevenue },
-      { m: "Jul", forecast: Math.round(monthlyRevenue * 1.05) },
-      { m: "Aug", forecast: Math.round(monthlyRevenue * 1.1) },
-      { m: "Sep", forecast: Math.round(monthlyRevenue * 1.15) },
-    ];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const allPaymentsIn = await Payment.find({ type: 'Payment In' });
+    const currentMonthIdx = new Date().getMonth();
+
+    const forecastData = [];
+    for (let i = 5; i >= 0; i--) {
+      const mIdx = (currentMonthIdx - i + 12) % 12;
+      const mName = months[mIdx];
+      const mRev = allPaymentsIn
+        .filter(p => {
+          const pD = new Date(p.date || p.createdAt || Date.now());
+          return !isNaN(pD.getTime()) && pD.getMonth() === mIdx;
+        })
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+      forecastData.push({ m: mName, actual: mRev });
+    }
+
+    const avgRev = forecastData.reduce((sum, d) => sum + d.actual, 0) / (forecastData.length || 1);
+    for (let i = 1; i <= 3; i++) {
+      const fIdx = (currentMonthIdx + i) % 12;
+      const fName = months[fIdx];
+      const fRev = Math.round(avgRev * (1 + 0.05 * i));
+      forecastData.push({ m: fName, forecast: fRev });
+    }
 
     const sessionDuration = `${8 + (totalUsersCount % 5)}m ${15 + (totalUsersCount % 40)}s`;
     const conversionRate = totalUsersCount ? `${((paidCount / totalUsersCount) * 100).toFixed(1)}%` : "0.0%";
@@ -306,6 +328,7 @@ const getAdminAnalyticsData = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error("GET_ADMIN_ANALYTICS_ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -524,7 +547,7 @@ const getAdminRevenueData = async (req, res) => {
       const chartItem = last6Months.find(item => item.month === pMonth);
       if (chartItem) {
         // Find owner plan
-        const associatedUser = allUsers.find(u => u._id.toString() === p.user.toString());
+        const associatedUser = p.user ? allUsers.find(u => u._id.toString() === p.user.toString()) : null;
         if (associatedUser) {
           const plan = associatedUser.subscription?.plan || 'Free';
           const normalizedPlan = plan.charAt(0).toUpperCase() + plan.slice(1).toLowerCase();
@@ -540,7 +563,7 @@ const getAdminRevenueData = async (req, res) => {
 
     // Recent Transactions list
     const transactionsList = allPayments.map((p, idx) => {
-      const user = allUsers.find(u => u._id.toString() === p.user.toString());
+      const user = p.user ? allUsers.find(u => u._id.toString() === p.user.toString()) : null;
       return {
         id: p.referenceNumber || `TXN-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
         business: user?.businessName || user?.name || "Walk-in Party",

@@ -80,17 +80,22 @@ const activityIcons = {
 
 /* ──────── Custom Tooltip ──────── */
 function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload) return null;
+  if (!active || !payload || !payload.length) return null;
   return (
-    <div className="rounded-xl border border-white/10 px-4 py-3 text-xs shadow-2xl"
-      style={{ background: "oklch(0.22 0.04 257)" }}
-    >
-      <p className="font-semibold text-white mb-1">{label}</p>
-      {payload.map((entry, i) => (
-        <p key={i} style={{ color: entry.color }}>
-          {entry.name}: <span className="font-bold">{typeof entry.value === "number" && entry.value > 1000 ? fmt(entry.value) : entry.value}</span>
-        </p>
-      ))}
+    <div className="rounded-xl border border-slate-700 bg-slate-900/95 backdrop-blur-md px-3.5 py-2.5 text-xs shadow-2xl z-50">
+      {label && <p className="font-semibold text-slate-200 mb-1.5 border-b border-slate-800 pb-1">{label}</p>}
+      {payload.map((entry, i) => {
+        const itemColor = entry.color || entry.fill || entry.payload?.fill || "#38bdf8";
+        const itemName = entry.name || entry.payload?.name || "Count";
+        const itemVal = typeof entry.value === "number" && entry.value > 1000 ? fmt(entry.value) : entry.value;
+        return (
+          <div key={i} className="flex items-center gap-2 font-medium my-0.5">
+            <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0" style={{ backgroundColor: itemColor }} />
+            <span className="text-slate-300">{itemName}:</span>
+            <span className="font-bold text-white ml-auto">{itemVal}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -195,7 +200,7 @@ export function SADashboard() {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="oklch(1 0 0 / 6%)" />
               <XAxis dataKey="month" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 100000}L`} />
+              <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => v >= 100000 ? `₹${(v / 100000).toFixed(1)}L` : v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`} />
               <Tooltip content={<CustomTooltip />} />
               <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2.5} fill="url(#saRevGrad)" name="Revenue" />
               <Area type="monotone" dataKey="expenses" stroke="#f43f5e" strokeWidth={2} fill="url(#saExpGrad)" name="Expenses" />

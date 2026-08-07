@@ -8,6 +8,26 @@ const statusStyles = {
   Banned: "bg-rose-500/15 text-rose-400 border-rose-500/30",
 };
 
+const formatLastLogin = (lastLogin, createdAt) => {
+  const dateVal = lastLogin || createdAt;
+  if (!dateVal) return "N/A";
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return String(dateVal);
+
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 2) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
 export function UserManagementSA() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +100,12 @@ export function UserManagementSA() {
     return nameMatch || emailMatch || bizMatch;
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const totalPages = Math.ceil((filtered?.length || 0) / itemsPerPage) || 1;
+  const paginatedUsers = (filtered || []).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
@@ -115,7 +141,7 @@ export function UserManagementSA() {
       {/* Search */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-        <input type="text" placeholder="Search users by name, email, business..." value={search} onChange={e => setSearch(e.target.value)}
+        <input type="text" placeholder="Search users by name, email, business..." value={search} onChange={e => { setSearch(e.target.value); setCurrentPage(1); }}
           className="w-full h-10 rounded-xl pl-9 pr-4 text-sm bg-white/5 border border-white/10 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all" />
       </div>
 
@@ -131,7 +157,7 @@ export function UserManagementSA() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(u => (
+              {paginatedUsers.map(u => (
                 <tr key={u._id || u.id} className="border-b border-white/5 hover:bg-white/3 transition-colors">
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
@@ -171,7 +197,10 @@ export function UserManagementSA() {
                     </span>
                   </td>
                   <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-1.5 text-xs text-slate-500"><Clock className="h-3 w-3" />{u.lastLogin || (u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A")}</div>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                      <Clock className="h-3 w-3 text-emerald-400 shrink-0" />
+                      <span>{formatLastLogin(u.lastLogin, u.createdAt)}</span>
+                    </div>
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1.5 text-xs text-slate-500"><Monitor className="h-3 w-3" />{u.device || "Chrome / Windows"}</div>
@@ -192,14 +221,50 @@ export function UserManagementSA() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        <div className="flex items-center justify-between border-t border-white/8 px-4 py-3">
+          <span className="text-xs text-slate-500">
+            Showing {paginatedUsers.length} of {filtered.length} users
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+            >
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                className={`h-7 w-7 rounded-lg text-xs font-semibold transition-all ${
+                  p === currentPage
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* User Details Modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-2xl border border-white/10 overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" style={{ background: "oklch(0.19 0.035 257)" }}>
+          <div className="w-full max-w-lg max-h-[90vh] flex flex-col rounded-2xl border border-white/10 overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" style={{ background: "oklch(0.19 0.035 257)" }}>
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-white/8 shrink-0">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Users className="h-5 w-5 text-emerald-400" /> User Details
               </h3>
@@ -212,7 +277,7 @@ export function UserManagementSA() {
             </div>
             
             {/* Modal Body */}
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-6 overflow-y-auto flex-1">
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-500/15 text-lg font-bold text-blue-400">
                   {selectedUser.name.split(" ").map(w => w[0]).join("")}
@@ -327,7 +392,7 @@ export function UserManagementSA() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-white/8 flex justify-end">
+            <div className="px-6 py-4 border-t border-white/8 flex justify-end shrink-0 bg-slate-900/40">
               <button 
                 onClick={() => setSelectedUser(null)}
                 className="rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 text-sm font-semibold transition-colors"

@@ -6,11 +6,22 @@ import api from "@/lib/api";
 import { fmt } from "../data/mockData";
 
 function Tip({ active, payload, label }) {
-  if (!active || !payload) return null;
+  if (!active || !payload || !payload.length) return null;
   return (
-    <div className="rounded-xl border border-white/10 px-4 py-3 text-xs shadow-2xl" style={{ background: "oklch(0.22 0.04 257)" }}>
-      <p className="font-semibold text-white mb-1">{label}</p>
-      {payload.map((e, i) => <p key={i} style={{ color: e.color }}>{e.name}: <span className="font-bold">{e.value > 100 ? fmt(e.value) : e.value}</span></p>)}
+    <div className="rounded-xl border border-slate-700 bg-slate-900/95 backdrop-blur-md px-3.5 py-2.5 text-xs shadow-2xl z-50">
+      {label && <p className="font-semibold text-slate-200 mb-1.5 border-b border-slate-800 pb-1">{label}</p>}
+      {payload.map((e, i) => {
+        const itemColor = e.color || e.fill || e.payload?.fill || "#38bdf8";
+        const itemName = e.name || e.payload?.name || "Count";
+        const itemVal = typeof e.value === "number" && e.value > 100 ? fmt(e.value) : e.value;
+        return (
+          <div key={i} className="flex items-center gap-2 font-medium my-0.5">
+            <span className="w-2.5 h-2.5 rounded-full inline-block shrink-0" style={{ backgroundColor: itemColor }} />
+            <span className="text-slate-300">{itemName}:</span>
+            <span className="font-bold text-white ml-auto">{itemVal}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -41,8 +52,27 @@ export function PlatformAnalytics() {
     );
   }
 
-  const { geoData, featureUsage, userEngagement, conversionFunnel, forecastData, kpis } = data;
-  const totalBiz = geoData.reduce((s, g) => s + g.biz, 0);
+  if (!data) {
+    return (
+      <div className="flex h-96 flex-col items-center justify-center text-center space-y-4">
+        <p className="text-rose-400 font-semibold">Failed to load platform analytics data.</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-semibold transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  const geoData = data.geoData || [];
+  const featureUsage = data.featureUsage || [];
+  const userEngagement = data.userEngagement || [];
+  const conversionFunnel = data.conversionFunnel || [];
+  const forecastData = data.forecastData || [];
+  const kpis = data.kpis || { dau: 0, sessionDuration: "0m 0s", conversionRate: "0%", churnRate: "0%" };
+  const totalBiz = geoData.reduce((s, g) => s + (g.biz || 0), 0);
 
   return (
     <div className="space-y-6">

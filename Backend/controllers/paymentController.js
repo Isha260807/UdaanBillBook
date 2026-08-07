@@ -33,7 +33,7 @@ const createPayment = async (req, res) => {
 
     const payment = await Payment.create({
       user: ownerId,
-      party,
+      party: party || undefined,
       partyName,
       type,
       amount,

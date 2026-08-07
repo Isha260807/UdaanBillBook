@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { CreditCard, TrendingUp, Users, Check, Star, Edit2, Archive, X, Plus } from "lucide-react";
+import { CreditCard, TrendingUp, Users, Check, Star, Edit2, Archive, X, Plus, CheckCircle2 } from "lucide-react";
 import { fmt } from "../data/mockData";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -16,10 +16,11 @@ export function SubscriptionManager() {
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState(null);
+  const [featureInput, setFeatureInput] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     price: "",
-    features: "",
+    featuresList: [],
     popular: false,
     platforms: "Mobile + Desktop",
     description: "",
@@ -50,10 +51,11 @@ export function SubscriptionManager() {
 
   const handleOpenCreate = () => {
     setEditingPlan(null);
+    setFeatureInput("");
     setFormData({
       name: "",
       price: "",
-      features: "",
+      featuresList: [],
       popular: false,
       platforms: "Mobile + Desktop",
       description: "",
@@ -65,10 +67,11 @@ export function SubscriptionManager() {
 
   const handleOpenEdit = (plan) => {
     setEditingPlan(plan);
+    setFeatureInput("");
     setFormData({
       name: plan.name,
       price: plan.price.toString(),
-      features: plan.features.join("\n"),
+      featuresList: Array.isArray(plan.features) ? [...plan.features] : (plan.features ? plan.features.split("\n").filter(Boolean) : []),
       popular: plan.popular,
       platforms: plan.platforms,
       description: plan.description || "",
@@ -78,6 +81,27 @@ export function SubscriptionManager() {
     setIsOpen(true);
   };
 
+  const handleAddFeatureItem = () => {
+    const trimmed = featureInput.trim();
+    if (!trimmed) return;
+    if (formData.featuresList.some(f => f.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error("Feature already added to list");
+      return;
+    }
+    setFormData(prev => ({
+      ...prev,
+      featuresList: [...prev.featuresList, trimmed]
+    }));
+    setFeatureInput("");
+  };
+
+  const handleRemoveFeatureItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      featuresList: prev.featuresList.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!formData.name.trim() || formData.price === "") {
@@ -85,10 +109,15 @@ export function SubscriptionManager() {
       return;
     }
 
+    if (formData.featuresList.length === 0) {
+      toast.error("Please add at least one feature");
+      return;
+    }
+
     const payload = {
       name: formData.name.trim(),
       price: Number(formData.price),
-      features: formData.features.split("\n").map(f => f.trim()).filter(Boolean),
+      features: formData.featuresList,
       popular: formData.popular,
       platforms: formData.platforms,
       description: formData.description.trim(),
@@ -318,15 +347,55 @@ export function SubscriptionManager() {
               {/* Templates Access Selection Checkboxes Removed */}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">Features (One per line) *</label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Unlimited Invoices&#10;Advanced GST Reports&#10;Desktop Access"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono"
-                  value={formData.features}
-                  onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                />
+                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Plan Features List *</label>
+                <div className="flex gap-2 mb-3">
+                  <input
+                    type="text"
+                    placeholder="e.g. Unlimited Invoices, Advanced GST Reports..."
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 placeholder:text-slate-500"
+                    value={featureInput}
+                    onChange={(e) => setFeatureInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddFeatureItem();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddFeatureItem}
+                    className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold flex items-center gap-1 transition-colors shrink-0"
+                  >
+                    <Plus className="h-4 w-4" /> Add
+                  </button>
+                </div>
+
+                {/* Feature Tags List */}
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {formData.featuresList.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic border border-dashed border-white/10 rounded-xl p-3 text-center">
+                      No features added yet. Type a feature above and click "+ Add" or press Enter.
+                    </p>
+                  ) : (
+                    formData.featuresList.map((feature, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white group hover:border-emerald-500/30 transition-all">
+                        <span className="flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                          <span>{feature}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFeatureItem(idx)}
+                          className="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-rose-500/10 transition-colors"
+                          title="Remove Feature"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input

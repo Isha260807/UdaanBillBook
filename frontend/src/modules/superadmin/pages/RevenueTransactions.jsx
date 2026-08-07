@@ -33,6 +33,7 @@ function CustomTooltip({ active, payload, label }) {
 export function RevenueTransactions() {
   const [tab, setTab] = useState("overview");
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState({
     totalRevenue: 0,
     successRate: 100,
@@ -64,6 +65,37 @@ export function RevenueTransactions() {
   }
 
   const { totalRevenue, successRate, totalTransactions, revenueBreakdown, transactions } = data;
+  const itemsPerPage = 8;
+
+  const totalPages = Math.ceil((transactions?.length || 0) / itemsPerPage) || 1;
+  const paginatedTxns = (transactions || []).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handleExportCSV = () => {
+    if (!transactions || !transactions.length) {
+      toast.error("No transactions to export");
+      return;
+    }
+    const headers = ["Transaction ID", "Business Name", "Plan", "Amount (INR)", "Payment Method", "Status", "Date"];
+    const rows = transactions.map(t => [
+      `"${t.id || ''}"`,
+      `"${t.business || ''}"`,
+      `"${t.plan || ''}"`,
+      t.amount || 0,
+      `"${t.method || ''}"`,
+      `"${t.status || ''}"`,
+      `"${t.date || ''}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Revenue_Transactions_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("Revenue Transactions CSV exported successfully!");
+  };
 
   return (
     <div className="space-y-6">
@@ -74,7 +106,7 @@ export function RevenueTransactions() {
           <p className="text-sm text-slate-500 mt-1">Track platform revenue, payments, and financial health.</p>
         </div>
         <button className="rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 text-sm font-semibold transition-colors flex items-center gap-1.5"
-          onClick={() => toast.info("Exporting CSV...")}>
+          onClick={handleExportCSV}>
           <Download className="h-3.5 w-3.5" /> Export CSV
         </button>
       </div>
@@ -144,7 +176,7 @@ export function RevenueTransactions() {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((txn) => (
+              {paginatedTxns.map((txn) => (
                 <tr key={txn.id} className="border-b border-white/5 hover:bg-white/3 transition-colors">
                   <td className="px-4 py-3.5">
                     <code className="text-xs text-slate-300 font-mono">{txn.id}</code>
@@ -173,6 +205,42 @@ export function RevenueTransactions() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="flex items-center justify-between border-t border-white/8 px-4 py-3">
+          <span className="text-xs text-slate-500">
+            Showing {paginatedTxns.length} of {transactions.length} transactions
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+            >
+              Prev
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                onClick={() => setCurrentPage(p)}
+                className={`h-7 w-7 rounded-lg text-xs font-semibold transition-all ${
+                  p === currentPage
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              className="px-2.5 py-1 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:hover:bg-transparent transition-all"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
     </div>
