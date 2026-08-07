@@ -17,7 +17,7 @@ export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, n
             <img src="/udaan-logo-removebg-preview.png" alt="Udaan Logo" className="h-8 w-auto object-contain opacity-90 grayscale mb-2" />
           ) : null}
           {printSet.printCompanyName && (
-            <h1 className={`text-base font-extrabold uppercase ${activeColor.text}`}>
+            <h1 className="text-base font-extrabold uppercase" style={{ color: activeColor?.raw || '#1e293b' }}>
               {printSet.companyName || "KESHAV TRAVELS"}
             </h1>
           )}
@@ -28,7 +28,7 @@ export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, n
           )}
         </div>
         <div className="text-right space-y-1">
-          <span className={`text-[11px] font-black tracking-widest uppercase bg-slate-50 border px-3 py-1 rounded inline-block ${activeColor.text}`}>
+          <span className="text-[11px] font-black tracking-widest uppercase bg-slate-50 border px-3 py-1 rounded inline-block" style={{ color: activeColor?.raw || '#1e293b' }}>
             TAX INVOICE
           </span>
           <p className="font-mono text-[9px]">Invoice Number: <span className="font-bold">{meta.invoiceNumber}</span></p>
@@ -78,7 +78,7 @@ export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, n
       <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
         <table className="w-full text-left">
           <thead>
-            <tr className={`text-[9px] font-bold uppercase divide-x divide-white/10 ${activeColor.bgClass} text-white`}>
+            <tr className="text-[9px] font-bold uppercase divide-x divide-white/10 text-white" style={{ backgroundColor: activeColor?.raw || '#1e293b' }}>
               {activeColsInOrder.map((key) => {
                 if (key === "slNo") return <th key={key} className="p-1.5 text-center w-6">{colNames.slNo || "Sr."}</th>;
                 if (key === "itemName") return <th key={key} className="p-2.5 min-w-[80px]">{colNames.itemName || "Description"}</th>;

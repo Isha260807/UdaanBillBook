@@ -7,7 +7,7 @@ export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberT
   return (
     <div className="font-sans bg-slate-50/50 rounded-xl overflow-hidden border border-slate-200 text-slate-800 text-[10px] leading-snug shadow-sm flex flex-col">
       {/* Colored Header Block */}
-      <div className={`p-4 text-white ${activeColor.bgClass} flex flex-col sm:flex-row justify-between items-center gap-3 relative overflow-hidden`}>
+      <div className="p-4 text-white flex flex-col sm:flex-row justify-between items-center gap-3 relative overflow-hidden" style={{ backgroundColor: activeColor?.raw || '#4f46e5' }}>
         <div className="space-y-1 text-center sm:text-left flex flex-col sm:flex-row items-center gap-3 z-10">
           {(printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl) ? (
             <img src={printSet.logoUrl || invoice?.logoUrl || invoice?.sellerDetails?.logoUrl} alt="Logo" className="max-h-10 max-w-[100px] object-contain bg-white/20 p-1 rounded-md" style={{ maxHeight: '40px', maxWidth: '100px', width: 'auto', height: 'auto' }} />
@@ -40,7 +40,7 @@ export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberT
         {/* Customer and Invoice details row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="bg-white border rounded-lg p-2.5 shadow-sm space-y-1">
-            <h4 className={`text-[9px] font-extrabold uppercase tracking-widest ${activeColor.text}`}>Customer Details</h4>
+            <h4 className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: activeColor?.raw || '#4f46e5' }}>Customer Details</h4>
             <p className="font-bold text-slate-900 text-xs">{meta.billingName || customer}</p>
             {meta.billingName && <p className="text-slate-500 text-[9px] font-semibold mb-0.5">M/s: {customer}</p>}
             {meta.billedToAddress && <p className="text-slate-500 text-[9px]">{meta.billedToAddress}</p>}
@@ -136,7 +136,7 @@ export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberT
         {/* Dynamic rounded table */}
         <div className="border border-slate-200 rounded-lg overflow-hidden shadow-sm bg-white">
           <div className="overflow-x-auto"><table className="w-full text-left text-[8px]">
-            <thead className={`${activeColor.bgClass} text-white text-[8px] uppercase font-bold`}>
+            <thead className="text-white text-[8px] uppercase font-bold" style={{ backgroundColor: activeColor?.raw || '#4f46e5' }}>
               <tr className="divide-x divide-white/10">
                 {activeColsInOrder.map((key) => {
                   if (key === "slNo") return <th key={key} className="p-1.5 text-center w-6">{colNames.slNo || "Sr."}</th>;

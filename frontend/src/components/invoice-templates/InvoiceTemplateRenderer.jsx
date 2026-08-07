@@ -127,8 +127,18 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
     { id: "rose", raw: "#e11d48", class: "text-rose-700", bgClass: "bg-rose-700" }
   ];
 
-  const themeColor = effectivePrintSet?.themeColor || invoice?.themeColor || "slate";
-  const activeColor = colors.find(c => c.id === themeColor) || colors[0];
+  const rawColor = effectivePrintSet?.themeColor || effectivePrintSet?.activeColor || invoice?.themeColor || invoice?.activeColor || "#a855f7";
+  const hexValue = (typeof rawColor === 'object' && rawColor.raw) ? rawColor.raw : (String(rawColor).startsWith('#') ? rawColor : '#a855f7');
+  const matched = colors.find(c => c.id === rawColor || c.raw.toLowerCase() === hexValue.toLowerCase());
+
+  const activeColor = matched || {
+    id: "custom",
+    raw: hexValue,
+    text: "",
+    bgClass: "",
+    style: { color: hexValue },
+    bgStyle: { backgroundColor: hexValue }
+  };
 
   const aToWords = (amount) => {
     if (!amount || isNaN(amount) || amount === 0) return "Zero";
