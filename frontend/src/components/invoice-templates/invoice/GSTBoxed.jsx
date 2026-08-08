@@ -92,8 +92,7 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
         </div>
       </div>
 
-      {/* Title */}
-      <div className={`border-b border-slate-800 text-center font-bold py-1 bg-slate-50 uppercase tracking-widest ${activeColor.text} ${getInvoiceSizeClass(textSz, "text-[11px]")}`}>
+      <div className={`border-b border-slate-800 text-center font-bold py-1 bg-slate-50 uppercase tracking-widest ${getInvoiceSizeClass(textSz, "text-[11px]")}`} style={{ color: activeColor?.raw || '#1e293b' }}>
         {getTransactionTitle(invoice, printSet, gstSet)}
       </div>
       {gstSet.compositeScheme && !(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") && (

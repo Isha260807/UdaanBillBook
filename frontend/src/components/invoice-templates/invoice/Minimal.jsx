@@ -22,7 +22,7 @@ export function MinimalTemplate({ invoice, printSet, gstSet, activeColor, number
           <span className="text-[9px] text-slate-500">GSTIN: {gstSet.gstin || "07AQXPD2556K2ZB"}</span>
         </div>
         <div className="text-right">
-          <p className={`font-extrabold uppercase text-[11px] ${activeColor.text}`}>TAX INVOICE</p>
+          <p className="font-extrabold uppercase text-[11px]" style={{ color: activeColor?.raw || '#1e293b' }}>TAX INVOICE</p>
           <p>INV NO: {meta.invoiceNumber}</p>
           <p>DATE: {meta.date}</p>
           {meta.poNumber && <p>P.O. NO: {meta.poNumber}</p>}

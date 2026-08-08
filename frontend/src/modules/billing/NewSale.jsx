@@ -2079,29 +2079,40 @@ export default function NewSale() {
             </h3>
 
             {/* Desktop Template Selector */}
-            <div className="hidden md:flex flex-wrap gap-2.5">
+            <div className="hidden md:flex flex-wrap gap-2">
               {(isEwayMode ? [
-                { id: "Green E-Way", name: "Green E-Way" },
                 { id: "Official E-Way", name: "Official E-Way" },
+                { id: "Green E-Way", name: "Green E-Way" },
                 { id: "Minimal E-Way", name: "Minimal E-Way" }
               ] : [
-                { id: "GST Boxed", name: "Standard (Boxed)" },
-                { id: "Classic White", name: "Classic" },
-                { id: "Modern Blue", name: "Modern" },
-                { id: "Minimalist", name: "Minimal" },
-                { id: "Professional", name: "Professional" }
-              ]).map((tpl) => (
-                <button
-                  key={tpl.id}
-                  onClick={() => setInvoiceTemplate(tpl.id)}
-                  className={`h-8 px-4 rounded-xl text-[11px] font-bold transition-all border ${invoiceTemplate === tpl.id
-                      ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
+                { id: "Standard (Boxed)", name: "Standard (Boxed)" },
+                { id: "Classic", name: "Classic" },
+                { id: "Modern", name: "Modern" },
+                { id: "Minimal", name: "Minimal" },
+                { id: "Professional", name: "Professional" },
+                { id: "Business Plus", name: "Business Plus" },
+                { id: "Corporate Pro", name: "Corporate Pro" }
+              ]).map((tpl) => {
+                const isActive = invoiceTemplate === tpl.id || 
+                  (tpl.id === "Standard (Boxed)" && invoiceTemplate === "GST Boxed") ||
+                  (tpl.id === "Classic" && invoiceTemplate === "Classic White") ||
+                  (tpl.id === "Modern" && invoiceTemplate === "Modern Blue") ||
+                  (tpl.id === "Minimal" && invoiceTemplate === "Minimalist");
+
+                return (
+                  <button
+                    key={tpl.id}
+                    onClick={() => setInvoiceTemplate(tpl.id)}
+                    className={`h-7 px-3 rounded-xl text-[10px] font-bold transition-all border cursor-pointer ${
+                      isActive
+                        ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
                     }`}
-                >
-                  {tpl.name}
-                </button>
-              ))}
+                  >
+                    {tpl.name}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Mobile Template Selector Dropdown */}
@@ -2110,21 +2121,23 @@ export default function NewSale() {
               <select
                 value={invoiceTemplate}
                 onChange={(e) => setInvoiceTemplate(e.target.value)}
-                className="h-7 sm:h-8 px-2 w-36 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                className="h-7 sm:h-8 px-2 w-44 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
               >
                 {isEwayMode ? (
                   <>
-                    <option value="Green E-Way">Green E-Way</option>
                     <option value="Official E-Way">Official E-Way</option>
+                    <option value="Green E-Way">Green E-Way</option>
                     <option value="Minimal E-Way">Minimal E-Way</option>
                   </>
                 ) : (
                   <>
-                    <option value="GST Boxed">Standard (Boxed)</option>
-                    <option value="Classic White">Classic</option>
-                    <option value="Modern Blue">Modern</option>
-                    <option value="Minimalist">Minimal</option>
+                    <option value="Standard (Boxed)">Standard (Boxed)</option>
+                    <option value="Classic">Classic</option>
+                    <option value="Modern">Modern</option>
+                    <option value="Minimal">Minimal</option>
                     <option value="Professional">Professional</option>
+                    <option value="Business Plus">Business Plus</option>
+                    <option value="Corporate Pro">Corporate Pro</option>
                   </>
                 )}
               </select>

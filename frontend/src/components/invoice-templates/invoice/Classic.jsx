@@ -6,8 +6,7 @@ export function ClassicTemplate({ invoice, printSet, gstSet, activeColor, number
   const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet);
   return (
     <div className="font-serif bg-white p-4 border border-slate-200 text-slate-800 text-[10px] leading-snug shadow-sm">
-      {/* Title */}
-      <div className={`text-center font-bold tracking-widest text-sm mb-2 border-b pb-1 ${activeColor.text}`}>
+      <div className="text-center font-bold tracking-widest text-sm mb-2 border-b pb-1" style={{ color: activeColor?.raw || '#1e293b' }}>
         TAX INVOICE
       </div>
 

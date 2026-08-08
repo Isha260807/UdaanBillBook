@@ -446,9 +446,9 @@ export function PrintSettingsTab({ settings, updateSettings, isMobile }) {
                     date: new Date().toISOString()
                   }}
                   printSettings={print}
-                  templateName={print.themeName || print.invoiceTemplate || "GST Boxed"}
-                  themeColor={print.themeColor || print.activeColor || "#a855f7"}
-                  activeColor={print.themeColor || print.activeColor || "#a855f7"}
+                  templateName={print.themeName || print.invoiceTemplate || "Standard (Boxed)"}
+                  themeColor={print.themeColor || print.activeColor || "#0ea5e9"}
+                  activeColor={print.themeColor || print.activeColor || "#0ea5e9"}
                   numberToWords={(val) => "Forty Five Rupees and Eighty Paisa only"}
                 />
               </div>

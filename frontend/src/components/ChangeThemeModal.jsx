@@ -2,24 +2,34 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, LayoutTemplate, Palette, Sparkles } from "lucide-react";
+import { Check, LayoutTemplate, Palette, Sparkles, FileText, Truck } from "lucide-react";
 import { InvoiceTemplateRenderer } from "@/components/invoice-templates/InvoiceTemplateRenderer";
+import { TEMPLATES } from "@/components/invoice-templates/registry";
 import { toast } from "sonner";
 
-const TEMPLATE_OPTIONS = [
-  { id: "GST Boxed", name: "GST Boxed", desc: "Standard boxed GST accounting layout" },
-  { id: "Classic White", name: "Classic White", desc: "Clean & traditional bill design" },
-  { id: "Modern Blue", name: "Modern Blue", desc: "Sleek modern layout with header accent" },
-  { id: "Minimalist", name: "Minimalist", desc: "Simple, elegant & minimal design" },
-  { id: "Business Plus", name: "Business Plus", desc: "Detailed corporate business invoice" },
-  { id: "Corporate Pro", name: "Corporate Pro", desc: "Executive corporate template" },
-  { id: "Retail Simple", name: "Retail Simple", desc: "Compact retail style bill" },
-  { id: "Professional", name: "Professional", desc: "Premium professional invoice design" }
-];
+const INVOICE_DESCRIPTIONS = {
+  "Standard (Boxed)": "Standard boxed GST accounting layout with grid borders",
+  "GST Boxed": "Standard boxed GST accounting layout with grid borders",
+  "Classic": "Clean & traditional bill design for standard retail",
+  "Classic White": "Clean & traditional bill design for standard retail",
+  "Modern": "Sleek modern layout with header color accent",
+  "Modern Blue": "Sleek modern layout with header color accent",
+  "Minimal": "Simple, elegant & minimal typography layout",
+  "Minimalist": "Simple, elegant & minimal typography layout",
+  "Professional": "Premium executive corporate invoice design",
+  "Business Plus": "Detailed corporate business invoice format",
+  "Corporate Pro": "Executive corporate enterprise template"
+};
+
+const EWAY_DESCRIPTIONS = {
+  "Official E-Way": "Government official standard E-Way Bill layout",
+  "Green E-Way": "Eco-green styled clean E-Way Bill format",
+  "Minimal E-Way": "Compact minimalist E-Way Bill summary"
+};
 
 const COLOR_OPTIONS = [
-  { hex: "#a855f7", name: "Royal Purple" },
   { hex: "#0ea5e9", name: "Ocean Blue" },
+  { hex: "#a855f7", name: "Royal Purple" },
   { hex: "#10b981", name: "Emerald Green" },
   { hex: "#ef4444", name: "Crimson Red" },
   { hex: "#f59e0b", name: "Warm Amber" },
@@ -31,18 +41,29 @@ const COLOR_OPTIONS = [
 ];
 
 export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) {
-  const currentTheme = settings?.printSettings?.themeName || settings?.printSettings?.invoiceTemplate || "GST Boxed";
-  const currentColor = settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || "#a855f7";
+  const currentTheme = settings?.printSettings?.themeName || settings?.printSettings?.invoiceTemplate || "Standard (Boxed)";
+  const currentColor = settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || "#0ea5e9";
 
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [selectedColor, setSelectedColor] = useState(currentColor);
+  const [activeTab, setActiveTab] = useState("INVOICE");
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedTheme(settings?.printSettings?.themeName || settings?.printSettings?.invoiceTemplate || "GST Boxed");
-      setSelectedColor(settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || "#a855f7");
+      const theme = settings?.printSettings?.themeName || settings?.printSettings?.invoiceTemplate || "Standard (Boxed)";
+      setSelectedTheme(theme);
+      setSelectedColor(settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || "#0ea5e9");
+
+      if (Object.keys(TEMPLATES.EWAY || {}).includes(theme)) {
+        setActiveTab("EWAY");
+      } else {
+        setActiveTab("INVOICE");
+      }
     }
   }, [isOpen, settings]);
+
+  const invoiceTemplateKeys = Object.keys(TEMPLATES.INVOICE || {}).filter(k => !["GST Boxed", "Classic White", "Modern Blue", "Minimalist", "Custom HTML"].includes(k));
+  const ewayTemplateKeys = Object.keys(TEMPLATES.EWAY || {});
 
   const handleApply = () => {
     updateSettings("printSettings", {
@@ -51,7 +72,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
       themeColor: selectedColor,
       activeColor: selectedColor,
     });
-    toast.success(`Invoice theme updated to ${selectedTheme}`);
+    toast.success(`Template updated to ${selectedTheme}`);
     onClose();
   };
 
@@ -91,58 +112,120 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold text-foreground">Transaction Theme & Colors</DialogTitle>
-              <p className="text-xs text-muted-foreground">Select invoice template layout and accent color scheme</p>
+              <DialogTitle className="text-lg font-bold text-foreground">Transaction Theme & Templates</DialogTitle>
+              <p className="text-xs text-muted-foreground">Select layout templates for Invoice and E-Way Bill</p>
             </div>
           </div>
         </DialogHeader>
 
         {/* Modal Body */}
         <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
-          {/* Left Panel: Template & Color Options */}
+          {/* Left Panel: Category Tabs & Template List */}
           <div className="lg:col-span-5 border-r flex flex-col h-full bg-slate-50/50 overflow-hidden">
+            {/* Category Switcher Tabs */}
+            <div className="p-3 border-b bg-white flex gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setActiveTab("INVOICE")}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeTab === "INVOICE"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                Invoice Templates ({invoiceTemplateKeys.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("EWAY")}
+                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                  activeTab === "EWAY"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                <Truck className="h-3.5 w-3.5" />
+                E-Way Bill ({ewayTemplateKeys.length})
+              </button>
+            </div>
+
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-6">
-                {/* Section 1: Accent Color Palette */}
-                <div className="space-y-3">
+                {/* Section 1: Color Palette */}
+                <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
                     <Palette className="h-4 w-4 text-primary" />
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Theme Colors</h3>
                   </div>
-                  <div className="grid grid-cols-5 gap-2.5 bg-white p-3 rounded-xl border shadow-sm">
-                    {COLOR_OPTIONS.map((c) => {
-                      const isSelected = selectedColor === c.hex;
-                      return (
-                        <button
-                          key={c.hex}
-                          type="button"
-                          title={c.name}
-                          onClick={() => setSelectedColor(c.hex)}
-                          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                            isSelected ? "ring-2 ring-primary ring-offset-2 scale-105 shadow-md" : "hover:scale-105 opacity-90"
-                          }`}
-                          style={{ backgroundColor: c.hex }}
-                        >
-                          {isSelected && <Check className="w-4 h-4 text-white drop-shadow-md" />}
-                        </button>
-                      );
-                    })}
+                  <div className="bg-white p-3 rounded-xl border shadow-sm space-y-2.5">
+                    <div className="grid grid-cols-5 gap-2">
+                      {COLOR_OPTIONS.map((c) => {
+                        const isSelected = selectedColor.toLowerCase() === c.hex.toLowerCase();
+                        return (
+                          <button
+                            key={c.hex}
+                            type="button"
+                            title={c.name}
+                            onClick={() => setSelectedColor(c.hex)}
+                            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                              isSelected ? "ring-2 ring-primary ring-offset-2 scale-105 shadow-md" : "hover:scale-105 opacity-90"
+                            }`}
+                            style={{ backgroundColor: c.hex }}
+                          >
+                            {isSelected && <Check className="w-4 h-4 text-white drop-shadow-md" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Custom Hex Color Code Input & Native Picker */}
+                    <div className="pt-2 border-t flex items-center gap-2">
+                      <div className="relative w-8 h-8 rounded-full border border-slate-300 shadow-sm overflow-hidden shrink-0 cursor-pointer" title="Pick Custom Color">
+                        <input
+                          type="color"
+                          value={selectedColor.startsWith('#') && selectedColor.length === 7 ? selectedColor : '#0ea5e9'}
+                          onChange={(e) => setSelectedColor(e.target.value)}
+                          className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer border-0 p-0"
+                        />
+                      </div>
+                      <div className="flex-1 relative">
+                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-slate-400">#</span>
+                        <input
+                          type="text"
+                          placeholder="0EA5E9"
+                          value={selectedColor.startsWith('#') ? selectedColor.slice(1) : selectedColor}
+                          onChange={(e) => {
+                            const val = e.target.value.trim().replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
+                            setSelectedColor(`#${val}`);
+                          }}
+                          className="w-full h-8 pl-6 pr-2 rounded-lg border border-slate-200 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-1 focus:ring-primary bg-slate-50/50"
+                          maxLength={6}
+                        />
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-500 whitespace-nowrap">Color Code</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Section 2: Invoice Template Layouts */}
-                <div className="space-y-3">
+                {/* Section 2: Templates List */}
+                <div className="space-y-2.5">
                   <div className="flex items-center gap-2">
                     <LayoutTemplate className="h-4 w-4 text-primary" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Invoice Design Templates</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {activeTab === "INVOICE" ? "Invoice Design Templates" : "E-Way Bill Templates"}
+                    </h3>
                   </div>
+
                   <div className="space-y-2">
-                    {TEMPLATE_OPTIONS.map((tmpl) => {
-                      const isSelected = selectedTheme === tmpl.id;
+                    {(activeTab === "INVOICE" ? invoiceTemplateKeys : ewayTemplateKeys).map((tmplKey) => {
+                      const isSelected = selectedTheme === tmplKey;
+                      const desc = INVOICE_DESCRIPTIONS[tmplKey] || EWAY_DESCRIPTIONS[tmplKey] || "Standard template format";
                       return (
                         <div
-                          key={tmpl.id}
-                          onClick={() => setSelectedTheme(tmpl.id)}
+                          key={tmplKey}
+                          onClick={() => setSelectedTheme(tmplKey)}
                           className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                             isSelected 
                               ? "bg-primary/5 border-primary shadow-sm ring-1 ring-primary/30" 
@@ -150,8 +233,8 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
                           }`}
                         >
                           <div className="space-y-0.5">
-                            <p className={`text-xs font-bold ${isSelected ? "text-primary" : "text-slate-800"}`}>{tmpl.name}</p>
-                            <p className="text-[11px] text-muted-foreground">{tmpl.desc}</p>
+                            <p className={`text-xs font-bold ${isSelected ? "text-primary" : "text-slate-800"}`}>{tmplKey}</p>
+                            <p className="text-[11px] text-muted-foreground">{desc}</p>
                           </div>
                           {isSelected && (
                             <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
@@ -178,6 +261,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
               <div className="w-full max-w-[750px] transform origin-top scale-[0.82]">
                 <InvoiceTemplateRenderer
                   invoice={mockInvoice}
+                  documentType={activeTab === "EWAY" ? "EWAY" : "INVOICE"}
                   printSettings={{
                     ...settings?.printSettings,
                     themeName: selectedTheme,
@@ -197,7 +281,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
         {/* Footer */}
         <DialogFooter className="p-3 border-t bg-white flex flex-row items-center justify-between shrink-0">
           <div className="text-xs text-muted-foreground flex items-center gap-2 pl-2">
-            <span>Selected Color:</span>
+            <span>Selected Theme:</span>
             <span className="h-3.5 w-3.5 rounded-full border shadow-sm inline-block" style={{ backgroundColor: selectedColor }}></span>
             <span className="font-bold text-slate-700">{selectedTheme}</span>
           </div>
