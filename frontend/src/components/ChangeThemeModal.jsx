@@ -18,11 +18,14 @@ const INVOICE_DESCRIPTIONS = {
   "Minimalist": "Simple, elegant & minimal typography layout",
   "Professional": "Premium executive corporate invoice design",
   "Business Plus": "Detailed corporate business invoice format",
-  "Corporate Pro": "Executive corporate enterprise template"
+  "Corporate Pro": "Executive corporate enterprise template",
+  "Vyapar Red": "Sleek red header bill template with bottom total box",
+  "Vyapar Purple": "Tax Invoice with Acknowledgement slip & purple theme"
 };
 
 const EWAY_DESCRIPTIONS = {
   "Official E-Way": "Government official standard E-Way Bill layout",
+  "Official Yellow E-Way": "Standard yellow-green official e-Way Bill template",
   "Green E-Way": "Eco-green styled clean E-Way Bill format",
   "Minimal E-Way": "Compact minimalist E-Way Bill summary"
 };

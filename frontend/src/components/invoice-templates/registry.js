@@ -5,10 +5,13 @@ import { MinimalTemplate } from "./invoice/Minimal";
 import { BusinessTemplate } from "./invoice/Business";
 import { CorporateTemplate } from "./invoice/Corporate";
 import { ProfessionalTemplate } from "./invoice/Professional";
+import { VyaparRedTemplate } from "./invoice/VyaparRed";
+import { VyaparPurpleTemplate } from "./invoice/VyaparPurple";
 import { CustomHTMLTemplate } from "./invoice/CustomHTML";
 import { OfficialEWay } from "./eway/OfficialEWay";
 import { GreenEWay } from "./eway/GreenEWay";
 import { MinimalEWay } from "./eway/MinimalEWay";
+import { OfficialYellowEWay } from "./eway/OfficialYellowEWay";
 
 export const TEMPLATES = {
   INVOICE: {
@@ -23,10 +26,13 @@ export const TEMPLATES = {
     "Professional": { component: ProfessionalTemplate, sizes: ["A4"] },
     "Business Plus": { component: BusinessTemplate, sizes: ["A4", "A5"] },
     "Corporate Pro": { component: CorporateTemplate, sizes: ["A4"] },
+    "Vyapar Red": { component: VyaparRedTemplate, sizes: ["A4"] },
+    "Vyapar Purple": { component: VyaparPurpleTemplate, sizes: ["A4"] },
     "Custom HTML": { component: CustomHTMLTemplate, sizes: ["A4"] }
   },
   EWAY: {
     "Official E-Way": { component: OfficialEWay, sizes: ["A4"] },
+    "Official Yellow E-Way": { component: OfficialYellowEWay, sizes: ["A4"] },
     "Green E-Way": { component: GreenEWay, sizes: ["A4"] },
     "Minimal E-Way": { component: MinimalEWay, sizes: ["A4"] }
   }

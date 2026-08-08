@@ -371,7 +371,7 @@ export default function NewSale() {
     return () => ro.disconnect();
   }, [activePane]); // re-run when switching to preview pane
 
-  const isEwayMode = ["E way bill", "Green E-Way", "Minimal E-Way", "Official E-Way"].includes(invoiceTemplate);
+  const isEwayMode = ["E way bill", "Green E-Way", "Minimal E-Way", "Official E-Way", "Official Yellow E-Way"].includes(invoiceTemplate);
 
   useEffect(() => {
     if (searchParams.get("ewaybill") === "true") {
@@ -2082,6 +2082,7 @@ export default function NewSale() {
             <div className="hidden md:flex flex-wrap gap-2">
               {(isEwayMode ? [
                 { id: "Official E-Way", name: "Official E-Way" },
+                { id: "Official Yellow E-Way", name: "Yellow E-Way" },
                 { id: "Green E-Way", name: "Green E-Way" },
                 { id: "Minimal E-Way", name: "Minimal E-Way" }
               ] : [
@@ -2091,7 +2092,9 @@ export default function NewSale() {
                 { id: "Minimal", name: "Minimal" },
                 { id: "Professional", name: "Professional" },
                 { id: "Business Plus", name: "Business Plus" },
-                { id: "Corporate Pro", name: "Corporate Pro" }
+                { id: "Corporate Pro", name: "Corporate Pro" },
+                { id: "Vyapar Red", name: "Vyapar Red" },
+                { id: "Vyapar Purple", name: "Vyapar Purple" }
               ]).map((tpl) => {
                 const isActive = invoiceTemplate === tpl.id || 
                   (tpl.id === "Standard (Boxed)" && invoiceTemplate === "GST Boxed") ||
@@ -2126,6 +2129,7 @@ export default function NewSale() {
                 {isEwayMode ? (
                   <>
                     <option value="Official E-Way">Official E-Way</option>
+                    <option value="Official Yellow E-Way">Yellow E-Way</option>
                     <option value="Green E-Way">Green E-Way</option>
                     <option value="Minimal E-Way">Minimal E-Way</option>
                   </>
@@ -2138,6 +2142,8 @@ export default function NewSale() {
                     <option value="Professional">Professional</option>
                     <option value="Business Plus">Business Plus</option>
                     <option value="Corporate Pro">Corporate Pro</option>
+                    <option value="Vyapar Red">Vyapar Red</option>
+                    <option value="Vyapar Purple">Vyapar Purple</option>
                   </>
                 )}
               </select>
