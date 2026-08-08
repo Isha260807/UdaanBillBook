@@ -5,12 +5,11 @@ export function VyaparPurpleTemplate({ invoice, printSet, gstSet, activeColor, n
   const { customer, lines, totals, meta, paymentDetails, shippingDetails } = invoice;
   const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet);
 
-  // By default use original template's signature Purple color (#4a3556 & #e8e1ef)
-  const vendorColor = printSet?.themeColor || printSet?.activeColor || activeColor?.hex || activeColor?.raw;
-  const isExplicitCustom = Boolean(vendorColor && vendorColor !== "#0ea5e9");
-
-  const primaryColor = isExplicitCustom ? vendorColor : "#4a3556"; // Default Purple
-  const lightPurple = isExplicitCustom ? `${vendorColor}1f` : "#e8e1ef"; // Default Light Purple strip
+  // Strictly use custom color for "Vyapar Purple" if configured in templateColors, otherwise default to signature Purple (#4a3556 & #e8e1ef)
+  const specificColor = printSet?.templateColors?.["Vyapar Purple"] || (activeColor?.raw && activeColor.raw !== "#0ea5e9" && printSet?.themeName === "Vyapar Purple" ? activeColor.raw : null);
+  
+  const primaryColor = specificColor || "#4a3556"; // Default Purple
+  const lightPurple = specificColor ? `${specificColor}1f` : "#e8e1ef"; // Default Light Purple strip
 
   return (
     <div className="font-sans bg-white border border-slate-300 text-slate-800 text-[10px] leading-tight shadow-sm flex flex-col p-4 space-y-3">

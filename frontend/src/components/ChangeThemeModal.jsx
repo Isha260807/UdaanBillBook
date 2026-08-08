@@ -43,19 +43,41 @@ const COLOR_OPTIONS = [
   { hex: "#059669", name: "Forest Green" }
 ];
 
+const DEFAULT_TEMPLATE_COLORS = {
+  "Standard (Boxed)": "#1e293b",
+  "Classic": "#0ea5e9",
+  "Modern": "#4f46e5",
+  "Minimal": "#64748b",
+  "Professional": "#10b981",
+  "Business Plus": "#a855f7",
+  "Corporate Pro": "#1e293b",
+  "Vyapar Red": "#8d2b2b",
+  "Vyapar Purple": "#4a3556",
+  "Official E-Way": "#059669",
+  "Official Yellow E-Way": "#e3ec9c",
+  "Green E-Way": "#10b981",
+  "Minimal E-Way": "#64748b"
+};
+
 export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) {
   const currentTheme = settings?.printSettings?.themeName || settings?.printSettings?.invoiceTemplate || "Standard (Boxed)";
-  const currentColor = settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || "#0ea5e9";
+  const savedTemplateColors = settings?.printSettings?.templateColors || {};
+  const currentColor = savedTemplateColors[currentTheme] || settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || DEFAULT_TEMPLATE_COLORS[currentTheme] || "#0ea5e9";
 
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
   const [selectedColor, setSelectedColor] = useState(currentColor);
+  const [templateColors, setTemplateColors] = useState(savedTemplateColors);
   const [activeTab, setActiveTab] = useState("INVOICE");
 
   useEffect(() => {
     if (isOpen) {
       const theme = settings?.printSettings?.themeName || settings?.printSettings?.invoiceTemplate || "Standard (Boxed)";
+      const colorsMap = settings?.printSettings?.templateColors || {};
+      const color = colorsMap[theme] || settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || DEFAULT_TEMPLATE_COLORS[theme] || "#0ea5e9";
+      
       setSelectedTheme(theme);
-      setSelectedColor(settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || "#0ea5e9");
+      setSelectedColor(color);
+      setTemplateColors(colorsMap);
 
       if (Object.keys(TEMPLATES.EWAY || {}).includes(theme)) {
         setActiveTab("EWAY");
@@ -68,12 +90,32 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
   const invoiceTemplateKeys = Object.keys(TEMPLATES.INVOICE || {}).filter(k => !["GST Boxed", "Classic White", "Modern Blue", "Minimalist", "Custom HTML"].includes(k));
   const ewayTemplateKeys = Object.keys(TEMPLATES.EWAY || {});
 
+  const handleSelectTemplate = (tmplKey) => {
+    setSelectedTheme(tmplKey);
+    const colorForTmpl = templateColors[tmplKey] || DEFAULT_TEMPLATE_COLORS[tmplKey] || "#0ea5e9";
+    setSelectedColor(colorForTmpl);
+  };
+
+  const handleSelectColor = (hex) => {
+    setSelectedColor(hex);
+    setTemplateColors(prev => ({
+      ...prev,
+      [selectedTheme]: hex
+    }));
+  };
+
   const handleApply = () => {
+    const updatedMap = {
+      ...templateColors,
+      [selectedTheme]: selectedColor
+    };
+
     updateSettings("printSettings", {
       themeName: selectedTheme,
       invoiceTemplate: selectedTheme,
       themeColor: selectedColor,
       activeColor: selectedColor,
+      templateColors: updatedMap
     });
     toast.success(`Template updated to ${selectedTheme}`);
     onClose();
@@ -171,7 +213,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
                             key={c.hex}
                             type="button"
                             title={c.name}
-                            onClick={() => setSelectedColor(c.hex)}
+                            onClick={() => handleSelectColor(c.hex)}
                             className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                               isSelected ? "ring-2 ring-primary ring-offset-2 scale-105 shadow-md" : "hover:scale-105 opacity-90"
                             }`}
@@ -189,7 +231,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
                         <input
                           type="color"
                           value={selectedColor.startsWith('#') && selectedColor.length === 7 ? selectedColor : '#0ea5e9'}
-                          onChange={(e) => setSelectedColor(e.target.value)}
+                          onChange={(e) => handleSelectColor(e.target.value)}
                           className="absolute -top-2 -left-2 w-12 h-12 cursor-pointer border-0 p-0"
                         />
                       </div>
@@ -201,7 +243,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
                           value={selectedColor.startsWith('#') ? selectedColor.slice(1) : selectedColor}
                           onChange={(e) => {
                             const val = e.target.value.trim().replace(/[^0-9A-Fa-f]/g, '').slice(0, 6);
-                            setSelectedColor(`#${val}`);
+                            handleSelectColor(`#${val}`);
                           }}
                           className="w-full h-8 pl-6 pr-2 rounded-lg border border-slate-200 text-xs font-mono font-bold uppercase focus:outline-none focus:ring-1 focus:ring-primary bg-slate-50/50"
                           maxLength={6}
@@ -228,7 +270,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
                       return (
                         <div
                           key={tmplKey}
-                          onClick={() => setSelectedTheme(tmplKey)}
+                          onClick={() => handleSelectTemplate(tmplKey)}
                           className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
                             isSelected 
                               ? "bg-primary/5 border-primary shadow-sm ring-1 ring-primary/30" 

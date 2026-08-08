@@ -127,17 +127,25 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
     { id: "rose", raw: "#e11d48", class: "text-rose-700", bgClass: "bg-rose-700" }
   ];
 
-  const rawColor = effectivePrintSet?.themeColor || effectivePrintSet?.activeColor || invoice?.themeColor || invoice?.activeColor || "#a855f7";
-  const hexValue = (typeof rawColor === 'object' && rawColor.raw) ? rawColor.raw : (String(rawColor).startsWith('#') ? rawColor : '#a855f7');
-  const matched = colors.find(c => c.id === rawColor || c.raw.toLowerCase() === hexValue.toLowerCase());
+  const resolvedTemplateName = templateName || invoice?.invoiceTemplate || invoice?.templateName || "GST Boxed";
+  const templateSpecificColor = effectivePrintSet?.templateColors?.[resolvedTemplateName];
+  const rawColor = templateSpecificColor || (effectivePrintSet?.themeName === resolvedTemplateName ? (effectivePrintSet?.themeColor || effectivePrintSet?.activeColor) : null);
+  
+  const hexValue = (typeof rawColor === 'object' && rawColor?.raw) 
+    ? rawColor.raw 
+    : (rawColor && typeof rawColor === 'string' && rawColor.startsWith('#') ? rawColor : null);
+    
+  const matched = hexValue 
+    ? colors.find(c => c && c.raw && (c.id === rawColor || c.raw.toLowerCase() === hexValue.toLowerCase())) 
+    : null;
 
   const activeColor = matched || {
-    id: "custom",
-    raw: hexValue,
+    id: hexValue ? "custom" : "default",
+    raw: hexValue || "",
     text: "",
     bgClass: "",
-    style: { color: hexValue },
-    bgStyle: { backgroundColor: hexValue }
+    style: hexValue ? { color: hexValue } : {},
+    bgStyle: hexValue ? { backgroundColor: hexValue } : {}
   };
 
   const aToWords = (amount) => {
@@ -163,7 +171,6 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
     return TEMPLATES[documentType] || TEMPLATES.INVOICE;
   };
 
-  const resolvedTemplateName = templateName || invoice?.invoiceTemplate || invoice?.templateName || "GST Boxed";
   const allTemplates = { ...TEMPLATES.INVOICE, ...TEMPLATES.EWAY, ...(TEMPLATES[documentType] || {}) };
   const templateConfig = allTemplates[resolvedTemplateName] || TEMPLATES.INVOICE[resolvedTemplateName] || TEMPLATES.INVOICE["GST Boxed"] || Object.values(allTemplates)[0];
   

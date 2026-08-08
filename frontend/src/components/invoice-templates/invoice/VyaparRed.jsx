@@ -5,11 +5,9 @@ export function VyaparRedTemplate({ invoice, printSet, gstSet, activeColor, numb
   const { customer, lines, totals, meta, paymentDetails } = invoice;
   const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet);
 
-  // By default use original template's signature Red/Maroon color (#8d2b2b)
-  const vendorColor = printSet?.themeColor || printSet?.activeColor || activeColor?.hex || activeColor?.raw;
-  const isExplicitCustom = Boolean(vendorColor && vendorColor !== "#0ea5e9");
-
-  const headerColor = isExplicitCustom ? vendorColor : "#8d2b2b"; // Default Red/Maroon
+  // Strictly use custom color for "Vyapar Red" if configured in templateColors, otherwise default to signature Red/Maroon (#8d2b2b)
+  const specificColor = printSet?.templateColors?.["Vyapar Red"] || (activeColor?.raw && activeColor.raw !== "#0ea5e9" && printSet?.themeName === "Vyapar Red" ? activeColor.raw : null);
+  const headerColor = specificColor || "#8d2b2b"; // Default Red/Maroon
 
   return (
     <div className="font-sans bg-white border border-slate-300 text-slate-800 text-[10px] leading-snug shadow-sm flex flex-col min-h-[600px] justify-between">
