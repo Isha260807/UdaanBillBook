@@ -175,7 +175,7 @@ const defaultSettings = {
     printPhone: true,
     phone: "9669002380",
     printGstin: true,
-    gstinOnSale: true,
+    gstinOnSale: "",
     paperSize: "1",
     orientation: "1",
     companyNameTextSize: "4",

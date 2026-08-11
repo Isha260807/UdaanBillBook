@@ -43,6 +43,17 @@ export function normalizeInvoice(inv) {
     billingName: inv.partyName || inv.supplier || inv.billingName || inv.shippingDetails?.shipToName || inv.party?.name || "",
     poNumber: inv.poNumber || "",
     poDate: inv.poDate || "",
+    validUntilDate: inv.validUntilDate || "",
+    originalInvoiceNo: inv.originalInvoiceNo || "",
+    originalInvoiceDate: inv.originalInvoiceDate || "",
+    noteReason: inv.noteReason || "",
+    shippingBillNo: inv.shippingBillNo || "",
+    shippingBillDate: inv.shippingBillDate || "",
+    portCode: inv.portCode || "",
+    exportCurrency: inv.exportCurrency || "",
+    expectedDeliveryDate: inv.expectedDeliveryDate || "",
+    challanDate: inv.challanDate || "",
+    time: inv.time || "",
     invoiceNumber: inv.invoiceNumber || (isPurchase ? "PUR-XXXX" : "INV-XXXX"),
     date: inv.date 
       ? `${new Date(inv.date).toLocaleDateString('en-IN')}${inv.time ? ' ' + inv.time : ''}` 
@@ -115,7 +126,7 @@ export function InvoiceTemplateRenderer({ invoice, templateName, printSettings, 
 
   const effectiveGstSet = {
     ...gstSettings,
-    gstin: isGstinEnabled ? (invoice.sellerDetails?.gstin || gstSettings?.gstin || printSettings?.gstinOnSale || "") : ""
+    gstin: isGstinEnabled ? (invoice.sellerDetails?.gstin || gstSettings?.gstin || (typeof printSettings?.gstinOnSale === "string" ? printSettings.gstinOnSale : "") || "") : ""
   };
 
   const colors = [

@@ -1,5 +1,5 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
 
 export function MinimalTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -33,7 +33,7 @@ export function MinimalTemplate({ invoice, printSet, gstSet, activeColor, number
       {/* Customer block minimal */}
       <div className="bg-slate-50 p-2 rounded border border-slate-100 flex justify-between items-start gap-4">
         <div>
-          <span className="text-[8px] text-slate-400 font-bold uppercase block mb-0.5">Billed To:</span>
+          <span className="text-[8px] text-slate-400 font-bold uppercase block mb-0.5">{getBilledToHeading(invoice.type, "Billed To")}:</span>
           <p className="font-bold text-slate-900">{meta.billingName || customer}</p>
           {meta.billingName && <p className="text-[9px] font-semibold text-slate-600">M/s: {customer}</p>}
           {meta.billedToAddress && <p className="text-[9px] text-slate-500">{meta.billedToAddress}</p>}
@@ -62,6 +62,9 @@ export function MinimalTemplate({ invoice, printSet, gstSet, activeColor, number
           {invoice.transportDetails?.transporterName && <p className="text-[9px] text-slate-500">Transporter: {invoice.transportDetails.transporterName}</p>}
           {invoice.transportDetails?.grRrNo && <p className="text-[9px] text-slate-500">GR/RR No: {invoice.transportDetails.grRrNo}</p>}
           {gstSet.reverseCharge && <p className="text-[9px] text-slate-500">Rev. Charge: {meta.reverseCharge}</p>}
+          {getDocTypeDetailLines(meta).map(({ label, value }) => (
+            <p key={label} className="text-[9px] text-slate-500">{label}: {value}</p>
+          ))}
         </div>
       </div>
 
@@ -190,13 +193,13 @@ export function MinimalTemplate({ invoice, printSet, gstSet, activeColor, number
           <div className={`flex justify-between font-extrabold text-[11px] border-t-2 pt-1 border-slate-800 ${activeColor.text}`}>
             <span>Total Payable</span><span>{formatAmt(totals.grand, printSet)}</span>
           </div>
-          {printSet.receivedAmount && (
+          {isPaymentRelevantForType(invoice.type) && printSet.receivedAmount && (
             <div className="flex justify-between text-slate-500">
               <span>Received</span>
               <span>{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
             </div>
           )}
-          {printSet.balanceAmount && (
+          {isPaymentRelevantForType(invoice.type) && printSet.balanceAmount && (
             <div className="flex justify-between font-bold text-slate-800 border-t border-dashed pt-0.5 mt-0.5">
               <span>Balance</span>
               <span>{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>

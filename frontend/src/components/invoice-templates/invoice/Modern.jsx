@@ -1,5 +1,5 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
 
 export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -40,7 +40,7 @@ export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberT
         {/* Customer and Invoice details row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="bg-white border rounded-lg p-2.5 shadow-sm space-y-1">
-            <h4 className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: activeColor?.raw || '#4f46e5' }}>Customer Details</h4>
+            <h4 className="text-[9px] font-extrabold uppercase tracking-widest" style={{ color: activeColor?.raw || '#4f46e5' }}>{getBilledToHeading(invoice.type, "Customer Details")}</h4>
             <p className="font-bold text-slate-900 text-xs">{meta.billingName || customer}</p>
             {meta.billingName && <p className="text-slate-500 text-[9px] font-semibold mb-0.5">M/s: {customer}</p>}
             {meta.billedToAddress && <p className="text-slate-500 text-[9px]">{meta.billedToAddress}</p>}
@@ -130,6 +130,12 @@ export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberT
                 <p className="font-bold text-slate-800">{meta.reverseCharge}</p>
               </div>
             )}
+            {getDocTypeDetailLines(meta).map(({ label, value }) => (
+              <div key={label}>
+                <p className="text-[8px] text-slate-400 uppercase font-semibold">{label}</p>
+                <p className="font-bold text-slate-800">{value}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -297,13 +303,13 @@ export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberT
               <div className={`flex justify-between font-extrabold text-[12px] py-1.5 ${activeColor.text}`}>
                 <span>Total Amount Due</span><span>&#8377; {formatAmt(totals.grand, printSet)}</span>
               </div>
-              {printSet.receivedAmount && (
+              {isPaymentRelevantForType(invoice.type) && printSet.receivedAmount && (
                 <div className="flex justify-between py-1 text-slate-500">
                   <span>Received Amount</span>
                   <span>{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
                 </div>
               )}
-              {printSet.balanceAmount && (
+              {isPaymentRelevantForType(invoice.type) && printSet.balanceAmount && (
                 <div className="flex justify-between font-bold py-1">
                   <span>Balance Due</span>
                   <span className="text-red-600">{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>

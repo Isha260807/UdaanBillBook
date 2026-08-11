@@ -1,5 +1,5 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
 
 export function BusinessTemplate({ invoice, printSet, gstSet, activeColor, numberToWords }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -37,7 +37,7 @@ export function BusinessTemplate({ invoice, printSet, gstSet, activeColor, numbe
       {/* Customer Info Box Side-by-side columns */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 bg-slate-50/50 p-3 rounded-lg border border-slate-100">
         <div>
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase block mb-1">Customer / Consignee:</span>
+          <span className="text-[9px] text-slate-400 font-extrabold uppercase block mb-1">{getBilledToHeading(invoice.type, "Customer / Consignee")}:</span>
           <p className="font-bold text-slate-900">{meta.billingName || customer}</p>
           {meta.billingName && <p className="text-[10px] text-slate-600 font-semibold mb-0.5">M/s: {customer}</p>}
           {meta.billedToAddress && <p className="text-slate-500 text-[10px]">{meta.billedToAddress}</p>}
@@ -55,6 +55,9 @@ export function BusinessTemplate({ invoice, printSet, gstSet, activeColor, numbe
           {meta.vehicleNo && <p className="text-[10px]"><span className="font-semibold text-slate-500">Vehicle No:</span> {meta.vehicleNo}</p>}
           {meta.placeOfSupply && <p className="text-[10px]"><span className="font-semibold text-slate-500">Place of Supply:</span> {meta.placeOfSupply}</p>}
           {gstSet.reverseCharge && <p className="text-[10px]"><span className="font-semibold text-slate-500">Reverse Charge:</span> {meta.reverseCharge}</p>}
+          {getDocTypeDetailLines(meta).map(({ label, value }) => (
+            <p key={label} className="text-[10px]"><span className="font-semibold text-slate-500">{label}:</span> {value}</p>
+          ))}
         </div>
       </div>
 
@@ -184,13 +187,13 @@ export function BusinessTemplate({ invoice, printSet, gstSet, activeColor, numbe
           <div className={`flex justify-between font-extrabold text-[12px] border-t pt-1.5 ${activeColor.text}`}>
             <span>Total Payable</span><span>{formatAmt(totals.grand, printSet)}</span>
           </div>
-          {printSet.receivedAmount && (
+          {isPaymentRelevantForType(invoice.type) && printSet.receivedAmount && (
             <div className="flex justify-between text-slate-500">
               <span>Received Amount</span>
               <span>{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
             </div>
           )}
-          {printSet.balanceAmount && (
+          {isPaymentRelevantForType(invoice.type) && printSet.balanceAmount && (
             <div className="flex justify-between font-bold text-slate-800 border-t border-dashed pt-1 mt-1">
               <span>Balance Amount</span>
               <span>{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>

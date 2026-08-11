@@ -296,6 +296,26 @@ export default function NewSale() {
   const [paymentDate, setPaymentDate] = useState(() => getInitialState("paymentDate", new Date().toISOString().substring(0, 10)));
   const [paymentTime, setPaymentTime] = useState(() => getInitialState("paymentTime", new Date().toTimeString().substring(0, 5)));
 
+  // Dynamic Document Type Specific Fields
+  const [validUntilDate, setValidUntilDate] = useState(() => getInitialState("validUntilDate", ""));
+  const [originalInvoiceNo, setOriginalInvoiceNo] = useState(() => getInitialState("originalInvoiceNo", ""));
+  const [originalInvoiceDate, setOriginalInvoiceDate] = useState(() => getInitialState("originalInvoiceDate", ""));
+  const [noteReason, setNoteReason] = useState(() => getInitialState("noteReason", "Sales Return"));
+  const [shippingBillNo, setShippingBillNo] = useState(() => getInitialState("shippingBillNo", ""));
+  const [shippingBillDate, setShippingBillDate] = useState(() => getInitialState("shippingBillDate", ""));
+  const [portCode, setPortCode] = useState(() => getInitialState("portCode", ""));
+  const [exportCurrency, setExportCurrency] = useState(() => getInitialState("exportCurrency", "INR"));
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(() => getInitialState("expectedDeliveryDate", ""));
+  const [challanDate, setChallanDate] = useState(() => getInitialState("challanDate", ""));
+
+  // Helper flags for dynamic form field visibility
+  const isPaymentFieldRelevant = !["Quotation", "Delivery Challan"].includes(docType);
+  const isCreditDebitNote = ["Credit Note", "Debit Note"].includes(docType);
+  const isQuotation = docType === "Quotation";
+  const isDeliveryChallan = docType === "Delivery Challan";
+  const isPurchaseOrder = docType === "Purchase Order";
+  const isExportInvoice = docType === "Export Invoice";
+
   const [errors, setErrors] = useState({ utr: "", upi: "" });
   const [lines, setLines] = useState(() => getInitialState("lines", [
     { name: "", hsnSac: "", qty: 1, rate: 0, discount: 0, gst: 18 }
@@ -405,8 +425,9 @@ export default function NewSale() {
       if (!sellerAddress && settings.printSettings.address) setSellerAddress(settings.printSettings.address);
       if (!sellerEmail && settings.printSettings.email) setSellerEmail(settings.printSettings.email);
       if (!sellerPhone && settings.printSettings.phone) setSellerPhone(settings.printSettings.phone);
-      if (!sellerGstin && (settings.printSettings.gstinOnSale || settings.gstSettings?.gstin)) {
-        setSellerGstin(settings.printSettings.gstinOnSale || settings.gstSettings?.gstin);
+      const seedGstin = typeof settings.printSettings.gstinOnSale === "string" ? settings.printSettings.gstinOnSale : "";
+      if (!sellerGstin && (seedGstin || settings.gstSettings?.gstin)) {
+        setSellerGstin(seedGstin || settings.gstSettings?.gstin);
       }
       if (!terms) {
         setTerms("1. We are responsible for the loss of signed Duty slip, check details.\n2. Interest@24% will be charged if bill not paid within 15 days.");
@@ -459,11 +480,24 @@ export default function NewSale() {
       signatureText,
       signatureUrl,
       signatureImgUrl,
+      docType,
+      validUntilDate,
+      originalInvoiceNo,
+      originalInvoiceDate,
+      noteReason,
+      shippingBillNo,
+      shippingBillDate,
+      portCode,
+      exportCurrency,
+      expectedDeliveryDate,
+      challanDate,
       partyBalance,
       logoUrl
     };
     localStorage.setItem("Udaan.sale_draft", JSON.stringify(draft));
   }, [
+    docType, validUntilDate, originalInvoiceNo, originalInvoiceDate, noteReason,
+    shippingBillNo, shippingBillDate, portCode, exportCurrency, expectedDeliveryDate, challanDate,
     customer, receivedAmount, status, paymentMethod, paymentDetails, lines,
     reverseCharge, challanNo, vehicleNo, dateOfSupply, placeOfSupply,
     billedToAddress, billedToGstin, billedToMobile, billedToState, invoiceTemplate, themeColor,
@@ -703,8 +737,18 @@ export default function NewSale() {
       },
       shippingDetails,
       challanNo: challanNo || "",
+      challanDate: challanDate || "",
       vehicleNo: vehicleNo || "",
       dateOfSupply: dateOfSupply || "",
+      validUntilDate,
+      originalInvoiceNo,
+      originalInvoiceDate,
+      noteReason,
+      shippingBillNo,
+      shippingBillDate,
+      portCode,
+      exportCurrency,
+      expectedDeliveryDate,
       reverseCharge: reverseCharge || "No",
       terms: terms || "",
       logoUrl: logoUrl || printSet?.logoUrl || "",
@@ -721,7 +765,7 @@ export default function NewSale() {
         address: sellerAddress || printSet?.address || user?.businessAddress || "",
         phone: sellerPhone || printSet?.phone || user?.phone || "",
         email: sellerEmail || printSet?.email || user?.email || "",
-        gstin: sellerGstin || printSet?.gstinOnSale || gstSet?.gstin || "",
+        gstin: sellerGstin || (typeof printSet?.gstinOnSale === "string" ? printSet.gstinOnSale : "") || gstSet?.gstin || "",
         logoUrl: logoUrl || printSet?.logoUrl || "",
         signatureText: signatureText || printSet?.signatureText || "Authorized Signatory",
         signatureUrl: signatureUrl || printSet?.signatureUrl || "",
@@ -1314,12 +1358,14 @@ export default function NewSale() {
                 {/* Customer Details Block */}
                 <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Billed To (Customer Details)</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      {isPurchaseOrder ? "Vendor / Supplier Details" : "Billed To (Customer Details)"}
+                    </span>
                   </div>
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-100">
                       <div className="space-y-1">
-                        <Label className="text-xs">Invoice No. (Override)</Label>
+                        <Label className="text-xs">{docType} No. (Override)</Label>
                         <Input
                           value={invoiceNumber}
                           onChange={(e) => setInvoiceNumber(e.target.value)}
@@ -1329,11 +1375,11 @@ export default function NewSale() {
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Customer Name</Label>
+                      <Label className="text-xs">{isPurchaseOrder ? "Vendor / Supplier Name" : "Customer Name"}</Label>
                       <Input
                         value={customer}
                         onChange={(e) => setCustomer(e.target.value)}
-                        placeholder="Enter customer / business name"
+                        placeholder={isPurchaseOrder ? "Enter vendor / supplier name" : "Enter customer / business name"}
                         className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500"
                       />
                     </div>
@@ -1405,6 +1451,209 @@ export default function NewSale() {
                     )}
                   </div>
                 </div>
+
+                {/* Dynamic Document-Type Specific Details Card */}
+                {(isQuotation || isCreditDebitNote || isExportInvoice || isPurchaseOrder || isDeliveryChallan) && (
+                  <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3 bg-amber-50/40 md:bg-white">
+                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block">
+                      {docType} Specific Details
+                    </span>
+
+                    {/* Quotation / Estimate Fields */}
+                    {isQuotation && (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-700">Valid Until / Expiry Date</Label>
+                          <Input
+                            type="date"
+                            value={validUntilDate}
+                            onChange={(e) => setValidUntilDate(e.target.value)}
+                            className="h-9 rounded-lg border-emerald-200 focus:ring-emerald-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Credit Note / Debit Note Fields */}
+                    {isCreditDebitNote && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Original Invoice Number</Label>
+                            <Input
+                              value={originalInvoiceNo}
+                              onChange={(e) => setOriginalInvoiceNo(e.target.value)}
+                              placeholder="e.g. INV-1001"
+                              className="h-9 rounded-lg border-blue-200"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Original Invoice Date</Label>
+                            <Input
+                              type="date"
+                              value={originalInvoiceDate}
+                              onChange={(e) => setOriginalInvoiceDate(e.target.value)}
+                              className="h-9 rounded-lg border-blue-200"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-700">Reason for {docType}</Label>
+                          <select
+                            value={noteReason}
+                            onChange={(e) => setNoteReason(e.target.value)}
+                            className="w-full h-9 rounded-lg border border-blue-200 bg-white px-2.5 text-xs font-medium focus:outline-none"
+                          >
+                            <option value="Sales Return">Sales Return / Goods Returned</option>
+                            <option value="Rate Difference">Price / Rate Difference</option>
+                            <option value="Goods Damaged">Goods Damaged in Transit</option>
+                            <option value="Discount Adjustment">Post-Sale Discount / Rebate</option>
+                            <option value="Correction">Invoice Correction / Revision</option>
+                            <option value="Other">Other Reason</option>
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Export Invoice Fields */}
+                    {isExportInvoice && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Shipping Bill No.</Label>
+                            <Input
+                              value={shippingBillNo}
+                              onChange={(e) => setShippingBillNo(e.target.value)}
+                              placeholder="e.g. SB-987654"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Shipping Bill Date</Label>
+                            <Input
+                              type="date"
+                              value={shippingBillDate}
+                              onChange={(e) => setShippingBillDate(e.target.value)}
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Port Code / Port of Discharge</Label>
+                            <Input
+                              value={portCode}
+                              onChange={(e) => setPortCode(e.target.value.toUpperCase())}
+                              placeholder="e.g. INNSA1"
+                              className="h-9 rounded-lg uppercase"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Export Currency</Label>
+                            <select
+                              value={exportCurrency}
+                              onChange={(e) => setExportCurrency(e.target.value)}
+                              className="w-full h-9 rounded-lg border bg-white px-2.5 text-xs font-bold focus:outline-none"
+                            >
+                              <option value="INR">INR (₹)</option>
+                              <option value="USD">USD ($)</option>
+                              <option value="EUR">EUR (€)</option>
+                              <option value="GBP">GBP (£)</option>
+                              <option value="AED">AED (DH)</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Purchase Order Fields */}
+                    {isPurchaseOrder && (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-slate-700">Expected Delivery Date</Label>
+                          <Input
+                            type="date"
+                            value={expectedDeliveryDate}
+                            onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Delivery Challan Fields — quick-entry versions of fields that also
+                        live in the Transport Details drawer, surfaced inline so they don't
+                        require an extra click for a document type that's mostly about them. */}
+                    {isDeliveryChallan && (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Challan Date</Label>
+                            <Input
+                              type="date"
+                              value={challanDate}
+                              onChange={(e) => setChallanDate(e.target.value)}
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Transporter Name</Label>
+                            <Input
+                              value={transportDetails.transporterName || ""}
+                              onChange={(e) => setTransportDetails({ ...transportDetails, transporterName: e.target.value })}
+                              placeholder="e.g. Safe Express"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Transporter GSTIN</Label>
+                            <Input
+                              value={transportDetails.transporterId || ""}
+                              onChange={(e) => setTransportDetails({ ...transportDetails, transporterId: e.target.value.toUpperCase().slice(0, 15) })}
+                              placeholder="07AAAA..."
+                              maxLength={15}
+                              className="h-9 rounded-lg uppercase"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">E-Way Bill No.</Label>
+                            <Input
+                              value={transportDetails.ewbNumber || ""}
+                              onChange={(e) => setTransportDetails({ ...transportDetails, ewbNumber: e.target.value })}
+                              placeholder="e.g. 123456789000"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Dispatch From Address</Label>
+                            <Input
+                              value={shippingDetails.dispatchFromAddress || ""}
+                              onChange={(e) => setShippingDetails({ ...shippingDetails, dispatchFromAddress: e.target.value })}
+                              placeholder="Warehouse / dispatch location"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-slate-700">Ship To Address</Label>
+                            <Input
+                              value={shippingDetails.shipToAddress || ""}
+                              onChange={(e) => setShippingDetails({ ...shippingDetails, shipToAddress: e.target.value })}
+                              placeholder="Delivery destination"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 italic">
+                          Challan No. and Vehicle Number are set in the Transport & Supply Details section below.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Transport & Additional Details Block */}
                 <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
@@ -1944,7 +2193,7 @@ export default function NewSale() {
             )}
 
             {/* Calculations & Payment Configuration */}
-            {!isEwayMode && printSet.paymentMode && (
+            {!isEwayMode && printSet.paymentMode && isPaymentFieldRelevant && (
               <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-4">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Payment Setup</span>
 
@@ -2185,9 +2434,19 @@ export default function NewSale() {
                     totals,
                     reverseCharge,
                     challanNo,
+                    challanDate,
                     vehicleNo,
                     dateOfSupply,
                     placeOfSupply,
+                    validUntilDate,
+                    originalInvoiceNo,
+                    originalInvoiceDate,
+                    noteReason,
+                    shippingBillNo,
+                    shippingBillDate,
+                    portCode,
+                    exportCurrency,
+                    expectedDeliveryDate,
                     billedToAddress,
                     billedToGstin,
                     billedToMobile,

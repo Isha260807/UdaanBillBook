@@ -1,5 +1,5 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
 
 export function CorporateTemplate({ invoice, printSet, gstSet, activeColor, numberToWords }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -33,7 +33,7 @@ export function CorporateTemplate({ invoice, printSet, gstSet, activeColor, numb
 
       {/* Customer details block */}
       <div className="border border-slate-100 rounded-lg p-3 bg-slate-50/30">
-        <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Billed & Shipped To</h4>
+        <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">{getBilledToHeading(invoice.type, "Billed & Shipped To")}</h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1">
             <p className="font-bold text-slate-900 text-xs">{meta.billingName || customer}</p>
@@ -52,6 +52,9 @@ export function CorporateTemplate({ invoice, printSet, gstSet, activeColor, numb
             {meta.vehicleNo && <p><span className="text-slate-400">Vehicle No:</span> {meta.vehicleNo}</p>}
             {meta.placeOfSupply && <p><span className="text-slate-400">Place of Supply:</span> {meta.placeOfSupply}</p>}
             {gstSet.reverseCharge && <p><span className="text-slate-400">Reverse Charge:</span> {meta.reverseCharge}</p>}
+            {getDocTypeDetailLines(meta).map(({ label, value }) => (
+              <p key={label}><span className="text-slate-400">{label}:</span> {value}</p>
+            ))}
           </div>
         </div>
       </div>
@@ -194,13 +197,13 @@ export function CorporateTemplate({ invoice, printSet, gstSet, activeColor, numb
           <div className={`flex justify-between font-extrabold text-[11px] border-t pt-1.5 ${activeColor.text}`}>
             <span>Total Outstanding</span><span>{formatAmt(totals.grand, printSet)}</span>
           </div>
-          {printSet.receivedAmount && (
+          {isPaymentRelevantForType(invoice.type) && printSet.receivedAmount && (
             <div className="flex justify-between text-slate-500">
               <span>Received</span>
               <span>{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
             </div>
           )}
-          {printSet.balanceAmount && (
+          {isPaymentRelevantForType(invoice.type) && printSet.balanceAmount && (
             <div className="flex justify-between font-bold text-slate-800 border-t border-dashed pt-1 mt-1">
               <span>Balance</span>
               <span>{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>

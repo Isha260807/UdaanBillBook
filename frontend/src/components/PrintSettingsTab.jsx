@@ -65,7 +65,7 @@ export function PrintSettingsTab({ settings, updateSettings, isMobile }) {
 
   const renderCheckInput = (checkKey, inputKey, label, inputType = "text") => {
     const checked = print[checkKey];
-    const value = print[inputKey] || "";
+    const value = typeof print[inputKey] === "string" ? print[inputKey] : "";
 
     return (
       <div className="flex flex-col gap-1 py-1.5 group">

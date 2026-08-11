@@ -1,6 +1,6 @@
 import React from "react";
 import { Building2 } from "lucide-react";
-import { getTemplateColumns, getTransactionTitle, formatAmt, renderCommonFooter } from "../templateUtils.jsx";
+import { getTemplateColumns, getTransactionTitle, formatAmt, renderCommonFooter, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
 
 export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -150,7 +150,7 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
       <div className="border-b border-slate-800 flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-slate-800">
         <div className="p-2 flex-1">
           <div className="font-bold border-b border-slate-300 pb-0.5 mb-1.5 uppercase">
-            {(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") ? "Details of Supplier | Billed From:" : "Details of Receiver | Billed to:"}
+            {(invoice.isPurchase || (invoice.type || "").toLowerCase() === "purchase") ? "Details of Supplier | Billed From:" : getBilledToHeading(invoice.type, "Details of Receiver | Billed to:")}
           </div>
           <div className="grid grid-cols-1 gap-y-0.5">
             <div className="flex"><span className="w-14 shrink-0 font-semibold">Name</span><span className="truncate">: {meta.billingName || customer}</span></div>
@@ -159,6 +159,9 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
             )}
             <div className="flex"><span className="w-14 shrink-0 font-semibold">GSTIN</span><span className="truncate">: {meta.billedToGstin || "-"}</span></div>
             <div className="flex"><span className="w-14 shrink-0 font-semibold">Mobile</span><span className="truncate">: {meta.billedToMobile || "-"}</span></div>
+            {getDocTypeDetailLines(meta).map(({ label, value }) => (
+              <div key={label} className="flex"><span className="w-24 shrink-0 font-semibold">{label}</span><span className="truncate">: {value}</span></div>
+            ))}
           </div>
         </div>
         {(invoice.shippingDetails?.shippingAddress || invoice.shippingDetails?.shippingName) && (
@@ -382,13 +385,13 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
               </span>
               <span>{formatAmt(totals.grand, printSet)}</span>
             </div>
-            {(printSet.receivedAmount || invoice.isPurchase) && (
+            {isPaymentRelevantForType(invoice.type) && (printSet.receivedAmount || invoice.isPurchase) && (
               <div className={`py-0.5 flex justify-between text-slate-600 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
                 <span>Paid / Received</span>
                 <span>{formatAmt(Number(invoice.receivedAmount || 0), printSet)}</span>
               </div>
             )}
-            {(printSet.balanceAmount || invoice.isPurchase) && (
+            {isPaymentRelevantForType(invoice.type) && (printSet.balanceAmount || invoice.isPurchase) && (
               <div className={`py-0.5 flex justify-between text-slate-600 font-bold border-t border-dashed mt-0.5 ${getInvoiceSizeClass(textSz, "text-[9px]")}`}>
                 <span>Balance Due</span>
                 <span>{formatAmt(Math.max(0, totals.grand - Number(invoice.receivedAmount || 0)), printSet)}</span>

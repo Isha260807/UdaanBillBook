@@ -33,6 +33,46 @@ export function getTransactionTitle(invoice, printSet = {}, gstSet = {}) {
   return "TAX INVOICE";
 }
 
+// Doc types that don't involve money collection at time of issue — payment/balance
+// sections should stay hidden on the printed document regardless of print-settings toggles.
+export function isPaymentRelevantForType(type) {
+  const t = (type || "").toLowerCase();
+  return t !== "quotation" && t !== "estimate" && t !== "delivery challan";
+}
+
+// Purchase Order documents refer to a vendor/supplier, not a customer — swap the
+// "Billed To" style heading while letting each template keep its own default wording.
+export function getBilledToHeading(type, defaultLabel = "Billed To") {
+  return (type || "").toLowerCase() === "purchase order" ? "Vendor / Supplier Details" : defaultLabel;
+}
+
+// Ordered { label, value } pairs of doc-type-specific details for the active invoice.type,
+// skipping empty values. Centralizes the per-type field mapping so templates don't duplicate it.
+export function getDocTypeDetailLines(meta = {}) {
+  const type = (meta.type || "").toLowerCase();
+  const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN') : "";
+  const out = [];
+
+  if (type === "quotation" || type === "estimate") {
+    if (meta.validUntilDate) out.push({ label: "Valid Until", value: fmt(meta.validUntilDate) });
+  } else if (type === "credit note" || type === "debit note") {
+    if (meta.originalInvoiceNo) out.push({ label: "Original Invoice No", value: meta.originalInvoiceNo });
+    if (meta.originalInvoiceDate) out.push({ label: "Original Invoice Date", value: fmt(meta.originalInvoiceDate) });
+    if (meta.noteReason) out.push({ label: "Reason", value: meta.noteReason });
+  } else if (type === "export invoice") {
+    if (meta.shippingBillNo) out.push({ label: "Shipping Bill No", value: meta.shippingBillNo });
+    if (meta.shippingBillDate) out.push({ label: "Shipping Bill Date", value: fmt(meta.shippingBillDate) });
+    if (meta.portCode) out.push({ label: "Port Code", value: meta.portCode });
+    if (meta.exportCurrency) out.push({ label: "Currency", value: meta.exportCurrency });
+  } else if (type === "purchase order") {
+    if (meta.expectedDeliveryDate) out.push({ label: "Expected Delivery", value: fmt(meta.expectedDeliveryDate) });
+  } else if (type === "delivery challan") {
+    if (meta.challanDate) out.push({ label: "Challan Date", value: fmt(meta.challanDate) });
+  }
+
+  return out;
+}
+
 export function getTemplateColumns(printSet) {
   const cols = printSet.tableColumns && Object.keys(printSet.tableColumns).length > 0 ? printSet.tableColumns : {
     slNo: true,
