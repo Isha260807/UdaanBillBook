@@ -1,5 +1,5 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
 
 export function ClassicTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -7,7 +7,7 @@ export function ClassicTemplate({ invoice, printSet, gstSet, activeColor, number
   return (
     <div className="font-serif bg-white p-4 border border-slate-200 text-slate-800 text-[10px] leading-snug shadow-sm">
       <div className="text-center font-bold tracking-widest text-sm mb-2 border-b pb-1" style={{ color: activeColor?.raw || '#1e293b' }}>
-        TAX INVOICE
+        {getTransactionTitle(invoice, printSet, gstSet)}
       </div>
 
       {/* Header Centered */}

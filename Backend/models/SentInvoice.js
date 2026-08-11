@@ -63,7 +63,7 @@ const sentInvoiceSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['Sale', 'Purchase', 'Estimate', 'Delivery Challan', 'Credit Note', 'Debit Note'],
+    enum: ['Sale', 'Purchase', 'Estimate', 'Quotation', 'Delivery Challan', 'Credit Note', 'Debit Note', 'Proforma Invoice', 'Purchase Order', 'Export Invoice'],
     required: true,
   },
   date: {

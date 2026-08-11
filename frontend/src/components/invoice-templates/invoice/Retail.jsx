@@ -1,5 +1,5 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
 
 export function RetailTemplate({ invoice, printSet, gstSet, activeColor, numberToWords }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -15,7 +15,7 @@ export function RetailTemplate({ invoice, printSet, gstSet, activeColor, numberT
           {printSet.address || "S-99/134 first floor moti lal nehru camp JNU, New Delhi"}
         </p>
         <p className="text-[9px] font-bold">GSTIN: {gstSet.gstin || "07AQXPD2556K2ZB"}</p>
-        <div className={`text-[10px] font-extrabold uppercase pt-1.5 ${activeColor.text}`}>RETAIL CASH MEMO</div>
+        <div className={`text-[10px] font-extrabold uppercase pt-1.5 ${activeColor.text}`}>{getTransactionTitle(invoice, printSet, gstSet)}</div>
       </div>
 
       {/* Mini Customer & Meta Card */}

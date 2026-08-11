@@ -63,7 +63,7 @@ const invoiceSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['Sale', 'Purchase', 'Estimate', 'Delivery Challan', 'Credit Note', 'Debit Note'],
+    enum: ['Sale', 'Purchase', 'Estimate', 'Quotation', 'Delivery Challan', 'Credit Note', 'Debit Note', 'Proforma Invoice', 'Purchase Order', 'Export Invoice'],
     required: true,
   },
   date: {
@@ -142,6 +142,18 @@ const invoiceSchema = new mongoose.Schema({
     dispatchFromAddress: String,
     placeOfDispatch: String,
     placeOfDelivery: String
+  },
+  exportDetails: {
+    exportType: {
+      type: String,
+      enum: ['Supply With Tax', 'Supply Without Tax (LUT)']
+    },
+    shippingBillNo: String,
+    shippingBillDate: Date,
+    portCode: String,
+    destinationCountry: String,
+    currencyCode: String,
+    exchangeRate: Number
   },
   sellerDetails: {
     companyName: String,

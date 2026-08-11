@@ -1,5 +1,5 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
 
 export function VyaparPurpleTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails, shippingDetails } = invoice;
@@ -18,7 +18,7 @@ export function VyaparPurpleTemplate({ invoice, printSet, gstSet, activeColor, n
         className="w-full py-2 px-4 text-center text-white rounded font-bold text-lg tracking-wide uppercase"
         style={{ backgroundColor: primaryColor }}
       >
-        Tax Invoice
+        {getTransactionTitle(invoice, printSet, gstSet)}
       </div>
 
       {/* 2. Company Details */}

@@ -20,6 +20,12 @@ export function getTransactionTitle(invoice, printSet = {}, gstSet = {}) {
   if (typeLower === "proforma invoice") {
     return (names.proformaInvoice || "PROFORMA INVOICE").toUpperCase();
   }
+  if (typeLower === "purchase order") {
+    return (names.purchaseOrder || "PURCHASE ORDER").toUpperCase();
+  }
+  if (typeLower === "export invoice") {
+    return (names.exportInvoice || "EXPORT INVOICE").toUpperCase();
+  }
 
   // Default Sale
   if (names.sale) return names.sale.toUpperCase();

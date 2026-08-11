@@ -1,5 +1,5 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
 
 export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
@@ -29,7 +29,7 @@ export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, n
         </div>
         <div className="text-right space-y-1">
           <span className="text-[11px] font-black tracking-widest uppercase bg-slate-50 border px-3 py-1 rounded inline-block" style={{ color: activeColor?.raw || '#1e293b' }}>
-            TAX INVOICE
+            {getTransactionTitle(invoice, printSet, gstSet)}
           </span>
           <p className="font-mono text-[9px]">Invoice Number: <span className="font-bold">{meta.invoiceNumber}</span></p>
           <p className="font-mono text-[9px]">Invoice Date: {meta.date}</p>

@@ -106,7 +106,7 @@ const createInvoice = async (req, res) => {
       if (item.item && mongoose.Types.ObjectId.isValid(item.item)) {
         const dbItem = await Item.findById(item.item);
         if (dbItem) {
-          if (type === 'Sale' || type === 'Delivery Challan' || type === 'Purchase Return' || type === 'Debit Note') {
+          if (type === 'Sale' || type === 'Delivery Challan' || type === 'Purchase Return' || type === 'Debit Note' || type === 'Export Invoice') {
             dbItem.stockQty -= item.qty;
           } else if (type === 'Purchase' || type === 'Sale Return' || type === 'Credit Note') {
             dbItem.stockQty += item.qty;
@@ -288,7 +288,7 @@ const deleteInvoice = async (req, res) => {
       if (item.item && mongoose.Types.ObjectId.isValid(item.item)) {
         const dbItem = await Item.findById(item.item);
         if (dbItem) {
-          if (invoice.type === 'Sale' || invoice.type === 'Delivery Challan' || invoice.type === 'Purchase Return' || invoice.type === 'Debit Note') {
+          if (invoice.type === 'Sale' || invoice.type === 'Delivery Challan' || invoice.type === 'Purchase Return' || invoice.type === 'Debit Note' || invoice.type === 'Export Invoice') {
             dbItem.stockQty += item.qty;
           } else if (invoice.type === 'Purchase' || invoice.type === 'Sale Return' || invoice.type === 'Credit Note') {
             dbItem.stockQty -= item.qty;

@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -262,6 +263,7 @@ export default function NewSale() {
   };
 
   // Form fields
+  const [docType, setDocType] = useState(() => searchParams.get("type") || getInitialState("docType", "Sale"));
   const [customer, setCustomer] = useState(() => getInitialState("customer", ""));
   const [receivedAmount, setReceivedAmount] = useState(() => getInitialState("receivedAmount", 0));
   const [status, setStatus] = useState(() => getInitialState("status", "Unpaid"));
@@ -670,7 +672,7 @@ export default function NewSale() {
       invoiceNumber: invoiceNumber || ("INV-" + Math.floor(1000 + Math.random() * 9000)),
       party: null,
       partyName: customer || "Walk-in Customer",
-      type: "Sale",
+      type: docType || "Sale",
       date: paymentDate ? new Date(paymentDate + "T12:00:00").toISOString() : new Date().toISOString(),
       time: paymentTime,
       items: lines.filter(l => l.name.trim() !== "").map(l => ({
@@ -847,7 +849,24 @@ export default function NewSale() {
           <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-slate-800 hover:bg-slate-50 rounded-full transition-colors shrink-0">
             <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
           </button>
-          <h1 className="text-xs md:text-sm font-bold tracking-tight text-slate-800 uppercase truncate">New Sale</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-xs md:text-sm font-bold tracking-tight text-slate-800 uppercase hidden sm:inline">Type:</span>
+            <Select value={docType} onValueChange={setDocType}>
+              <SelectTrigger className="h-8 w-[140px] md:w-[170px] rounded-lg text-xs font-bold bg-slate-50 border-slate-300">
+                <SelectValue placeholder="Select Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Sale">Sale Invoice</SelectItem>
+                <SelectItem value="Quotation">Quotation / Estimate</SelectItem>
+                <SelectItem value="Delivery Challan">Delivery Challan</SelectItem>
+                <SelectItem value="Proforma Invoice">Proforma Invoice</SelectItem>
+                <SelectItem value="Purchase Order">Purchase Order</SelectItem>
+                <SelectItem value="Export Invoice">Export Invoice</SelectItem>
+                <SelectItem value="Credit Note">Credit Note</SelectItem>
+                <SelectItem value="Debit Note">Debit Note</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <div className="flex items-center gap-1 md:gap-2 shrink-0">
           <Button
@@ -2151,11 +2170,12 @@ export default function NewSale() {
           </div>
 
           {/* Responsive invoice preview: scales down on mobile to fit screen */}
-          <div ref={invoiceWrapperRef} className="invoice-preview-wrapper w-full mx-auto" style={{ maxWidth: '210mm' }}>
-            <div ref={invoiceScalerRef} className="invoice-preview-scaler">
-              <div className="bg-white shadow-xl rounded-xl border border-slate-300 w-full p-3 sm:p-6 text-[11px] text-slate-800 leading-normal relative overflow-hidden" style={{ minWidth: '800px' }}>
+          <div ref={invoiceWrapperRef} className="invoice-preview-wrapper w-full mx-auto overflow-hidden" style={{ maxWidth: '210mm' }}>
+            <div ref={invoiceScalerRef} className="invoice-preview-scaler w-full overflow-hidden">
+              <div className="bg-white shadow-xl rounded-xl border border-slate-300 w-full p-3 sm:p-6 text-[11px] text-slate-800 leading-normal relative overflow-hidden">
                 <InvoiceTemplateRenderer
                   invoice={{
+                    type: docType,
                     customer,
                     receivedAmount,
                     status,
