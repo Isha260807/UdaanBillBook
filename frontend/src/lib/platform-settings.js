@@ -1,5 +1,5 @@
-// Mock platform settings store for business types and other dynamic categories.
 import { useEffect, useState } from "react";
+import api from "./api";
 
 const KEY = "Udaan.settings";
 
@@ -152,7 +152,7 @@ const defaultSettings = {
     mfgDate: false,
     modelNo: false,
     size: false,
-    customFields: [], // Array of { name, active }
+    customFields: [],
   },
   partySettings: {
     partyType: true,
@@ -183,7 +183,6 @@ const defaultSettings = {
     printOriginalDuplicate: false,
     extraSpaceTop: 0,
     minRowsItemTable: 0,
-    // Transaction Names
     transactionNames: {
       sale: "Tax Invoice",
       estimate: "Estimate",
@@ -196,14 +195,11 @@ const defaultSettings = {
       purchaseReturn: "Debit Note",
       purchaseOrder: "Purchase Order"
     },
-    // Item Table Columns
     tableColumns: {
-      // Item related
       slNo: true,
       itemName: true,
       itemCode: false,
       hsnSac: true,
-      // Additional
       batchNo: false,
       expDate: false,
       mfgDate: false,
@@ -217,7 +213,6 @@ const defaultSettings = {
       brand: false,
       serialNo: false,
       challanNo: false,
-      // Amounts & Taxes
       quantity: true,
       unit: false,
       priceUnit: true,
@@ -231,7 +226,6 @@ const defaultSettings = {
       finalRate: false,
       amount: true
     },
-    // Item Table Column Names
     tableColumnNames: {
       slNo: "#",
       itemName: "Item name",
@@ -284,28 +278,59 @@ const defaultSettings = {
 };
 
 const listeners = new Set();
+let cachedSettings = null;
+
+function mergeWithDefault(parsed) {
+  if (!parsed) return defaultSettings;
+  return {
+    ...defaultSettings,
+    ...parsed,
+    gstSettings: { ...defaultSettings.gstSettings, ...(parsed.gstSettings || {}) },
+    txnSettings: { ...defaultSettings.txnSettings, ...(parsed.txnSettings || {}) },
+    generalSettings: { ...defaultSettings.generalSettings, ...(parsed.generalSettings || {}) },
+    messageSettings: { ...defaultSettings.messageSettings, ...(parsed.messageSettings || {}) },
+    itemSettings: { ...defaultSettings.itemSettings, ...(parsed.itemSettings || {}) },
+    partySettings: { ...defaultSettings.partySettings, ...(parsed.partySettings || {}) },
+    printSettings: { ...defaultSettings.printSettings, ...(parsed.printSettings || {}) },
+  };
+}
 
 function read() {
+  if (cachedSettings) return cachedSettings;
   if (typeof window === "undefined") return defaultSettings;
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return defaultSettings;
-    const parsed = JSON.parse(raw);
-    
-    // Deep merge to safeguard structure
-    return {
-      ...defaultSettings,
-      ...parsed,
-      gstSettings: { ...defaultSettings.gstSettings, ...parsed.gstSettings },
-      txnSettings: { ...defaultSettings.txnSettings, ...parsed.txnSettings },
-      generalSettings: { ...defaultSettings.generalSettings, ...parsed.generalSettings },
-      messageSettings: { ...defaultSettings.messageSettings, ...parsed.messageSettings },
-      itemSettings: { ...defaultSettings.itemSettings, ...parsed.itemSettings },
-      partySettings: { ...defaultSettings.partySettings, ...parsed.partySettings },
-      printSettings: { ...defaultSettings.printSettings, ...parsed.printSettings },
-    };
+    cachedSettings = mergeWithDefault(JSON.parse(raw));
+    return cachedSettings;
   } catch {
     return defaultSettings;
+  }
+}
+
+async function fetchFromDB() {
+  try {
+    const res = await api.get("/settings");
+    if (res.data) {
+      const merged = mergeWithDefault(res.data);
+      cachedSettings = merged;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(KEY, JSON.stringify(merged));
+      }
+      listeners.forEach((l) => l());
+      return merged;
+    }
+  } catch (err) {
+    console.warn("Could not sync settings from DB, using fallback:", err?.message);
+  }
+  return read();
+}
+
+async function saveToDB(settingsObj) {
+  try {
+    await api.put("/settings", settingsObj);
+  } catch (err) {
+    console.warn("Failed to persist settings to DB:", err?.message);
   }
 }
 
@@ -313,9 +338,15 @@ export const platformSettings = {
   get() {
     return read();
   },
+  fetchFromDB,
   save(settings) {
-    window.localStorage.setItem(KEY, JSON.stringify(settings));
+    const merged = mergeWithDefault(settings);
+    cachedSettings = merged;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(KEY, JSON.stringify(merged));
+    }
     listeners.forEach((l) => l());
+    saveToDB(merged);
   },
   update(updates) {
     const current = read();
@@ -330,8 +361,12 @@ export const platformSettings = {
       partySettings: updates.partySettings ? { ...current.partySettings, ...updates.partySettings } : current.partySettings,
       printSettings: updates.printSettings ? { ...current.printSettings, ...updates.printSettings } : current.printSettings,
     };
-    window.localStorage.setItem(KEY, JSON.stringify(updated));
+    cachedSettings = updated;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(KEY, JSON.stringify(updated));
+    }
     listeners.forEach((l) => l());
+    saveToDB(updates);
   },
   subscribe(l) {
     listeners.add(l);
@@ -340,14 +375,28 @@ export const platformSettings = {
 };
 
 export function usePlatformSettings() {
-  const [settings, setSettings] = useState(defaultSettings);
+  const [settings, setSettings] = useState(() => read());
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setSettings(read());
-    setHydrated(true);
-    const unsub = platformSettings.subscribe(() => setSettings(read()));
-    return unsub;
+    let isMounted = true;
+    
+    // Initial fetch from MongoDB Database
+    fetchFromDB().then((dbData) => {
+      if (isMounted && dbData) {
+        setSettings(dbData);
+        setHydrated(true);
+      }
+    });
+
+    const unsub = platformSettings.subscribe(() => {
+      if (isMounted) setSettings(read());
+    });
+
+    return () => {
+      isMounted = false;
+      unsub();
+    };
   }, []);
 
   return { settings, hydrated };

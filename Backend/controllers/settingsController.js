@@ -27,8 +27,7 @@ const getSettings = async (req, res) => {
 const updateSettings = async (req, res) => {
   try {
     const ownerId = req.user.role === 'staff' ? req.user.ownerId : req.user.id;
-
-    const { gstSettings, printSettings, invoiceSettings } = req.body;
+    const body = req.body || {};
 
     let settings = await Settings.findOne({ user: ownerId });
 
@@ -36,9 +35,33 @@ const updateSettings = async (req, res) => {
       settings = new Settings({ user: ownerId });
     }
 
-    if (gstSettings) settings.gstSettings = { ...settings.gstSettings, ...gstSettings };
-    if (printSettings) settings.printSettings = { ...settings.printSettings, ...printSettings };
-    if (invoiceSettings) settings.invoiceSettings = { ...settings.invoiceSettings, ...invoiceSettings };
+    const sections = [
+      'gstSettings',
+      'txnSettings',
+      'generalSettings',
+      'messageSettings',
+      'itemSettings',
+      'partySettings',
+      'printSettings',
+      'invoiceSettings'
+    ];
+
+    sections.forEach((sec) => {
+      if (body[sec]) {
+        settings[sec] = {
+          ...(settings[sec] || {}),
+          ...body[sec]
+        };
+        settings.markModified(sec);
+      }
+    });
+
+    // Also support root-level direct field updates
+    Object.keys(body).forEach((key) => {
+      if (!sections.includes(key) && key !== 'user' && key !== '_id') {
+        settings[key] = body[key];
+      }
+    });
 
     const updatedSettings = await settings.save();
     res.status(200).json(updatedSettings);

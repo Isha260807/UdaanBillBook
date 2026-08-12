@@ -38,6 +38,7 @@ import {
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -118,6 +119,7 @@ function Kpi({
 export function MainDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isGstCalculatorOpen, setIsGstCalculatorOpen] = useState(false);
+  const [topProductsModalOpen, setTopProductsModalOpen] = useState(false);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sendingTest, setSendingTest] = useState(false);
@@ -407,7 +409,7 @@ export function MainDashboard() {
         <Card className="border-0 shadow-[var(--shadow-card)] lg:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-base">Top Products</CardTitle>
-            <Button variant="ghost" size="sm" className="text-xs">View all</Button>
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setTopProductsModalOpen(true)}>View all</Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-1">
@@ -500,6 +502,52 @@ export function MainDashboard() {
       </Card>
 
       <GstCalculatorDialog open={isGstCalculatorOpen} onOpenChange={setIsGstCalculatorOpen} />
+
+      {/* Top Products Modal for Mobile & Quick View */}
+      <Dialog open={topProductsModalOpen} onOpenChange={setTopProductsModalOpen}>
+        <DialogContent className="max-w-md w-[92vw] sm:w-full rounded-2xl p-4 sm:p-6 max-h-[85vh] flex flex-col">
+          <DialogHeader className="pb-2 border-b">
+            <DialogTitle className="text-base sm:text-lg font-bold flex items-center justify-between">
+              Top Selling Products
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Highest performing items ranked by revenue
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto py-2 space-y-2.5 custom-scrollbar my-1 pr-1">
+            {!data?.topProducts || data.topProducts.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-8 text-center">No sales registered yet.</p>
+            ) : (
+              data.topProducts.map((p, i) => (
+                <div
+                  key={p.name}
+                  className="flex items-center gap-3 rounded-xl p-2.5 bg-slate-50 border border-slate-200/80 hover:bg-slate-100 transition-colors"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-sm font-bold text-primary">
+                    #{i + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs sm:text-sm font-bold text-slate-800">{p.name || "Unnamed Item"}</p>
+                    <p className="text-[11px] text-muted-foreground">{p.sold} units sold</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs sm:text-sm font-bold text-emerald-600">{fmt(p.revenue)}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          <DialogFooter className="pt-2 border-t flex flex-col sm:flex-row gap-2">
+            <Link to={getRoleUrl("/vendor/inventory")} onClick={() => setTopProductsModalOpen(false)} className="w-full">
+              <Button className="w-full rounded-xl text-xs font-semibold">
+                Go to Full Inventory Page
+              </Button>
+            </Link>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

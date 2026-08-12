@@ -182,24 +182,6 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t p-2">
         <SidebarMenu>
-          {/* User Profile Info Card */}
-          <SidebarMenuItem className="mb-2 group-data-[collapsible=icon]:hidden">
-            <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-              <div className="h-9 w-9 rounded-full bg-emerald-500 text-white font-bold flex items-center justify-center text-sm shadow-sm shrink-0 uppercase">
-                {(user?.name || user?.businessName || "U")[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-slate-800 truncate">
-                  {user?.name || user?.businessName || "User Profile"}
-                </p>
-                <p className="text-[10px] font-medium text-slate-500 truncate capitalize flex items-center gap-1">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  {user?.role || "Vendor"} {user?.phone ? `• ${user.phone}` : ""}
-                </p>
-              </div>
-            </div>
-          </SidebarMenuItem>
-
           {isVendor && (
             <SidebarMenuItem className="mb-2 group-data-[collapsible=icon]:hidden">
               {isFree ? (

@@ -19,8 +19,10 @@ const INVOICE_DESCRIPTIONS = {
   "Professional": "Premium executive corporate invoice design",
   "Business Plus": "Detailed corporate business invoice format",
   "Corporate Pro": "Executive corporate enterprise template",
-  "Vyapar Red": "Sleek red header bill template with bottom total box",
-  "Vyapar Purple": "Tax Invoice with Acknowledgement slip & purple theme"
+  "Standard Plus": "Sleek compact header bill template with bottom total box",
+  "Premium Pro": "Tax Invoice with Acknowledgement slip & signature block",
+  "Vyapar Red": "Sleek compact header bill template with bottom total box",
+  "Vyapar Purple": "Tax Invoice with Acknowledgement slip & signature block"
 };
 
 const EWAY_DESCRIPTIONS = {
@@ -51,6 +53,8 @@ const DEFAULT_TEMPLATE_COLORS = {
   "Professional": "#10b981",
   "Business Plus": "#a855f7",
   "Corporate Pro": "#1e293b",
+  "Standard Plus": "#8d2b2b",
+  "Premium Pro": "#4a3556",
   "Vyapar Red": "#8d2b2b",
   "Vyapar Purple": "#4a3556",
   "Official E-Way": "#059669",
@@ -71,7 +75,9 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
 
   useEffect(() => {
     if (isOpen) {
-      const theme = settings?.printSettings?.themeName || settings?.printSettings?.invoiceTemplate || "Standard (Boxed)";
+      let theme = settings?.printSettings?.themeName || settings?.printSettings?.invoiceTemplate || "Standard (Boxed)";
+      if (theme === "Vyapar Red") theme = "Standard Plus";
+      if (theme === "Vyapar Purple") theme = "Premium Pro";
       const colorsMap = settings?.printSettings?.templateColors || {};
       const color = colorsMap[theme] || settings?.printSettings?.themeColor || settings?.printSettings?.activeColor || DEFAULT_TEMPLATE_COLORS[theme] || "#0ea5e9";
       
@@ -87,7 +93,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
     }
   }, [isOpen, settings]);
 
-  const invoiceTemplateKeys = Object.keys(TEMPLATES.INVOICE || {}).filter(k => !["GST Boxed", "Classic White", "Modern Blue", "Minimalist", "Custom HTML"].includes(k));
+  const invoiceTemplateKeys = Object.keys(TEMPLATES.INVOICE || {}).filter(k => !["GST Boxed", "Classic White", "Modern Blue", "Minimalist", "Custom HTML", "Vyapar Red", "Vyapar Purple"].includes(k));
   const ewayTemplateKeys = Object.keys(TEMPLATES.EWAY || {});
 
   const handleSelectTemplate = (tmplKey) => {

@@ -7,31 +7,17 @@ const settingsSchema = new mongoose.Schema({
     ref: 'User',
     unique: true, // One settings document per user
   },
-  gstSettings: {
-    enableGst: { type: Boolean, default: true },
-    enableHsn: { type: Boolean, default: true },
-    cessOnItem: { type: Boolean, default: false },
-    reverseCharge: { type: Boolean, default: false },
-    placeOfSupply: { type: Boolean, default: true },
-  },
-  printSettings: {
-    themeName: { type: String, default: 'Advanced' },
-    themeColor: { type: String, default: '#a855f7' },
-    printCompanyName: { type: Boolean, default: true },
-    printCompanyLogo: { type: Boolean, default: false },
-    companyLogoUrl: { type: String, default: '' },
-    signatureUrl: { type: String, default: '' },
-    extraSpaceTop: { type: Number, default: 0 },
-    printCompanyAddress: { type: Boolean, default: true },
-    printMobile: { type: Boolean, default: true },
-  },
-  invoiceSettings: {
-    prefix: { type: String, default: 'INV-' },
-    nextNumber: { type: Number, default: 1 },
-    termsAndConditions: { type: String, default: 'Thanks for doing business with us!' },
-  }
+  gstSettings: { type: mongoose.Schema.Types.Mixed, default: {} },
+  txnSettings: { type: mongoose.Schema.Types.Mixed, default: {} },
+  generalSettings: { type: mongoose.Schema.Types.Mixed, default: {} },
+  messageSettings: { type: mongoose.Schema.Types.Mixed, default: {} },
+  itemSettings: { type: mongoose.Schema.Types.Mixed, default: {} },
+  partySettings: { type: mongoose.Schema.Types.Mixed, default: {} },
+  printSettings: { type: mongoose.Schema.Types.Mixed, default: {} },
+  invoiceSettings: { type: mongoose.Schema.Types.Mixed, default: {} },
 }, {
-  timestamps: true
+  timestamps: true,
+  strict: false
 });
 
 module.exports = mongoose.model('Settings', settingsSchema);

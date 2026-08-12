@@ -48,7 +48,7 @@ export function GstCalculatorDialog({ open, onOpenChange }) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-w-[92vw] sm:max-w-[425px] w-full rounded-2xl p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>GST Calculator</DialogTitle>
         </DialogHeader>

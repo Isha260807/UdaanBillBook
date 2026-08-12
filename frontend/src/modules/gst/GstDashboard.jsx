@@ -20,8 +20,10 @@ import {
   Settings,
   Building,
   CreditCard,
-  Briefcase
+  Briefcase,
+  Calculator
 } from "lucide-react";
+import { GstCalculatorDialog } from "@/components/GstCalculatorDialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +50,7 @@ export function GstDashboard() {
   const [parties, setParties] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isGstCalculatorOpen, setIsGstCalculatorOpen] = useState(false);
 
   // Search & Filters
   const [globalSearch, setGlobalSearch] = useState("");
@@ -483,6 +486,9 @@ export function GstDashboard() {
         subtitle="Manage business GSTIN returns, Input Tax Credit registers, and tax liabilities dynamically."
         actions={
           <div className="flex gap-2">
+            <Button variant="outline" className="rounded-xl border-slate-200" onClick={() => setIsGstCalculatorOpen(true)}>
+              <Calculator className="mr-1.5 h-3.5 w-3.5 text-emerald-600" /> GST Calculator
+            </Button>
             <Button variant="outline" className="rounded-xl border-slate-200" onClick={fetchData}>
               <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Sync Data
             </Button>
@@ -1103,6 +1109,7 @@ export function GstDashboard() {
 
         </div>
       </div>
+      <GstCalculatorDialog open={isGstCalculatorOpen} onOpenChange={setIsGstCalculatorOpen} />
     </div>
   );
 }

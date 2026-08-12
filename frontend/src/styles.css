@@ -361,3 +361,150 @@ aside nav::-webkit-scrollbar,
   }
 }
 
+/* ================================
+   GLOBAL MOBILE FONT SYSTEM
+================================ */
+
+/* Standard Mobile UI (767px & Below) */
+@media (max-width: 767px) {
+  /* Normal body text */
+  body {
+    font-size: 14px;
+    font-weight: 400;
+  }
+
+  /* Main heading */
+  h1 {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  /* Secondary heading */
+  h2 {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* Section heading (e.g. SELLER DETAILS) */
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  /* Form labels */
+  label,
+  .form-label {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* Input text */
+  input,
+  textarea,
+  select,
+  .form-input {
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  /* Buttons - allow component level font utility overrides */
+  button:not([class*="text-"]):not([class*="!text-"]),
+  .btn:not([class*="text-"]):not([class*="!text-"]) {
+    font-size: 14px;
+  }
+
+  button:not([class*="font-"]):not([class*="!font-"]),
+  .btn:not([class*="font-"]):not([class*="!font-"]) {
+    font-weight: 600;
+  }
+
+  /* Header title */
+  .header-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* Small / helper text */
+  .small-text {
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  /* Bottom navigation */
+  .bottom-nav-item {
+    font-size: 11px;
+    font-weight: 500;
+  }
+}
+
+/* Ultra-Compact Mobile Screens (320px - 359px) */
+@media (max-width: 359px) {
+  body {
+    font-size: 13px;
+  }
+
+  h1 {
+    font-size: 19px;
+    font-weight: 700;
+  }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  label,
+  .form-label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  input,
+  textarea,
+  select,
+  .form-input {
+    font-size: 15px;
+    font-weight: 400;
+  }
+
+  button:not([class*="text-"]):not([class*="!text-"]),
+  .btn:not([class*="text-"]):not([class*="!text-"]) {
+    font-size: 13px;
+  }
+
+  button:not([class*="font-"]):not([class*="!font-"]),
+  .btn:not([class*="font-"]):not([class*="!font-"]) {
+    font-weight: 600;
+  }
+
+  .header-title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .small-text {
+    font-size: 11px;
+    font-weight: 400;
+  }
+
+  .bottom-nav-item {
+    font-size: 10px;
+    font-weight: 500;
+  }
+}
+

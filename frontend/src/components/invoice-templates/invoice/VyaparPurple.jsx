@@ -5,8 +5,8 @@ export function VyaparPurpleTemplate({ invoice, printSet, gstSet, activeColor, n
   const { customer, lines, totals, meta, paymentDetails, shippingDetails } = invoice;
   const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet);
 
-  // Strictly use custom color for "Vyapar Purple" if configured in templateColors, otherwise default to signature Purple (#4a3556 & #e8e1ef)
-  const specificColor = printSet?.templateColors?.["Vyapar Purple"] || (activeColor?.raw && activeColor.raw !== "#0ea5e9" && printSet?.themeName === "Vyapar Purple" ? activeColor.raw : null);
+  // Strictly use custom color for "Premium Pro" / "Vyapar Purple" if configured in templateColors, otherwise default to signature Purple (#4a3556 & #e8e1ef)
+  const specificColor = printSet?.templateColors?.["Premium Pro"] || printSet?.templateColors?.["Vyapar Purple"] || (activeColor?.raw && activeColor.raw !== "#0ea5e9" && (printSet?.themeName === "Premium Pro" || printSet?.themeName === "Vyapar Purple") ? activeColor.raw : null);
   
   const primaryColor = specificColor || "#4a3556"; // Default Purple
   const lightPurple = specificColor ? `${specificColor}1f` : "#e8e1ef"; // Default Light Purple strip

@@ -457,7 +457,7 @@ export function AddPartyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add Party</DialogTitle>
           <DialogDescription>Customer or supplier ledger registration.</DialogDescription>
@@ -541,9 +541,9 @@ export function AddPartyDialog({
               <Input id="paname" value={f.name} onChange={(e) => set("name", e.target.value)} className="h-10 rounded-xl" />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex gap-3">
               {partySettings.phone && (
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 flex-1 min-w-0">
                   <Label htmlFor="paphone">Mobile</Label>
                   <Input
                     id="paphone" inputMode="numeric" maxLength={10}
@@ -554,19 +554,19 @@ export function AddPartyDialog({
                 </div>
               )}
               {partySettings.partyType && (
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <Label>Type</Label>
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <Label className="whitespace-nowrap">Type</Label>
                     <button
                       type="button"
                       onClick={() => setShowAddType(true)}
-                      className="text-[11px] text-blue-600 hover:underline font-semibold"
+                      className="text-[11px] text-blue-600 hover:underline font-semibold whitespace-nowrap"
                     >
                       + Add Type
                     </button>
                   </div>
                   <Select value={f.type} onValueChange={(v) => set("type", v)}>
-                    <SelectTrigger className="h-10 rounded-xl"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-10 rounded-xl w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {partyTypes.map((t) => (
                         <SelectItem key={t._id || t.name} value={t.name}>{t.name}</SelectItem>
@@ -605,10 +605,10 @@ export function AddPartyDialog({
               </div>
             )}
 
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" className="rounded-xl">Save Party</Button>
-            </DialogFooter>
+            <div className="flex flex-col gap-2 pt-2">
+              <Button type="submit" className="w-full h-11 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm">Save Party</Button>
+              <Button type="button" variant="ghost" className="w-full h-10 rounded-xl text-sm font-medium text-muted-foreground" onClick={() => onOpenChange(false)}>Cancel</Button>
+            </div>
           </form>
         )}
       </DialogContent>

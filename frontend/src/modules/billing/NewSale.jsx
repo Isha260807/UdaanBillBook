@@ -418,34 +418,53 @@ export default function NewSale() {
     fetchTemplates();
   }, []);
 
-  // Initialize seller details & footer from settings once settings are loaded
+  // Initialize seller details, bank details & footer from settings & logged-in user profile once loaded
   useEffect(() => {
-    if (settings?.printSettings) {
-      if (!sellerName && settings.printSettings.companyName) setSellerName(settings.printSettings.companyName);
-      if (!sellerAddress && settings.printSettings.address) setSellerAddress(settings.printSettings.address);
-      if (!sellerEmail && settings.printSettings.email) setSellerEmail(settings.printSettings.email);
-      if (!sellerPhone && settings.printSettings.phone) setSellerPhone(settings.printSettings.phone);
-      const seedGstin = typeof settings.printSettings.gstinOnSale === "string" ? settings.printSettings.gstinOnSale : "";
-      if (!sellerGstin && (seedGstin || settings.gstSettings?.gstin)) {
-        setSellerGstin(seedGstin || settings.gstSettings?.gstin);
-      }
-      if (!terms) {
-        setTerms("1. We are responsible for the loss of signed Duty slip, check details.\n2. Interest@24% will be charged if bill not paid within 15 days.");
-      }
-      if (!signatureText && settings.printSettings.signatureText) {
-        setSignatureText(settings.printSettings.signatureText);
-      }
-      if (!signatureUrl && settings.printSettings.signatureUrl) {
-        setSignatureUrl(settings.printSettings.signatureUrl);
-      }
-      if (!signatureImgUrl && settings.printSettings.signatureImgUrl) {
-        setSignatureImgUrl(settings.printSettings.signatureImgUrl);
-      }
-      if (!logoUrl && settings.printSettings.logoUrl) {
-        setLogoUrl(settings.printSettings.logoUrl);
-      }
+    const printSet = settings?.printSettings || {};
+    const gstSet = settings?.gstSettings || {};
+    const srcBank = settings?.bankDetails || user?.bankDetails || {};
+
+    if (!sellerName) {
+      setSellerName(printSet.companyName || user?.businessName || user?.business || "");
     }
-  }, [settings]);
+    if (!sellerAddress) {
+      setSellerAddress(printSet.address || user?.businessAddress || user?.address || "");
+    }
+    if (!sellerEmail) {
+      setSellerEmail(printSet.email || user?.email || "");
+    }
+    if (!sellerPhone) {
+      setSellerPhone(printSet.phone || user?.phone || user?.mobile || "");
+    }
+    if (!sellerGstin) {
+      setSellerGstin(printSet.gstinOnSale || gstSet.gstin || user?.gstin || "");
+    }
+
+    if (!bankDetails.accountNumber && !bankDetails.bankName && !bankDetails.ifsc) {
+      setBankDetails({
+        accountNumber: srcBank.accountNumber || printSet.bankAccount || printSet.accountNumber || "",
+        bankName: srcBank.bankName || printSet.bankName || "",
+        ifsc: srcBank.ifsc || printSet.bankIfsc || printSet.ifsc || "",
+        branchName: srcBank.branchName || printSet.bankBranch || printSet.branchName || ""
+      });
+    }
+
+    if (!terms) {
+      setTerms("1. We are responsible for the loss of signed Duty slip, check details.\n2. Interest@24% will be charged if bill not paid within 15 days.");
+    }
+    if (!signatureText && printSet.signatureText) {
+      setSignatureText(printSet.signatureText);
+    }
+    if (!signatureUrl && printSet.signatureUrl) {
+      setSignatureUrl(printSet.signatureUrl);
+    }
+    if (!signatureImgUrl && printSet.signatureImgUrl) {
+      setSignatureImgUrl(printSet.signatureImgUrl);
+    }
+    if (!logoUrl && printSet.logoUrl) {
+      setLogoUrl(printSet.logoUrl);
+    }
+  }, [settings, user]);
 
   // Sync draft to local storage
   useEffect(() => {
@@ -888,15 +907,15 @@ export default function NewSale() {
   return (
     <div className="min-h-[100vh] -mx-4 -mt-4 md:-mx-6 md:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-100 font-sans text-slate-900 flex flex-col">
       {/* Top App Bar */}
-      <div className="flex h-12 md:h-14 shrink-0 items-center justify-between bg-white px-2 md:px-4 border-b">
-        <div className="flex items-center gap-1 md:gap-3 overflow-hidden">
-          <button onClick={() => navigate(-1)} className="p-1 -ml-1 text-slate-800 hover:bg-slate-50 rounded-full transition-colors shrink-0">
-            <ArrowLeft className="h-5 w-5 md:h-6 md:w-6" />
+      <div className="flex h-11 md:h-14 shrink-0 items-center justify-start sm:justify-between gap-1 sm:gap-4 bg-white px-1 sm:px-2 md:px-4 border-b">
+        <div className="flex items-center gap-1 shrink-0">
+          <button onClick={() => navigate(-1)} className="p-0.5 text-slate-800 hover:bg-slate-50 rounded-lg transition-colors shrink-0">
+            <ArrowLeft className="h-4 w-4 md:h-6 md:w-6" />
           </button>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <span className="text-xs md:text-sm font-bold tracking-tight text-slate-800 uppercase hidden sm:inline">Type:</span>
             <Select value={docType} onValueChange={setDocType}>
-              <SelectTrigger className="h-8 w-[140px] md:w-[170px] rounded-lg text-xs font-bold bg-slate-50 border-slate-300">
+              <SelectTrigger className="h-7 sm:h-8 w-auto rounded-lg !text-[11px] sm:!text-xs !font-normal text-slate-700 bg-slate-50 border-slate-300 px-1.5 whitespace-nowrap">
                 <SelectValue placeholder="Select Type" />
               </SelectTrigger>
               <SelectContent>
@@ -912,19 +931,19 @@ export default function NewSale() {
             </Select>
           </div>
         </div>
-        <div className="flex items-center gap-1 md:gap-2 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button
             size="sm"
             variant="outline"
             onClick={() => setActivePane(activePane === "form" ? "preview" : "form")}
-            className="flex items-center gap-1 rounded-xl text-[10px] md:text-xs h-8 px-2 md:px-3 md:hidden"
+            className="flex items-center gap-0.5 sm:gap-1 rounded-lg !text-[11px] md:!text-xs h-7 sm:h-8 px-1.5 sm:px-3 md:hidden !font-normal text-slate-700"
           >
-            <Eye className="h-3.5 w-3.5" />
+            <Eye className="h-3 w-3" />
             <span className="hidden sm:inline">{activePane === "form" ? "View Preview" : "View Form"}</span>
             <span className="sm:hidden">{activePane === "form" ? "Preview" : "Form"}</span>
           </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8 md:h-9 md:w-9 text-slate-600 rounded-xl" onClick={() => printInvoiceHtml()} title="Print Invoice">
-            <Printer className="h-4 w-4" />
+          <Button size="icon" variant="ghost" className="h-7 w-6 sm:h-9 sm:w-9 text-slate-600 rounded-lg p-0" onClick={() => printInvoiceHtml()} title="Print Invoice">
+            <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
         </div>
       </div>
@@ -2361,14 +2380,16 @@ export default function NewSale() {
                 { id: "Professional", name: "Professional" },
                 { id: "Business Plus", name: "Business Plus" },
                 { id: "Corporate Pro", name: "Corporate Pro" },
-                { id: "Vyapar Red", name: "Vyapar Red" },
-                { id: "Vyapar Purple", name: "Vyapar Purple" }
+                { id: "Standard Plus", name: "Standard Plus" },
+                { id: "Premium Pro", name: "Premium Pro" }
               ]).map((tpl) => {
                 const isActive = invoiceTemplate === tpl.id || 
                   (tpl.id === "Standard (Boxed)" && invoiceTemplate === "GST Boxed") ||
                   (tpl.id === "Classic" && invoiceTemplate === "Classic White") ||
                   (tpl.id === "Modern" && invoiceTemplate === "Modern Blue") ||
-                  (tpl.id === "Minimal" && invoiceTemplate === "Minimalist");
+                  (tpl.id === "Minimal" && invoiceTemplate === "Minimalist") ||
+                  (tpl.id === "Standard Plus" && invoiceTemplate === "Vyapar Red") ||
+                  (tpl.id === "Premium Pro" && invoiceTemplate === "Vyapar Purple");
 
                 return (
                   <button
@@ -2410,8 +2431,8 @@ export default function NewSale() {
                     <option value="Professional">Professional</option>
                     <option value="Business Plus">Business Plus</option>
                     <option value="Corporate Pro">Corporate Pro</option>
-                    <option value="Vyapar Red">Vyapar Red</option>
-                    <option value="Vyapar Purple">Vyapar Purple</option>
+                    <option value="Standard Plus">Standard Plus</option>
+                    <option value="Premium Pro">Premium Pro</option>
                   </>
                 )}
               </select>
@@ -2799,12 +2820,12 @@ export default function NewSale() {
         </div>
 
         <div className="flex flex-row w-full md:w-auto gap-1.5 md:gap-2">
-          <Button variant="outline" className="flex-1 rounded-full h-8 md:h-10 text-xs md:text-sm font-medium border-slate-300 md:max-w-xs px-2 whitespace-nowrap uppercase tracking-wide" onClick={() => handleSave(false)}>
-            SAVE {isEwayMode ? "E-WAY" : "INVOICE"}
+          <Button variant="outline" className="flex-1 rounded-full h-8 md:h-10 text-[10px] sm:text-xs md:text-sm font-semibold border-slate-300 md:max-w-xs px-1.5 whitespace-nowrap tracking-normal" onClick={() => handleSave(false)}>
+            Save {isEwayMode ? "E-Way" : "Invoice"}
           </Button>
-          <Button className="flex-[1.5] md:flex-[2] rounded-full h-8 md:h-10 text-xs md:text-sm font-medium bg-emerald-500 hover:bg-emerald-600 md:max-w-xs px-2 whitespace-nowrap uppercase tracking-wide" onClick={() => handleSave(true)}>
+          <Button className="flex-[1.5] md:flex-[2] rounded-full h-8 md:h-10 text-[10px] sm:text-xs md:text-sm font-semibold bg-emerald-500 hover:bg-emerald-600 md:max-w-xs px-1.5 whitespace-nowrap tracking-normal" onClick={() => handleSave(true)}>
             <Send className="mr-1 h-3 w-3 md:mr-1.5 md:h-3.5 md:w-3.5" />
-            SAVE & SEND
+            Save & Send
           </Button>
         </div>
       </div>

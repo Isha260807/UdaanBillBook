@@ -26,6 +26,8 @@ export const TEMPLATES = {
     "Professional": { component: ProfessionalTemplate, sizes: ["A4"] },
     "Business Plus": { component: BusinessTemplate, sizes: ["A4", "A5"] },
     "Corporate Pro": { component: CorporateTemplate, sizes: ["A4"] },
+    "Standard Plus": { component: VyaparRedTemplate, sizes: ["A4"] },
+    "Premium Pro": { component: VyaparPurpleTemplate, sizes: ["A4"] },
     "Vyapar Red": { component: VyaparRedTemplate, sizes: ["A4"] },
     "Vyapar Purple": { component: VyaparPurpleTemplate, sizes: ["A4"] },
     "Custom HTML": { component: CustomHTMLTemplate, sizes: ["A4"] }

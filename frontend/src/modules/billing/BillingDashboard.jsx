@@ -294,7 +294,7 @@ export function BillingDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Billing & Invoices"
+        title={<span className="hidden sm:inline">Billing & Invoices</span>}
         actions={
           <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2">
             <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2 rounded-xl h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={handleExportPdf}>
@@ -338,17 +338,17 @@ export function BillingDashboard() {
         ))}
       </div>
 
-      <Card className="border-0 shadow-[var(--shadow-card)]">
-        <CardContent className="p-4 md:p-6">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Tabs value={tab} onValueChange={setTab} className="hidden sm:block">
-              <TabsList className="rounded-xl">
-                <TabsTrigger value="all" className="rounded-lg">All</TabsTrigger>
-                <TabsTrigger value="paid" className="rounded-lg">Paid</TabsTrigger>
-                <TabsTrigger value="unpaid" className="rounded-lg">Unpaid</TabsTrigger>
-                <TabsTrigger value="partial" className="rounded-lg">Partial</TabsTrigger>
-              </TabsList>
-            </Tabs>
+      {/* Search & Invoice List without outer Card wrapper */}
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Tabs value={tab} onValueChange={setTab} className="hidden sm:block">
+            <TabsList className="rounded-xl">
+              <TabsTrigger value="all" className="rounded-lg">All</TabsTrigger>
+              <TabsTrigger value="paid" className="rounded-lg">Paid</TabsTrigger>
+              <TabsTrigger value="unpaid" className="rounded-lg">Unpaid</TabsTrigger>
+              <TabsTrigger value="partial" className="rounded-lg">Partial</TabsTrigger>
+            </TabsList>
+          </Tabs>
             <div className="flex w-full gap-2 sm:w-auto items-center">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -410,7 +410,7 @@ export function BillingDashboard() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200/80 shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-b">
@@ -517,8 +517,7 @@ export function BillingDashboard() {
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
 
       {/* ====== Status Update Modal ====== */}
