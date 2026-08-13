@@ -39,6 +39,7 @@ export function normalizeInvoice(inv) {
     billedToAddress: inv.billedToAddress || inv.shippingDetails?.shipToAddress || inv.party?.address || inv.partyAddress || "",
     billedToGstin: inv.gstin || inv.billedToGstin || inv.shippingDetails?.shipToGSTIN || inv.party?.gstin || "",
     billedToMobile: inv.phone || inv.billedToMobile || inv.shippingDetails?.phone || inv.party?.phone || "",
+    billedToEmail: inv.email || inv.billedToEmail || inv.party?.email || "",
     billedToState: inv.billedToState || inv.shippingDetails?.state || inv.party?.state || "Delhi",
     billingName: inv.partyName || inv.supplier || inv.billingName || inv.shippingDetails?.shipToName || inv.party?.name || "",
     poNumber: inv.poNumber || "",
@@ -87,7 +88,10 @@ export function normalizeInvoice(inv) {
     receivedBy: inv.receivedBy || "",
     deliveredBy: inv.deliveredBy || "",
     acknowledgement: inv.acknowledgement || "",
-    partyBalance: inv.partyBalance || ""
+    partyBalance: inv.partyBalance || "",
+    restaurantDetails: inv.restaurantDetails || null,
+    hotelDetails: inv.hotelDetails || null,
+    retailDetails: inv.retailDetails || null
   };
 }
 

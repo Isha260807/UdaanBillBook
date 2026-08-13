@@ -102,7 +102,7 @@ export function AppTopbar() {
 
         {/* Right Section */}
         <div className="flex items-center gap-2">
-          {/* New Invoice & E-Way Bill Buttons (Desktop Only) */}
+          {/* New Invoice, Thermal Receipt & E-Way Bill Buttons (Desktop Only) */}
           <div className="hidden md:flex items-center gap-2">
             <Button
               size="sm"
@@ -113,6 +113,17 @@ export function AppTopbar() {
               <Link to={`${rolePrefix}/sale/new?ewaybill=true`}>
                 <Plus className="mr-1 h-4 w-4" />
                 E-Way Bill
+              </Link>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-10 rounded-xl px-4 border-amber-500 text-amber-600 hover:bg-amber-50"
+              asChild
+            >
+              <Link to={`${rolePrefix}/sale/new?thermal=true&template=Thermal%20Receipt&business=restaurant`}>
+                <Plus className="mr-1 h-4 w-4" />
+                Thermal Receipt
               </Link>
             </Button>
             <Button

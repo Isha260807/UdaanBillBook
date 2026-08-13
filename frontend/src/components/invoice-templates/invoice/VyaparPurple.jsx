@@ -322,6 +322,18 @@ export function VyaparPurpleTemplate({ invoice, printSet, gstSet, activeColor, n
               <span>SGST:</span>
               <span className="font-mono">₹{formatAmt(totals.gstAmount / 2, printSet)}</span>
             </div>
+            {totals.tcsAmount > 0 && (
+              <div className="flex justify-between font-semibold text-emerald-700">
+                <span>TCS (+):</span>
+                <span className="font-mono">+₹{formatAmt(totals.tcsAmount, printSet)}</span>
+              </div>
+            )}
+            {totals.tdsAmount > 0 && (
+              <div className="flex justify-between font-semibold text-blue-700">
+                <span>TDS (-):</span>
+                <span className="font-mono">-₹{formatAmt(totals.tdsAmount, printSet)}</span>
+              </div>
+            )}
 
             {/* Total Highlight Bar */}
             <div

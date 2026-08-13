@@ -431,13 +431,34 @@ export default function NewPurchase() {
                         onChange={(e) => updateLine(i, 'unit', e.target.value)} 
                         className="h-9 w-full rounded-md border border-input bg-white px-2 py-1 text-xs shadow-sm focus-visible:outline-none"
                       >
-                        <option value="Pcs">Pcs</option>
-                        <option value="Box">Box</option>
-                        <option value="Kg">Kg</option>
-                        <option value="Ltr">Ltr</option>
-                        <option value="Mtr">Mtr</option>
-                        <option value="Pack">Pack</option>
-                        <option value="Set">Set</option>
+                        <option value="Bag">BAGS (Bag)</option>
+                        <option value="Btl">BOTTLES (Btl)</option>
+                        <option value="Box">BOX (Box)</option>
+                        <option value="Bdl">BUNDLES (Bdl)</option>
+                        <option value="Can">CANS (Can)</option>
+                        <option value="Ctn">CARTONS (Ctn)</option>
+                        <option value="Mtq">CUBIC METER (Mtq)</option>
+                        <option value="Day">DAY (Day)</option>
+                        <option value="Dzn">DOZENS (Dzn)</option>
+                        <option value="Gm">GRAMMES (Gm)</option>
+                        <option value="Hur">HOUR (Hur)</option>
+                        <option value="Kg">KILOGRAMS (Kg)</option>
+                        <option value="Kmt">KILOMETER (Kmt)</option>
+                        <option value="Ltr">LITRE (Ltr)</option>
+                        <option value="Mtr">METERS (Mtr)</option>
+                        <option value="Ml">MILILITRE (Ml)</option>
+                        <option value="Nos">NUMBERS (Nos)</option>
+                        <option value="Pac">PACKS (Pac)</option>
+                        <option value="Prs">PAIRS (Prs)</option>
+                        <option value="Pcs">PIECES (Pcs)</option>
+                        <option value="Qtl">QUINTAL (Qtl)</option>
+                        <option value="Rol">ROLLS (Rol)</option>
+                        <option value="Ser">SERVICE (Ser)</option>
+                        <option value="Set">SET (Set)</option>
+                        <option value="Sqf">SQUARE FEET (Sqf)</option>
+                        <option value="Sqm">SQUARE METERS (Sqm)</option>
+                        <option value="Tbs">TABLETS (Tbs)</option>
+                        <option value="Ton">TON / METRIC TON (Ton)</option>
                       </select>
                     </div>
 

@@ -32,6 +32,8 @@ export default function Register() {
     phone: "",
     email: "",
     gstNo: "",
+    aadhaarNo: "",
+    panNo: "",
     aadhaarCard: null,
     panCard: null,
   });
@@ -103,6 +105,8 @@ export default function Register() {
           address: form.address,
           businessType: form.type,
           gstNo: form.gstNo,
+          aadhaarNo: form.aadhaarNo,
+          panNo: form.panNo,
           returnUrl: location.state?.returnUrl
         }
       });
@@ -204,36 +208,46 @@ export default function Register() {
         </div>
 
         <div className="pt-4 mt-2 border-t border-border/50">
-          <h3 className="text-sm font-semibold text-slate-800 mb-3">Document Uploads (Optional)</h3>
+          <h3 className="text-sm font-semibold text-slate-800 mb-3">Identity & Tax Details</h3>
           <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="gstNo">GST Number</Label>
-              <Input
-                id="gstNo"
-                placeholder="22AAAAA0000A1Z5"
-                value={form.gstNo}
-                onChange={(e) => set("gstNo", e.target.value.toUpperCase())}
-                className="h-11 rounded-xl"
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-1.5">
-                <Label htmlFor="aadhaarCard">Aadhaar Card</Label>
+                <Label htmlFor="gstNo">GST Number</Label>
                 <Input
-                  id="aadhaarCard"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={(e) => set("aadhaarCard", e.target.files[0])}
-                  className="h-11 rounded-xl cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                  id="gstNo"
+                  placeholder="22AAAAA0000A1Z5"
+                  value={form.gstNo}
+                  onChange={(e) => set("gstNo", e.target.value.toUpperCase())}
+                  className="h-11 rounded-xl"
                 />
-                {form.aadhaarCard && form.aadhaarCard.type.startsWith('image/') && (
-                  <div className="mt-3 p-1.5 border border-slate-200 rounded-xl inline-block bg-white shadow-sm">
-                    <img src={URL.createObjectURL(form.aadhaarCard)} alt="Aadhaar Preview" className="h-24 w-auto rounded-lg object-contain" />
-                  </div>
-                )}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="panCard">PAN Card</Label>
+                <Label htmlFor="panNo">PAN Number</Label>
+                <Input
+                  id="panNo"
+                  placeholder="ABCDE1234F"
+                  value={form.panNo}
+                  maxLength={10}
+                  onChange={(e) => set("panNo", e.target.value.toUpperCase())}
+                  className="h-11 rounded-xl uppercase"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="aadhaarNo">Aadhaar Number</Label>
+                <Input
+                  id="aadhaarNo"
+                  placeholder="1234 5678 9012"
+                  value={form.aadhaarNo}
+                  maxLength={12}
+                  onChange={(e) => set("aadhaarNo", e.target.value.replace(/\D/g, "").slice(0, 12))}
+                  className="h-11 rounded-xl"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 pt-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="panCard">PAN Card Image <span className="text-muted-foreground">(Optional)</span></Label>
                 <Input
                   id="panCard"
                   type="file"
@@ -244,6 +258,21 @@ export default function Register() {
                 {form.panCard && form.panCard.type.startsWith('image/') && (
                   <div className="mt-3 p-1.5 border border-slate-200 rounded-xl inline-block bg-white shadow-sm">
                     <img src={URL.createObjectURL(form.panCard)} alt="PAN Preview" className="h-24 w-auto rounded-lg object-contain" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="aadhaarCard">Aadhaar Card Image</Label>
+                <Input
+                  id="aadhaarCard"
+                  type="file"
+                  accept="image/*,.pdf"
+                  onChange={(e) => set("aadhaarCard", e.target.files[0])}
+                  className="h-11 rounded-xl cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                />
+                {form.aadhaarCard && form.aadhaarCard.type.startsWith('image/') && (
+                  <div className="mt-3 p-1.5 border border-slate-200 rounded-xl inline-block bg-white shadow-sm">
+                    <img src={URL.createObjectURL(form.aadhaarCard)} alt="Aadhaar Preview" className="h-24 w-auto rounded-lg object-contain" />
                   </div>
                 )}
               </div>

@@ -7,6 +7,7 @@ import { CorporateTemplate } from "./invoice/Corporate";
 import { ProfessionalTemplate } from "./invoice/Professional";
 import { VyaparRedTemplate } from "./invoice/VyaparRed";
 import { VyaparPurpleTemplate } from "./invoice/VyaparPurple";
+import { ThermalReceiptTemplate } from "./invoice/ThermalReceipt";
 import { CustomHTMLTemplate } from "./invoice/CustomHTML";
 import { OfficialEWay } from "./eway/OfficialEWay";
 import { GreenEWay } from "./eway/GreenEWay";
@@ -23,6 +24,7 @@ export const TEMPLATES = {
     "Modern Blue": { component: ModernTemplate, sizes: ["A4", "Thermal"] },
     "Minimal": { component: MinimalTemplate, sizes: ["A4", "Thermal"] },
     "Minimalist": { component: MinimalTemplate, sizes: ["A4", "Thermal"] },
+    "Thermal Receipt": { component: ThermalReceiptTemplate, sizes: ["Thermal"] },
     "Professional": { component: ProfessionalTemplate, sizes: ["A4"] },
     "Business Plus": { component: BusinessTemplate, sizes: ["A4", "A5"] },
     "Corporate Pro": { component: CorporateTemplate, sizes: ["A4"] },

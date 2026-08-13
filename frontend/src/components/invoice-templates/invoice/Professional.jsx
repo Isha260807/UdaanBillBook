@@ -208,6 +208,16 @@ export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, n
             <span className="font-bold text-[8px] uppercase tracking-wider block text-slate-400 mb-1">Billing Summary</span>
             <div className="flex justify-between"><span>Taxable amount</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></div>
             <div className="flex justify-between"><span>GST Taxes</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
+            {totals.tcsAmount > 0 && (
+              <div className="flex justify-between font-semibold text-emerald-700">
+                <span>TCS (+)</span><span>+{formatAmt(totals.tcsAmount, printSet)}</span>
+              </div>
+            )}
+            {totals.tdsAmount > 0 && (
+              <div className="flex justify-between font-semibold text-blue-700">
+                <span>TDS (-)</span><span>-{formatAmt(totals.tdsAmount, printSet)}</span>
+              </div>
+            )}
             <div className={`flex justify-between font-extrabold text-[10px] border-t pt-1 ${activeColor.text}`}>
               <span>Total Payable</span><span>{formatAmt(totals.grand, printSet)}</span>
             </div>

@@ -190,6 +190,16 @@ export function MinimalTemplate({ invoice, printSet, gstSet, activeColor, number
         <div className="text-right space-y-1 w-64 text-[10px] font-mono border-t pt-1 border-slate-100">
           <div className="flex justify-between"><span>Taxable Amount</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></div>
           <div className="flex justify-between"><span>GST Amount</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
+          {totals.tcsAmount > 0 && (
+            <div className="flex justify-between font-semibold text-emerald-700">
+              <span>TCS (+)</span><span>+{formatAmt(totals.tcsAmount, printSet)}</span>
+            </div>
+          )}
+          {totals.tdsAmount > 0 && (
+            <div className="flex justify-between font-semibold text-blue-700">
+              <span>TDS (-)</span><span>-{formatAmt(totals.tdsAmount, printSet)}</span>
+            </div>
+          )}
           <div className={`flex justify-between font-extrabold text-[11px] border-t-2 pt-1 border-slate-800 ${activeColor.text}`}>
             <span>Total Payable</span><span>{formatAmt(totals.grand, printSet)}</span>
           </div>

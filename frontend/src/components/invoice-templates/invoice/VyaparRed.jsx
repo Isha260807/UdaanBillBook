@@ -261,6 +261,22 @@ export function VyaparRedTemplate({ invoice, printSet, gstSet, activeColor, numb
               <span>TOTAL</span>
               {totals.gstAmount > 0 && <span className="text-[9px] font-normal opacity-80">(Incl. GST ₹{formatAmt(totals.gstAmount, printSet)})</span>}
             </div>
+            {(totals.tcsAmount > 0 || totals.tdsAmount > 0) && (
+              <div className="mt-1 pt-1 border-t border-white/20 text-[9px] space-y-0.5 opacity-90">
+                {totals.tcsAmount > 0 && (
+                  <div className="flex justify-between font-semibold">
+                    <span>TCS (+)</span>
+                    <span>+₹{formatAmt(totals.tcsAmount, printSet)}</span>
+                  </div>
+                )}
+                {totals.tdsAmount > 0 && (
+                  <div className="flex justify-between font-semibold">
+                    <span>TDS (-)</span>
+                    <span>-₹{formatAmt(totals.tdsAmount, printSet)}</span>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="text-right mt-4">
               <span className="text-2xl font-black font-mono">₹{formatAmt(totals.grand, printSet)}</span>
             </div>

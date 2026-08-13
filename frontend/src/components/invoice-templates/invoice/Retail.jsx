@@ -158,6 +158,16 @@ export function RetailTemplate({ invoice, printSet, gstSet, activeColor, numberT
       <div className="space-y-1 border-b border-dashed pb-3 text-[10px] font-mono">
         <div className="flex justify-between"><span>Subtotal (Exc. Tax)</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></div>
         <div className="flex justify-between"><span>GST Tax Charges</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
+        {totals.tcsAmount > 0 && (
+          <div className="flex justify-between font-semibold text-emerald-700">
+            <span>TCS (+)</span><span>+{formatAmt(totals.tcsAmount, printSet)}</span>
+          </div>
+        )}
+        {totals.tdsAmount > 0 && (
+          <div className="flex justify-between font-semibold text-blue-700">
+            <span>TDS (-)</span><span>-{formatAmt(totals.tdsAmount, printSet)}</span>
+          </div>
+        )}
         <div className={`flex justify-between font-extrabold text-[12px] pt-1.5 ${activeColor.text}`}>
           <span>NET PAYABLE</span><span>{formatAmt(totals.grand, printSet)}</span>
         </div>

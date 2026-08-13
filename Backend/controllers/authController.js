@@ -100,7 +100,7 @@ const sendOtp = async (req, res) => {
 // @access  Public
 const verifyOtp = async (req, res) => {
   try {
-    const { phone, otp, mode, name, business, address, email, role, businessType } = req.body;
+    const { phone, otp, mode, name, business, address, email, role, businessType, gstNo, panNo, aadhaarNo } = req.body;
 
     if (!phone || !otp) {
       return res.status(400).json({ message: 'Phone and OTP are required' });
@@ -132,6 +132,9 @@ const verifyOtp = async (req, res) => {
         businessAddress: address,
         businessType: businessType,
         email: email && email.trim() ? email.trim() : "",
+        gstin: gstNo || "",
+        panNo: panNo || "",
+        aadhaarNo: aadhaarNo || "",
         role: userRole,
         status: initialStatus,
         subscription: { plan: (isPlatformAdmin ? "Enterprise" : "Free"), status: "active" }
@@ -143,6 +146,9 @@ const verifyOtp = async (req, res) => {
       user.businessAddress = address || user.businessAddress;
       user.businessType = businessType || user.businessType;
       user.email = email || user.email;
+      if (gstNo) user.gstin = gstNo;
+      if (panNo) user.panNo = panNo;
+      if (aadhaarNo) user.aadhaarNo = aadhaarNo;
       await user.save();
     }
     
@@ -171,6 +177,10 @@ const verifyOtp = async (req, res) => {
       phone: user.phone,
       email: user.email,
       businessName: user.businessName,
+      businessAddress: user.businessAddress,
+      gstin: user.gstin || "",
+      panNo: user.panNo || "",
+      aadhaarNo: user.aadhaarNo || "",
       role: user.role,
       status: user.status || "Active",
       permissions: user.permissions || [],

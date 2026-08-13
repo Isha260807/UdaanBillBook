@@ -230,6 +230,18 @@ export function ClassicTemplate({ invoice, printSet, gstSet, activeColor, number
               <span className="text-slate-500">SGST Amount</span>
               <span className="font-mono">{formatAmt(totals.gstAmount / 2, printSet)}</span>
             </div>
+            {totals.tcsAmount > 0 && (
+              <div className="flex justify-between py-0.5 border-b border-slate-100 text-emerald-700 font-semibold">
+                <span>TCS (+)</span>
+                <span className="font-mono">+{formatAmt(totals.tcsAmount, printSet)}</span>
+              </div>
+            )}
+            {totals.tdsAmount > 0 && (
+              <div className="flex justify-between py-0.5 border-b border-slate-100 text-blue-700 font-semibold">
+                <span>TDS (-)</span>
+                <span className="font-mono">-{formatAmt(totals.tdsAmount, printSet)}</span>
+              </div>
+            )}
             <div className="flex justify-between py-1 border-b border-slate-200 font-bold text-slate-900">
               <span>Net Payable (Inc Tax)</span>
               <span className={`font-mono ${activeColor.text}`}>{formatAmt(totals.grand, printSet)}</span>

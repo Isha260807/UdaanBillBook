@@ -295,6 +295,16 @@ export function ModernTemplate({ invoice, printSet, gstSet, activeColor, numberT
                   </div>
                 </>
               )}
+              {totals.tcsAmount > 0 && (
+                <div className="flex justify-between py-1 font-semibold text-emerald-700">
+                  <span>TCS (+)</span><span>+{formatAmt(totals.tcsAmount, printSet)}</span>
+                </div>
+              )}
+              {totals.tdsAmount > 0 && (
+                <div className="flex justify-between py-1 font-semibold text-blue-700">
+                  <span>TDS (-)</span><span>-{formatAmt(totals.tdsAmount, printSet)}</span>
+                </div>
+              )}
               {totals.roundOff !== 0 && (
                 <div className="flex justify-between py-1 text-slate-400 italic">
                   <span>Round Off</span><span>{totals.roundOff > 0 ? '+' : ''}{formatAmt(Math.abs(totals.roundOff), printSet)}</span>

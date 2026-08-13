@@ -374,6 +374,18 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
               <span>Total GST</span>
               <span>{formatAmt(totals.gstAmount, printSet)}</span>
             </div>
+            {totals.tcsAmount > 0 && (
+              <div className="py-0.5 flex justify-between text-emerald-700 font-semibold">
+                <span>TCS (+)</span>
+                <span>+{formatAmt(totals.tcsAmount, printSet)}</span>
+              </div>
+            )}
+            {totals.tdsAmount > 0 && (
+              <div className="py-0.5 flex justify-between text-blue-700 font-semibold">
+                <span>TDS (-)</span>
+                <span>-{formatAmt(totals.tdsAmount, printSet)}</span>
+              </div>
+            )}
             {String(meta.reverseCharge || "").toLowerCase() === "yes" && (
               <div className="text-[7.5px] text-amber-700 font-medium italic text-right py-0.5 leading-tight">
                 *Tax to be paid on Reverse Charge by Recipient/Buyer

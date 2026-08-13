@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { ArrowLeft, ReceiptText, Printer, Plus, Send, Trash2, X, ShieldCheck, Eye } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
@@ -186,6 +186,8 @@ function SignaturePad({ value, onChange }) {
 export default function NewSale() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { roleType: roleTypeParam } = useParams();
+  const rolePrefix = roleTypeParam || "vendor";
   const { addInvoice } = useInvoices();
   const { user } = useMockAuth();
   const { settings } = usePlatformSettings();
@@ -279,9 +281,47 @@ export default function NewSale() {
   const [showTransportDrawer, setShowTransportDrawer] = useState(false);
   const [transportDetails, setTransportDetails] = useState({});
   const [shippingDetails, setShippingDetails] = useState({});
+  const [businessType, setBusinessType] = useState(() => searchParams.get("business") || "retail");
+  const [sellerFssai, setSellerFssai] = useState(() => getInitialState("sellerFssai", ""));
+  const [restaurantDetails, setRestaurantDetails] = useState(() => getInitialState("restaurantDetails", {
+    tableNumber: "",
+    kotNumber: "",
+    waiterName: "",
+    orderType: "Dine In",
+    serviceCharge: 0,
+    packagingCharge: 0,
+    deliveryCharge: 0
+  }));
+  const [hotelDetails, setHotelDetails] = useState(() => getInitialState("hotelDetails", {
+    roomNumber: "",
+    roomType: "",
+    bookingId: "",
+    checkInDate: "",
+    checkInTime: "",
+    checkOutDate: "",
+    checkOutTime: "",
+    totalNights: 1,
+    totalGuests: 1,
+    guestName: "",
+    guestMobile: "",
+    guestEmail: "",
+    guestAddress: "",
+    guestCompany: "",
+    guestGstin: "",
+    additionalServices: []
+  }));
+
+  const [retailDetails, setRetailDetails] = useState(() => getInitialState("retailDetails", {
+    orderNo: "",
+    counterNo: "",
+    cashierName: "",
+    fssai: ""
+  }));
 
   // Additional Meta Fields
   const [reverseCharge, setReverseCharge] = useState(() => getInitialState("reverseCharge", "No"));
+  const [tcsAmount, setTcsAmount] = useState(() => getInitialState("tcsAmount", 0));
+  const [tdsAmount, setTdsAmount] = useState(() => getInitialState("tdsAmount", 0));
   const [challanNo, setChallanNo] = useState(() => getInitialState("challanNo", ""));
   const [vehicleNo, setVehicleNo] = useState(() => getInitialState("vehicleNo", ""));
   const [dateOfSupply, setDateOfSupply] = useState(() => getInitialState("dateOfSupply", ""));
@@ -318,7 +358,7 @@ export default function NewSale() {
 
   const [errors, setErrors] = useState({ utr: "", upi: "" });
   const [lines, setLines] = useState(() => getInitialState("lines", [
-    { name: "", hsnSac: "", qty: 1, rate: 0, discount: 0, gst: 18 }
+    { name: "", hsnSac: "", unit: "Pcs", qty: 1, rate: 0, discount: 0, gst: 18 }
   ]));
 
   // Seller Details Fields (Dynamically shown based on PRINT checkboxes)
@@ -328,6 +368,7 @@ export default function NewSale() {
   const [sellerPhone, setSellerPhone] = useState(() => getInitialState("sellerPhone", ""));
   const [sellerGstin, setSellerGstin] = useState(() => getInitialState("sellerGstin", ""));
   const [logoUrl, setLogoUrl] = useState(() => getInitialState("logoUrl", ""));
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [invoiceNumber, setInvoiceNumber] = useState(() => getInitialState("invoiceNumber", ""));
   const [bankDetails, setBankDetails] = useState(() => getInitialState("bankDetails", {
     accountNumber: "",
@@ -350,8 +391,12 @@ export default function NewSale() {
 
   const [activePane, setActivePane] = useState("form");
   const [invoiceTemplate, setInvoiceTemplate] = useState(() => {
+    if (searchParams.get("thermal") === "true") return searchParams.get("template") || "Thermal Receipt";
     if (searchParams.get("ewaybill") === "true") return "Green E-Way";
-    return getInitialState("invoiceTemplate", "GST Boxed");
+    if (searchParams.get("template")) return searchParams.get("template");
+    // Never load Thermal Receipt from localStorage on the normal route
+    const saved = getInitialState("invoiceTemplate", "GST Boxed");
+    return saved === "Thermal Receipt" ? "GST Boxed" : saved;
   });
   const [themeColor, setThemeColor] = useState(() => getInitialState("themeColor", "slate"));
 
@@ -394,9 +439,18 @@ export default function NewSale() {
   }, [activePane]); // re-run when switching to preview pane
 
   const isEwayMode = ["E way bill", "Green E-Way", "Minimal E-Way", "Official E-Way", "Official Yellow E-Way"].includes(invoiceTemplate);
+  const isThermalMode = searchParams.get("thermal") === "true";
 
   useEffect(() => {
-    if (searchParams.get("ewaybill") === "true") {
+    const tmplParam = searchParams.get("template");
+    const isThermal = searchParams.get("thermal") === "true";
+    const isEway = searchParams.get("ewaybill") === "true";
+
+    if (tmplParam) {
+      setInvoiceTemplate(tmplParam);
+    } else if (isThermal) {
+      setInvoiceTemplate("Thermal Receipt");
+    } else if (isEway) {
       if (!isEwayMode) setInvoiceTemplate("Green E-Way");
     } else {
       if (isEwayMode) setInvoiceTemplate(settings?.printSettings?.themeName || "GST Boxed");
@@ -424,20 +478,26 @@ export default function NewSale() {
     const gstSet = settings?.gstSettings || {};
     const srcBank = settings?.bankDetails || user?.bankDetails || {};
 
-    if (!sellerName) {
-      setSellerName(printSet.companyName || user?.businessName || user?.business || "");
+    const defaultSellerName = user?.businessName || user?.business || printSet.companyName || "";
+    const defaultSellerAddress = user?.businessAddress || user?.address || printSet.address || "";
+    const defaultSellerEmail = user?.email || printSet.email || "";
+    const defaultSellerPhone = user?.phone || user?.mobile || printSet.phone || "";
+    const defaultSellerGstin = user?.gstin || printSet.gstinOnSale || gstSet.gstin || "";
+
+    if (defaultSellerName && (!sellerName || sellerName === "Gujarat Freight Tools" || sellerName === "my company" || sellerName === "restaurant")) {
+      setSellerName(defaultSellerName);
     }
-    if (!sellerAddress) {
-      setSellerAddress(printSet.address || user?.businessAddress || user?.address || "");
+    if (defaultSellerAddress && (!sellerAddress || sellerAddress === "Plot No A 64, Road No 21, Waghle Indl Estate, Mumbai, Maharashtra - 360001" || sellerAddress === "13 d swastik")) {
+      setSellerAddress(defaultSellerAddress);
     }
-    if (!sellerEmail) {
-      setSellerEmail(printSet.email || user?.email || "");
+    if (defaultSellerEmail && (!sellerEmail || sellerEmail === "hp4270077@gmail.com" || sellerEmail === "isha30066@gmail.com")) {
+      setSellerEmail(defaultSellerEmail);
     }
-    if (!sellerPhone) {
-      setSellerPhone(printSet.phone || user?.phone || user?.mobile || "");
+    if (defaultSellerPhone && (!sellerPhone || sellerPhone === "9669002380")) {
+      setSellerPhone(defaultSellerPhone);
     }
-    if (!sellerGstin) {
-      setSellerGstin(printSet.gstinOnSale || gstSet.gstin || user?.gstin || "");
+    if (defaultSellerGstin && (!sellerGstin || sellerGstin === "489267613582444" || sellerGstin === "98762313256")) {
+      setSellerGstin(defaultSellerGstin);
     }
 
     if (!bankDetails.accountNumber && !bankDetails.bankName && !bankDetails.ifsc) {
@@ -461,8 +521,8 @@ export default function NewSale() {
     if (!signatureImgUrl && printSet.signatureImgUrl) {
       setSignatureImgUrl(printSet.signatureImgUrl);
     }
-    if (!logoUrl && printSet.logoUrl) {
-      setLogoUrl(printSet.logoUrl);
+    if (!logoUrl && (printSet.logoUrl || user?.logoUrl)) {
+      setLogoUrl(printSet.logoUrl || user?.logoUrl || "");
     }
   }, [settings, user]);
 
@@ -606,12 +666,13 @@ export default function NewSale() {
       grand += lineTotal;
     });
 
-    const roundedGrand = Math.round(grand);
-    const roundOff = roundedGrand - grand;
+    const totalWithTcsTds = grand + (Number(tcsAmount) || 0) - (Number(tdsAmount) || 0);
+    const roundedGrand = Math.round(totalWithTcsTds);
+    const roundOff = roundedGrand - totalWithTcsTds;
     const taxableAmount = grand - gstAmount;
 
-    return { subtotal, discountAmount, taxableAmount, gstAmount, roundOff, grand: roundedGrand };
-  }, [lines]);
+    return { subtotal, discountAmount, taxableAmount, gstAmount, roundOff, grand: roundedGrand, tcsAmount: Number(tcsAmount) || 0, tdsAmount: Number(tdsAmount) || 0 };
+  }, [lines, tcsAmount, tdsAmount]);
 
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus);
@@ -633,7 +694,7 @@ export default function NewSale() {
   };
 
   const addLine = () => {
-    setLines([...lines, { name: "", hsnSac: "", qty: 1, rate: 0, discount: 0, gst: 18 }]);
+    setLines([...lines, { name: "", hsnSac: "", unit: "Pcs", qty: 1, rate: 0, discount: 0, gst: 18 }]);
   };
 
   const removeLine = (index) => {
@@ -643,7 +704,7 @@ export default function NewSale() {
   };
 
   const handleMobileAdd = () => {
-    setLines([...lines, { name: "", hsnSac: "", qty: 1, rate: 0, discount: 0, gst: 18 }]);
+    setLines([...lines, { name: "", hsnSac: "", unit: "Pcs", qty: 1, rate: 0, discount: 0, gst: 18 }]);
     setEditingItemIndex(lines.length);
     setIsItemModalOpen(true);
   };
@@ -731,6 +792,7 @@ export default function NewSale() {
       items: lines.filter(l => l.name.trim() !== "").map(l => ({
         name: l.name || "Item",
         hsnSac: l.hsnSac,
+        unit: l.unit || "Pcs",
         qty: Number(l.qty) || 1,
         rate: Number(l.rate) || 0,
         discount: Number(l.discount) || 0,
@@ -930,6 +992,29 @@ export default function NewSale() {
               </SelectContent>
             </Select>
           </div>
+          {isThermalMode && (
+            <div className="flex items-center gap-1 ml-1 sm:ml-2">
+              <span className="text-xs md:text-sm font-bold tracking-tight text-slate-800 uppercase hidden sm:inline">Business:</span>
+              <Select
+                value={businessType}
+                onValueChange={(val) => {
+                  setBusinessType(val);
+                  navigate(
+                    `/${rolePrefix}/sale/new?thermal=true&template=Thermal%20Receipt&business=${val}`
+                  );
+                }}
+              >
+                <SelectTrigger className="h-7 sm:h-8 w-auto rounded-lg !text-[11px] sm:!text-xs !font-normal text-slate-700 bg-slate-50 border-slate-300 px-1.5 whitespace-nowrap">
+                  <SelectValue placeholder="Business Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="restaurant">Restaurant / Cafe</SelectItem>
+                  <SelectItem value="hotel">Hotel / Lodge</SelectItem>
+                  <SelectItem value="retail">Grocery / Retail</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <Button
@@ -1221,255 +1306,704 @@ export default function NewSale() {
               </>
             ) : (
               <>
-                {/* Seller/Company Details Block (Dynamically shown based on PRINT checkboxes) */}
-                {(printSet.printCompanyName || printSet.printCompanyLogo || printSet.printAddress || printSet.printEmail || printSet.printPhone || printSet.printGstin) && (
-                  <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Seller Details (Your Info)</span>
-                    <div className="space-y-3">
-                      {printSet.printCompanyName && (
+                {businessType === "restaurant" ? (
+                  <>
+                    {/* 1. Restaurant Details */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Restaurant Details</span>
+                      <div className="space-y-3">
                         <div className="space-y-1">
-                          <Label className="text-xs">Company Name</Label>
+                          <Label className="text-xs">Restaurant Name *</Label>
                           <Input
                             value={sellerName}
                             onChange={(e) => setSellerName(e.target.value)}
-                            placeholder="Seller Company Name"
-                            className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500"
-                          />
-                        </div>
-                      )}
-
-                      {printSet.printCompanyLogo && (
-                        <div className="space-y-2">
-                          <Label className="text-xs font-semibold text-slate-700">Your Shop Logo (Optional)</Label>
-                          <div className="flex items-center gap-3">
-                            <label className="text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 cursor-pointer font-semibold transition-all">
-                              Upload Logo
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => {
-                                      setLogoUrl(reader.result);
-                                    };
-                                    reader.readAsDataURL(file);
-                                  }
-                                }}
-                              />
-                            </label>
-                            {logoUrl && (
-                              <button
-                                type="button"
-                                onClick={() => setLogoUrl("")}
-                                className="text-[11px] text-red-500 hover:underline font-semibold"
-                              >
-                                Remove
-                              </button>
-                            )}
-                          </div>
-                          {logoUrl && (
-                            <div className="border rounded-xl p-2 bg-slate-50 w-24 h-12 flex items-center justify-center">
-                              <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {printSet.printGstin && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">GSTIN on Sale</Label>
-                          <Input
-                            value={sellerGstin}
-                            onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))}
-                            maxLength={15}
-                            placeholder="Seller GSTIN"
+                            placeholder="e.g. Royal Restaurant & Cafe"
                             className="h-9 rounded-lg"
                           />
                         </div>
-                      )}
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                        {printSet.printPhone && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                           <div className="space-y-1">
-                            <Label className="text-xs">Phone Number</Label>
+                            <Label className="text-xs">Phone *</Label>
                             <Input
                               value={sellerPhone}
                               onChange={(e) => setSellerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                               maxLength={10}
-                              placeholder="Seller Phone"
+                              placeholder="9876543210"
                               className="h-9 rounded-lg"
                             />
                           </div>
-                        )}
-                        {printSet.printEmail && (
                           <div className="space-y-1">
-                            <Label className="text-xs">Email Address</Label>
+                            <Label className="text-xs">GSTIN</Label>
                             <Input
-                              value={sellerEmail}
-                              onChange={(e) => setSellerEmail(e.target.value)}
-                              placeholder="Seller Email"
+                              value={sellerGstin}
+                              onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))}
+                              maxLength={15}
+                              placeholder="27CORPP3939N1ZQ"
                               className="h-9 rounded-lg"
                             />
                           </div>
-                        )}
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Address *</Label>
+                            <Input
+                              value={sellerAddress}
+                              onChange={(e) => setSellerAddress(e.target.value)}
+                              placeholder="Full Restaurant Address"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">FSSAI No.</Label>
+                            <Input
+                              value={sellerFssai}
+                              onChange={(e) => setSellerFssai(e.target.value.replace(/\D/g, "").slice(0, 14))}
+                              maxLength={14}
+                              placeholder="e.g. 10019011000123"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </div>
                       </div>
-                      {printSet.printAddress && (
+                    </div>
+
+                    {/* 2. Invoice Details */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Invoice Details</span>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <Label className="text-xs">Seller Address</Label>
+                          <Label className="text-xs">Bill/Invoice No. *</Label>
                           <Input
-                            value={sellerAddress}
-                            onChange={(e) => setSellerAddress(e.target.value)}
-                            placeholder="Seller Address"
+                            value={invoiceNumber}
+                            onChange={(e) => setInvoiceNumber(e.target.value)}
+                            placeholder="INV-1001"
                             className="h-9 rounded-lg"
                           />
                         </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Date & Time *</Label>
+                          <div className="grid grid-cols-2 gap-1">
+                            <Input
+                              type="date"
+                              value={paymentDate}
+                              onChange={(e) => setPaymentDate(e.target.value)}
+                              className="h-9 rounded-lg text-xs px-2"
+                            />
+                            <Input
+                              type="time"
+                              value={paymentTime}
+                              onChange={(e) => setPaymentTime(e.target.value)}
+                              className="h-9 rounded-lg text-xs px-2"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Order Type *</Label>
+                          <Select
+                            value={restaurantDetails.orderType || "Dine In"}
+                            onValueChange={(val) => setRestaurantDetails({ ...restaurantDetails, orderType: val })}
+                          >
+                            <SelectTrigger className="h-9 rounded-lg text-xs">
+                              <SelectValue placeholder="Order Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Dine In">Dine In</SelectItem>
+                              <SelectItem value="Takeaway">Takeaway</SelectItem>
+                              <SelectItem value="Delivery">Delivery</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Table No.</Label>
+                          <Input
+                            value={restaurantDetails.tableNumber || ""}
+                            onChange={(e) => setRestaurantDetails({ ...restaurantDetails, tableNumber: e.target.value })}
+                            placeholder="T-1"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">KOT/Order No.</Label>
+                          <Input
+                            value={restaurantDetails.kotNumber || ""}
+                            onChange={(e) => setRestaurantDetails({ ...restaurantDetails, kotNumber: e.target.value })}
+                            placeholder="KOT-101"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                      </div>
+
+                      {gstSet.enableTcs && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-emerald-700">TCS Amount (Tax Collected at Source)</Label>
+                            <Input
+                              type="number"
+                              value={tcsAmount}
+                              onChange={(e) => setTcsAmount(Number(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="h-9 rounded-lg border-emerald-200 focus-visible:ring-emerald-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {gstSet.enableTds && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-blue-700">TDS Deduction Amount</Label>
+                            <Input
+                              type="number"
+                              value={tdsAmount}
+                              onChange={(e) => setTdsAmount(Number(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="h-9 rounded-lg border-blue-200 focus-visible:ring-blue-500"
+                            />
+                          </div>
+                        </div>
                       )}
                     </div>
-                  </div>
-                )}
 
-                {/* Bank Details Block */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bank Details (On Invoice)</span>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Account No.</Label>
-                      <Input
-                        value={bankDetails.accountNumber}
-                        onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value.replace(/\D/g, "").slice(0, 18) })}
-                        placeholder="Account Number"
-                        className="h-9 rounded-lg"
-                      />
+                    {/* 3. Customer */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Customer</span>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Name</Label>
+                          <Input
+                            value={customer}
+                            onChange={(e) => setCustomer(e.target.value)}
+                            placeholder="Walk-in Customer / Customer Name"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Mobile</Label>
+                            <Input
+                              value={billedToMobile}
+                              onChange={(e) => setBilledToMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                              maxLength={10}
+                              placeholder="Mobile Number"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">GSTIN</Label>
+                            <Input
+                              value={billedToGstin}
+                              onChange={(e) => setBilledToGstin(e.target.value.toUpperCase().slice(0, 15))}
+                              maxLength={15}
+                              placeholder="Customer GSTIN"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Bank Name</Label>
-                      <Input
-                        value={bankDetails.bankName}
-                        onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
-                        placeholder="e.g. Axis Bank"
-                        className="h-9 rounded-lg"
-                      />
+                  </>
+                ) : businessType === "hotel" && isThermalMode ? (
+                  <>
+                    {/* 1. Hotel Details */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Hotel Details</span>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Hotel Name *</Label>
+                          <Input value={sellerName} onChange={(e) => setSellerName(e.target.value)} placeholder="e.g. Grand Palace Hotel" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Phone *</Label>
+                            <Input value={sellerPhone} onChange={(e) => setSellerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} maxLength={10} placeholder="9876543210" className="h-9 rounded-lg" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Email</Label>
+                            <Input value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} placeholder="hotel@email.com" className="h-9 rounded-lg" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Address *</Label>
+                            <Input value={sellerAddress} onChange={(e) => setSellerAddress(e.target.value)} placeholder="Full Hotel Address" className="h-9 rounded-lg" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">GSTIN</Label>
+                            <Input value={sellerGstin} onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))} maxLength={15} placeholder="27CORPP3939N1ZQ" className="h-9 rounded-lg" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">IFSC Code</Label>
-                      <Input
-                        value={bankDetails.ifsc}
-                        onChange={(e) => setBankDetails({ ...bankDetails, ifsc: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 11) })}
-                        placeholder="e.g. UTIB0003532"
-                        className="h-9 rounded-lg"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Branch Name</Label>
-                      <Input
-                        value={bankDetails.branchName}
-                        onChange={(e) => setBankDetails({ ...bankDetails, branchName: e.target.value })}
-                        placeholder="e.g. MG Road Branch"
-                        className="h-9 rounded-lg"
-                      />
-                    </div>
-                  </div>
-                </div>
 
-                {/* Customer Details Block */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      {isPurchaseOrder ? "Vendor / Supplier Details" : "Billed To (Customer Details)"}
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-100">
+                    {/* 2. Booking Details */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Booking Details</span>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Invoice No. *</Label>
+                          <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="INV-1001" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Invoice Date *</Label>
+                          <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="h-9 rounded-lg" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Booking ID *</Label>
+                          <Input value={hotelDetails.bookingId} onChange={(e) => setHotelDetails({ ...hotelDetails, bookingId: e.target.value })} placeholder="BKG-001" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Number of Nights *</Label>
+                          <Input type="number" min={1} value={hotelDetails.totalNights} onChange={(e) => setHotelDetails({ ...hotelDetails, totalNights: Number(e.target.value) || 1 })} placeholder="1" className="h-9 rounded-lg" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Check-in *</Label>
+                          <div className="grid grid-cols-2 gap-1">
+                            <Input type="date" value={hotelDetails.checkInDate} onChange={(e) => setHotelDetails({ ...hotelDetails, checkInDate: e.target.value })} className="h-9 rounded-lg" />
+                            <Input type="time" value={hotelDetails.checkInTime} onChange={(e) => setHotelDetails({ ...hotelDetails, checkInTime: e.target.value })} className="h-9 rounded-lg" />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Check-out *</Label>
+                          <div className="grid grid-cols-2 gap-1">
+                            <Input type="date" value={hotelDetails.checkOutDate} onChange={(e) => setHotelDetails({ ...hotelDetails, checkOutDate: e.target.value })} className="h-9 rounded-lg" />
+                            <Input type="time" value={hotelDetails.checkOutTime} onChange={(e) => setHotelDetails({ ...hotelDetails, checkOutTime: e.target.value })} className="h-9 rounded-lg" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Room No. *</Label>
+                          <Input value={hotelDetails.roomNumber} onChange={(e) => setHotelDetails({ ...hotelDetails, roomNumber: e.target.value })} placeholder="e.g. 101" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Room Type *</Label>
+                          <select
+                            value={hotelDetails.roomType}
+                            onChange={(e) => setHotelDetails({ ...hotelDetails, roomType: e.target.value })}
+                            className="w-full h-9 rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                          >
+                            <option value="">Select Room Type</option>
+                            <option value="Standard">Standard</option>
+                            <option value="Deluxe">Deluxe</option>
+                            <option value="Suite">Suite</option>
+                            <option value="Super Deluxe">Super Deluxe</option>
+                            <option value="Presidential">Presidential</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {gstSet.enableTcs && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-emerald-700">TCS Amount (Tax Collected at Source)</Label>
+                            <Input
+                              type="number"
+                              value={tcsAmount}
+                              onChange={(e) => setTcsAmount(Number(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="h-9 rounded-lg border-emerald-200 focus-visible:ring-emerald-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {gstSet.enableTds && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-blue-700">TDS Deduction Amount</Label>
+                            <Input
+                              type="number"
+                              value={tdsAmount}
+                              onChange={(e) => setTdsAmount(Number(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="h-9 rounded-lg border-blue-200 focus-visible:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3. Guest Details */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Guest Details</span>
                       <div className="space-y-1">
-                        <Label className="text-xs">{docType} No. (Override)</Label>
-                        <Input
-                          value={invoiceNumber}
-                          onChange={(e) => setInvoiceNumber(e.target.value)}
-                          placeholder="e.g. INV-1001"
-                          className="h-9 rounded-lg"
-                        />
+                        <Label className="text-xs">Guest Name *</Label>
+                        <Input value={hotelDetails.guestName || customer} onChange={(e) => { setHotelDetails({ ...hotelDetails, guestName: e.target.value }); setCustomer(e.target.value); }} placeholder="Full Name" className="h-9 rounded-lg" />
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Mobile *</Label>
+                          <Input value={hotelDetails.guestMobile || billedToMobile} onChange={(e) => { const v = e.target.value.replace(/\D/g,"").slice(0,10); setHotelDetails({ ...hotelDetails, guestMobile: v }); setBilledToMobile(v); }} maxLength={10} placeholder="9876543210" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Email</Label>
+                          <Input value={hotelDetails.guestEmail} onChange={(e) => setHotelDetails({ ...hotelDetails, guestEmail: e.target.value })} placeholder="guest@email.com" className="h-9 rounded-lg" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Address</Label>
+                        <Input value={hotelDetails.guestAddress || billedToAddress} onChange={(e) => { setHotelDetails({ ...hotelDetails, guestAddress: e.target.value }); setBilledToAddress(e.target.value); }} placeholder="Guest address" className="h-9 rounded-lg" />
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Company Name</Label>
+                          <Input value={hotelDetails.guestCompany} onChange={(e) => setHotelDetails({ ...hotelDetails, guestCompany: e.target.value })} placeholder="Company (if applicable)" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">GSTIN</Label>
+                          <Input value={hotelDetails.guestGstin || billedToGstin} onChange={(e) => { const v = e.target.value.toUpperCase().slice(0,15); setHotelDetails({ ...hotelDetails, guestGstin: v }); setBilledToGstin(v); }} maxLength={15} placeholder="Guest GSTIN" className="h-9 rounded-lg" />
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">{isPurchaseOrder ? "Vendor / Supplier Name" : "Customer Name"}</Label>
-                      <Input
-                        value={customer}
-                        onChange={(e) => setCustomer(e.target.value)}
-                        placeholder={isPurchaseOrder ? "Enter vendor / supplier name" : "Enter customer / business name"}
-                        className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500"
-                      />
-                    </div>
-                    {txnSet.billingName && (
-                      <div className="space-y-1">
-                        <Label className="text-xs">Billing Name</Label>
-                        <Input
-                          value={billingName}
-                          onChange={(e) => setBillingName(e.target.value)}
-                          placeholder="Enter legal / billing name"
-                          className="h-9 rounded-lg"
-                        />
-                      </div>
-                    )}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Mobile Number</Label>
-                        <Input
-                          value={billedToMobile}
-                          onChange={(e) => setBilledToMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                          maxLength={10}
-                          placeholder="98765..."
-                          className="h-9 rounded-lg"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">GSTIN</Label>
-                        <Input
-                          value={billedToGstin}
-                          onChange={(e) => setBilledToGstin(e.target.value.toUpperCase().slice(0, 15))}
-                          maxLength={15}
-                          placeholder="07AAAA..."
-                          className="h-9 rounded-lg"
-                        />
+                  </>
+                ) : businessType === "retail" && isThermalMode ? (
+                  <>
+                    {/* 1. Shop Details */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Shop Details</span>
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Shop Name *</Label>
+                          <Input value={sellerName} onChange={(e) => setSellerName(e.target.value)} placeholder="e.g. Sharma Kirana Store" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Address *</Label>
+                          <Input value={sellerAddress} onChange={(e) => setSellerAddress(e.target.value)} placeholder="Shop address" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Phone *</Label>
+                            <Input value={sellerPhone} onChange={(e) => setSellerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} maxLength={10} placeholder="9876543210" className="h-9 rounded-lg" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">Email</Label>
+                            <Input value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} placeholder="shop@email.com" className="h-9 rounded-lg" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">GSTIN</Label>
+                            <Input value={sellerGstin} onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))} maxLength={15} placeholder="27CORPP3939N1ZQ" className="h-9 rounded-lg" />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">FSSAI No. (Food Businesses)</Label>
+                            <Input value={retailDetails.fssai} onChange={(e) => setRetailDetails({ ...retailDetails, fssai: e.target.value.replace(/\D/g, "").slice(0, 14) })} maxLength={14} placeholder="e.g. 10019011000123" className="h-9 rounded-lg" />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+                    {/* 2. Invoice Details */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Invoice Details</span>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Bill / Invoice No. *</Label>
+                          <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} placeholder="BILL-001" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Date & Time *</Label>
+                          <div className="grid grid-cols-2 gap-1">
+                            <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="h-9 rounded-lg" />
+                            <Input type="time" value={paymentTime} onChange={(e) => setPaymentTime(e.target.value)} className="h-9 rounded-lg" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Order No.</Label>
+                          <Input value={retailDetails.orderNo} onChange={(e) => setRetailDetails({ ...retailDetails, orderNo: e.target.value })} placeholder="ORD-001" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Counter No.</Label>
+                          <Input value={retailDetails.counterNo} onChange={(e) => setRetailDetails({ ...retailDetails, counterNo: e.target.value })} placeholder="C-1" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Cashier Name</Label>
+                          <Input value={retailDetails.cashierName} onChange={(e) => setRetailDetails({ ...retailDetails, cashierName: e.target.value })} placeholder="Ramesh" className="h-9 rounded-lg" />
+                        </div>
+                      </div>
+
+                      {gstSet.enableTcs && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-emerald-700">TCS Amount (Tax Collected at Source)</Label>
+                            <Input
+                              type="number"
+                              value={tcsAmount}
+                              onChange={(e) => setTcsAmount(Number(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="h-9 rounded-lg border-emerald-200 focus-visible:ring-emerald-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {gstSet.enableTds && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold text-blue-700">TDS Deduction Amount</Label>
+                            <Input
+                              type="number"
+                              value={tdsAmount}
+                              onChange={(e) => setTdsAmount(Number(e.target.value) || 0)}
+                              placeholder="0.00"
+                              className="h-9 rounded-lg border-blue-200 focus-visible:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3. Customer Details (Optional) */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Customer Details <span className="text-slate-300 font-normal normal-case">(optional)</span></span>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Customer Name</Label>
+                        <Input value={customer} onChange={(e) => setCustomer(e.target.value)} placeholder="Walk-in Customer" className="h-9 rounded-lg" />
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Mobile</Label>
+                          <Input value={billedToMobile} onChange={(e) => setBilledToMobile(e.target.value.replace(/\D/g, "").slice(0, 10))} maxLength={10} placeholder="9876543210" className="h-9 rounded-lg" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">GSTIN</Label>
+                          <Input value={billedToGstin} onChange={(e) => setBilledToGstin(e.target.value.toUpperCase().slice(0, 15))} maxLength={15} placeholder="Customer GSTIN" className="h-9 rounded-lg" />
+                        </div>
+                      </div>
                       <div className="space-y-1">
                         <Label className="text-xs">Billing Address</Label>
-                        <Input
-                          value={billedToAddress}
-                          onChange={(e) => setBilledToAddress(e.target.value)}
-                          placeholder="City, State"
-                          className="h-9 rounded-lg"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">State & Code</Label>
-                        <Input
-                          value={billedToState}
-                          onChange={(e) => setBilledToState(e.target.value)}
-                          placeholder="e.g. Delhi (07)"
-                          className="h-9 rounded-lg"
-                        />
+                        <Input value={billedToAddress} onChange={(e) => setBilledToAddress(e.target.value)} placeholder="Customer address" className="h-9 rounded-lg" />
                       </div>
                     </div>
-                    {printSet.currentBalanceParty && (
-                      <div className="space-y-1">
-                        <Label className="text-xs">Party Current Balance (₹)</Label>
-                        <Input
-                          type="number"
-                          value={partyBalance === 0 ? "" : partyBalance}
-                          onChange={(e) => setPartyBalance(e.target.value === "" ? 0 : Number(e.target.value))}
-                          placeholder="e.g. 15000"
-                          className="h-9 rounded-lg"
-                          onFocus={(e) => e.target.select()}
-                        />
+                  </>
+                ) : (
+                  <>
+                    {/* Seller/Company Details Block */}
+                    {(printSet.printCompanyName || printSet.printCompanyLogo || printSet.printAddress || printSet.printEmail || printSet.printPhone || printSet.printGstin) && (
+                      <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Seller Details (Your Info)</span>
+                        <div className="space-y-3">
+                          {printSet.printCompanyName && (
+                            <div className="space-y-1">
+                              <Label className="text-xs">Company Name</Label>
+                              <Input
+                                value={sellerName}
+                                onChange={(e) => setSellerName(e.target.value)}
+                                placeholder="Seller Company Name"
+                                className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500"
+                              />
+                            </div>
+                          )}
+
+                          {printSet.printCompanyLogo && (
+                            <div className="space-y-2">
+                              <Label className="text-xs font-semibold text-slate-700">Your Shop Logo (Optional)</Label>
+                              <div className="flex items-center gap-3">
+                                <label className="text-[12px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 cursor-pointer font-semibold transition-all">
+                                  Upload Logo
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                          setLogoUrl(reader.result);
+                                        };
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }}
+                                  />
+                                </label>
+                                {logoUrl && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setLogoUrl("")}
+                                    className="text-[11px] text-red-500 hover:underline font-semibold"
+                                  >
+                                    Remove
+                                  </button>
+                                )}
+                              </div>
+                              {logoUrl && (
+                                <div className="border rounded-xl p-2 bg-slate-50 w-24 h-12 flex items-center justify-center">
+                                  <img src={logoUrl} alt="Logo" className="max-h-full max-w-full object-contain" />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {printSet.printGstin && (
+                            <div className="space-y-1">
+                              <Label className="text-xs">GSTIN on Sale</Label>
+                              <Input
+                                value={sellerGstin}
+                                onChange={(e) => setSellerGstin(e.target.value.toUpperCase().slice(0, 15))}
+                                maxLength={15}
+                                placeholder="Seller GSTIN"
+                                className="h-9 rounded-lg"
+                              />
+                            </div>
+                          )}
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            {printSet.printPhone && (
+                              <div className="space-y-1">
+                                <Label className="text-xs">Phone Number</Label>
+                                <Input
+                                  value={sellerPhone}
+                                  onChange={(e) => setSellerPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                                  maxLength={10}
+                                  placeholder="Seller Phone"
+                                  className="h-9 rounded-lg"
+                                />
+                              </div>
+                            )}
+                            {printSet.printEmail && (
+                              <div className="space-y-1">
+                                <Label className="text-xs">Email Address</Label>
+                                <Input
+                                  value={sellerEmail}
+                                  onChange={(e) => setSellerEmail(e.target.value)}
+                                  placeholder="Seller Email"
+                                  className="h-9 rounded-lg"
+                                />
+                              </div>
+                            )}
+                          </div>
+                          {printSet.printAddress && (
+                            <div className="space-y-1">
+                              <Label className="text-xs">Seller Address</Label>
+                              <Input
+                                value={sellerAddress}
+                                onChange={(e) => setSellerAddress(e.target.value)}
+                                placeholder="Seller Address"
+                                className="h-9 rounded-lg"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
-                  </div>
-                </div>
+
+                    {/* Bank Details Block */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bank Details (On Invoice)</span>
+                      </div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Account No.</Label>
+                          <Input
+                            value={bankDetails.accountNumber}
+                            onChange={(e) => setBankDetails({ ...bankDetails, accountNumber: e.target.value.replace(/\D/g, "").slice(0, 18) })}
+                            placeholder="Account Number"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Bank Name</Label>
+                          <Input
+                            value={bankDetails.bankName}
+                            onChange={(e) => setBankDetails({ ...bankDetails, bankName: e.target.value })}
+                            placeholder="e.g. Axis Bank"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">IFSC Code</Label>
+                          <Input
+                            value={bankDetails.ifsc}
+                            onChange={(e) => setBankDetails({ ...bankDetails, ifsc: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 11) })}
+                            placeholder="e.g. UTIB0003532"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Branch Name</Label>
+                          <Input
+                            value={bankDetails.branchName}
+                            onChange={(e) => setBankDetails({ ...bankDetails, branchName: e.target.value })}
+                            placeholder="e.g. MG Road Branch"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Customer Details Block */}
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                          {isPurchaseOrder ? "Vendor / Supplier Details" : "Billed To (Customer Details)"}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-3 border-b border-slate-100">
+                          <div className="space-y-1">
+                            <Label className="text-xs">{docType} No. (Override)</Label>
+                            <Input
+                              value={invoiceNumber}
+                              onChange={(e) => setInvoiceNumber(e.target.value)}
+                              placeholder="e.g. INV-1001"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">{isPurchaseOrder ? "Vendor / Supplier Name" : "Customer Name"}</Label>
+                          <Input
+                            value={customer}
+                            onChange={(e) => setCustomer(e.target.value)}
+                            placeholder={isPurchaseOrder ? "Enter vendor / supplier name" : "Enter customer / business name"}
+                            className="h-10 rounded-xl border border-slate-200 focus-visible:ring-1 focus-visible:ring-emerald-500"
+                          />
+                        </div>
+                        {txnSet.billingName && (
+                          <div className="space-y-1">
+                            <Label className="text-xs">Billing Name</Label>
+                            <Input
+                              value={billingName}
+                              onChange={(e) => setBillingName(e.target.value)}
+                              placeholder="Enter legal / billing name"
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        )}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs">Mobile Number</Label>
+                            <Input
+                              value={billedToMobile}
+                              onChange={(e) => setBilledToMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                              maxLength={10}
+                              placeholder="98765..."
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs">GSTIN</Label>
+                            <Input
+                              value={billedToGstin}
+                              onChange={(e) => setBilledToGstin(e.target.value.toUpperCase().slice(0, 15))}
+                              maxLength={15}
+                              placeholder="07AAAA..."
+                              className="h-9 rounded-lg"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Dynamic Document-Type Specific Details Card */}
                 {(isQuotation || isCreditDebitNote || isExportInvoice || isPurchaseOrder || isDeliveryChallan) && (
@@ -1674,87 +2208,117 @@ export default function NewSale() {
                   </div>
                 )}
 
-                {/* Transport & Additional Details Block */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Transport & Supply Details</span>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Challan No.</Label>
-                      <Input
-                        value={challanNo}
-                        onChange={(e) => setChallanNo(e.target.value)}
-                        placeholder="Challan reference"
-                        className="h-9 rounded-lg"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Vehicle Number</Label>
-                      <Input
-                        value={vehicleNo}
-                        onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
-                        placeholder="DL2CAZXXXX"
-                        className="h-9 rounded-lg"
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Date of Supply</Label>
-                      <Input
-                        type="date"
-                        value={dateOfSupply}
-                        onChange={(e) => setDateOfSupply(e.target.value)}
-                        className="h-9 rounded-lg"
-                      />
-                    </div>
-                    {gstSet.placeOfSupply && (
+                {/* Transport & Additional Details Block (Hidden in Thermal & Restaurant mode) */}
+                {!isThermalMode && businessType !== "restaurant" && (
+                  <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Transport & Supply Details</span>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <Label className="text-xs">Place of Supply</Label>
+                        <Label className="text-xs">Challan No.</Label>
                         <Input
-                          value={placeOfSupply}
-                          onChange={(e) => setPlaceOfSupply(e.target.value)}
-                          placeholder="Delhi"
+                          value={challanNo}
+                          onChange={(e) => setChallanNo(e.target.value)}
+                          placeholder="Challan reference"
                           className="h-9 rounded-lg"
                         />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Vehicle Number</Label>
+                        <Input
+                          value={vehicleNo}
+                          onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
+                          placeholder="DL2CAZXXXX"
+                          className="h-9 rounded-lg"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Date of Supply</Label>
+                        <Input
+                          type="date"
+                          value={dateOfSupply}
+                          onChange={(e) => setDateOfSupply(e.target.value)}
+                          className="h-9 rounded-lg"
+                        />
+                      </div>
+                      {gstSet.placeOfSupply && (
+                        <div className="space-y-1">
+                          <Label className="text-xs">Place of Supply</Label>
+                          <Input
+                            value={placeOfSupply}
+                            onChange={(e) => setPlaceOfSupply(e.target.value)}
+                            placeholder="Delhi"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    {txnSet.poDetails && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t pt-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Customer P.O. No.</Label>
+                          <Input
+                            value={poNumber}
+                            onChange={(e) => setPoNumber(e.target.value)}
+                            placeholder="P.O. reference"
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">P.O. Date</Label>
+                          <Input
+                            type="date"
+                            value={poDate}
+                            onChange={(e) => setPoDate(e.target.value)}
+                            className="h-9 rounded-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {gstSet.reverseCharge && (
+                      <div className="flex items-center justify-between pt-1">
+                        <Label className="text-xs">Reverse Charge</Label>
+                        <select
+                          value={reverseCharge}
+                          onChange={(e) => setReverseCharge(e.target.value)}
+                          className="h-8 rounded-lg border text-xs bg-white px-2 focus:outline-none"
+                        >
+                          <option value="No">No</option>
+                          <option value="Yes">Yes</option>
+                        </select>
+                      </div>
+                    )}
+                    {gstSet.enableTcs && (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-emerald-700">TCS Amount (Tax Collected at Source)</Label>
+                          <Input
+                            type="number"
+                            value={tcsAmount}
+                            onChange={(e) => setTcsAmount(Number(e.target.value) || 0)}
+                            placeholder="0.00"
+                            className="h-9 rounded-lg border-emerald-200 focus-visible:ring-emerald-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {gstSet.enableTds && (
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t">
+                        <div className="space-y-1">
+                          <Label className="text-xs font-semibold text-blue-700">TDS Deduction Amount</Label>
+                          <Input
+                            type="number"
+                            value={tdsAmount}
+                            onChange={(e) => setTdsAmount(Number(e.target.value) || 0)}
+                            placeholder="0.00"
+                            className="h-9 rounded-lg border-blue-200 focus-visible:ring-blue-500"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
-                  {txnSet.poDetails && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t pt-3">
-                      <div className="space-y-1">
-                        <Label className="text-xs">Customer P.O. No.</Label>
-                        <Input
-                          value={poNumber}
-                          onChange={(e) => setPoNumber(e.target.value)}
-                          placeholder="P.O. reference"
-                          className="h-9 rounded-lg"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">P.O. Date</Label>
-                        <Input
-                          type="date"
-                          value={poDate}
-                          onChange={(e) => setPoDate(e.target.value)}
-                          className="h-9 rounded-lg"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {gstSet.reverseCharge && (
-                    <div className="flex items-center justify-between pt-1">
-                      <Label className="text-xs">Reverse Charge</Label>
-                      <select
-                        value={reverseCharge}
-                        onChange={(e) => setReverseCharge(e.target.value)}
-                        className="h-8 rounded-lg border text-xs bg-white px-2 focus:outline-none"
-                      >
-                        <option value="No">No</option>
-                        <option value="Yes">Yes</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
+                )}
               </>
             )}
 
@@ -1829,9 +2393,48 @@ export default function NewSale() {
                         )}
                       </div>
 
+                      {/* Unit Dropdown */}
+                      <div className="col-span-4 sm:col-span-2">
+                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Unit</Label>
+                        <select
+                          value={l.unit || "Pcs"}
+                          onChange={(e) => updateLine(i, 'unit', e.target.value)}
+                          className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        >
+                          <option value="Bag">BAGS (Bag)</option>
+                          <option value="Btl">BOTTLES (Btl)</option>
+                          <option value="Box">BOX (Box)</option>
+                          <option value="Bdl">BUNDLES (Bdl)</option>
+                          <option value="Can">CANS (Can)</option>
+                          <option value="Ctn">CARTONS (Ctn)</option>
+                          <option value="Mtq">CUBIC METER (Mtq)</option>
+                          <option value="Day">DAY (Day)</option>
+                          <option value="Dzn">DOZENS (Dzn)</option>
+                          <option value="Gm">GRAMMES (Gm)</option>
+                          <option value="Hur">HOUR (Hur)</option>
+                          <option value="Kg">KILOGRAMS (Kg)</option>
+                          <option value="Kmt">KILOMETER (Kmt)</option>
+                          <option value="Ltr">LITRE (Ltr)</option>
+                          <option value="Mtr">METERS (Mtr)</option>
+                          <option value="Ml">MILILITRE (Ml)</option>
+                          <option value="Nos">NUMBERS (Nos)</option>
+                          <option value="Pac">PACKS (Pac)</option>
+                          <option value="Prs">PAIRS (Prs)</option>
+                          <option value="Pcs">PIECES (Pcs)</option>
+                          <option value="Qtl">QUINTAL (Qtl)</option>
+                          <option value="Rol">ROLLS (Rol)</option>
+                          <option value="Ser">SERVICE (Ser)</option>
+                          <option value="Set">SET (Set)</option>
+                          <option value="Sqf">SQUARE FEET (Sqf)</option>
+                          <option value="Sqm">SQUARE METERS (Sqm)</option>
+                          <option value="Tbs">TABLETS (Tbs)</option>
+                          <option value="Ton">TON / METRIC TON (Ton)</option>
+                        </select>
+                      </div>
+
                       {/* Rate / Price */}
                       <div className="col-span-4 sm:col-span-2">
-                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Price/Unit</Label>
+                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Price (₹)</Label>
                         <Input
                           type="number"
                           min={0}
@@ -1851,10 +2454,36 @@ export default function NewSale() {
                       </div>
                     </div>
 
-                    {/* Purchase Price Tag */}
-                    {txnSet.displayPurchasePrice && (
-                      <div className="flex items-center gap-2 mt-2.5 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-1.5 max-w-max">
-                        <span className="text-[10px] text-amber-600 font-semibold shrink-0">Purchase Price ₹</span>
+                    {/* Tags Row */}
+                    <div className="flex flex-wrap items-center gap-3 mt-2.5">
+                      {/* Item Total Tag */}
+                      {(() => {
+                        const q = Number(l.qty) || 0;
+                        const r = Number(l.rate) || 0;
+                        const d = Number(l.discount) || 0;
+                        const g = Number(l.gst) || 0;
+                        const isExcl = l.taxType === "exclusive";
+                        const rateAfterDisc = r * (1 - d / 100);
+                        let lineTotal = 0;
+                        if (isExcl) {
+                          const taxableVal = q * rateAfterDisc;
+                          const taxVal = taxableVal * (g / 100);
+                          lineTotal = taxableVal + taxVal;
+                        } else {
+                          lineTotal = q * rateAfterDisc;
+                        }
+                        return (
+                          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200/60 rounded-lg px-3 py-1.5 max-w-max">
+                            <span className="text-[10px] text-emerald-600 font-semibold shrink-0">Item Total</span>
+                            <span className="text-[11px] font-bold text-emerald-800">₹{lineTotal.toFixed(2)}</span>
+                          </div>
+                        );
+                      })()}
+
+                      {/* Purchase Price Tag */}
+                      {txnSet.displayPurchasePrice && (
+                        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-1.5 max-w-max">
+                          <span className="text-[10px] text-amber-600 font-semibold shrink-0">Purchase Price ₹</span>
                         <input
                           type="number"
                           value={l.purchasePrice === 0 ? "" : (l.purchasePrice || "")}
@@ -1875,6 +2504,7 @@ export default function NewSale() {
                         />
                       </div>
                     )}
+                    </div>
 
                     {/* Row 2: Secondary fields */}
                     <div className="grid grid-cols-12 gap-3 mt-3 items-end">
@@ -2028,8 +2658,129 @@ export default function NewSale() {
 
 
 
-            {/* Footer / Additional Details Card */}
-            {!isEwayMode && (printSet.printDescription || printSet.printTermsAndConditions || printSet.printAcknowledgement || printSet.printReceivedByDetails || printSet.printDeliveredByDetails || printSet.printSignatureText) && (
+            {/* Thermal Dedicated Cards: Payment, UPI, Footer */}
+            {isThermalMode && (
+              <>
+                {/* Payment Block */}
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Payment Details</span>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Payment Mode *</Label>
+                      <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                        <SelectTrigger className="h-9 rounded-lg text-xs">
+                          <SelectValue placeholder="Payment Mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="UPI">UPI / Online</SelectItem>
+                          <SelectItem value="Card">Card</SelectItem>
+                          <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                          <SelectItem value="Credit">Credit / Unpaid</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Amount Paid (₹) *</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={receivedAmount}
+                        onChange={(e) => setReceivedAmount(Number(e.target.value) || 0)}
+                        placeholder="0.00"
+                        className="h-9 rounded-lg"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Amount Due (₹)</Label>
+                      <Input
+                        type="number"
+                        disabled
+                        value={Math.max(0, totals.grand - receivedAmount).toFixed(2)}
+                        className="h-9 rounded-lg bg-slate-100 font-bold text-slate-700"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* UPI Block */}
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">UPI Details</span>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">UPI ID</Label>
+                      <Input
+                        value={paymentDetails.upiId || paymentDetails.transactionId || ""}
+                        onChange={(e) => setPaymentDetails({ ...paymentDetails, upiId: e.target.value, transactionId: e.target.value })}
+                        placeholder="e.g. 9876543210@paytm"
+                        className="h-9 rounded-lg"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold text-slate-700">QR Code Image</Label>
+                      <div className="flex items-center gap-3">
+                        <label className="text-[12px] bg-blue-50 text-blue-600 border border-blue-200 px-3 py-1.5 rounded-xl hover:bg-blue-100 cursor-pointer font-semibold transition-all">
+                          Upload QR Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  setQrCodeUrl(reader.result);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                        {qrCodeUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setQrCodeUrl("")}
+                            className="text-[11px] text-red-500 hover:underline font-semibold"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Block */}
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Footer & Notes</span>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Thank You Message</Label>
+                      <Input
+                        value={terms}
+                        onChange={(e) => setTerms(e.target.value)}
+                        placeholder="Thank You! Visit Again"
+                        className="h-9 rounded-lg"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Notes / Description</Label>
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Enter additional receipt notes..."
+                        rows="2"
+                        className="w-full text-xs p-2.5 border rounded-xl focus:outline-none bg-white border-slate-200"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Footer / Additional Details Card (Hidden in Thermal mode) */}
+            {!isEwayMode && !isThermalMode && (printSet.printDescription || printSet.printTermsAndConditions || printSet.printAcknowledgement || printSet.printReceivedByDetails || printSet.printDeliveredByDetails || printSet.printSignatureText) && (
               <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Footer & T&C Details</span>
                 <div className="space-y-3">
@@ -2211,8 +2962,8 @@ export default function NewSale() {
               </div>
             )}
 
-            {/* Calculations & Payment Configuration */}
-            {!isEwayMode && printSet.paymentMode && isPaymentFieldRelevant && (
+            {/* Calculations & Payment Configuration (Hidden in Thermal Mode as custom Payment card is used) */}
+            {!isEwayMode && !isThermalMode && printSet.paymentMode && isPaymentFieldRelevant && (
               <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-4">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Payment Setup</span>
 
@@ -2359,85 +3110,87 @@ export default function NewSale() {
         {/* RIGHT COLUMN: Live Print Preview styled as selected Vyapar Theme */}
         <div className={`w-full md:w-1/2 lg:w-7/12 flex flex-col h-full bg-slate-200 overflow-y-auto p-2 sm:p-4 custom-scrollbar ${activePane === 'form' ? 'hidden md:flex' : 'flex'}`}>
 
-          {/* Visual Invoice/E-Way Template Selector */}
-          <div className="mb-2 sm:mb-4 bg-white border border-slate-300 rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h3 className="text-[10px] sm:text-xs font-bold text-slate-800 uppercase tracking-wider hidden md:block">
-              {isEwayMode ? "Select E-Way Design" : "Select Invoice Design"}
-            </h3>
+          {/* Visual Invoice/E-Way Template Selector - Hidden in Thermal Mode */}
+          {!isThermalMode && (
+            <div className="mb-2 sm:mb-4 bg-white border border-slate-300 rounded-lg sm:rounded-xl p-2 sm:p-4 shadow-sm shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h3 className="text-[10px] sm:text-xs font-bold text-slate-800 uppercase tracking-wider hidden md:block">
+                {isEwayMode ? "Select E-Way Design" : "Select Invoice Design"}
+              </h3>
 
-            {/* Desktop Template Selector */}
-            <div className="hidden md:flex flex-wrap gap-2">
-              {(isEwayMode ? [
-                { id: "Official E-Way", name: "Official E-Way" },
-                { id: "Official Yellow E-Way", name: "Yellow E-Way" },
-                { id: "Green E-Way", name: "Green E-Way" },
-                { id: "Minimal E-Way", name: "Minimal E-Way" }
-              ] : [
-                { id: "Standard (Boxed)", name: "Standard (Boxed)" },
-                { id: "Classic", name: "Classic" },
-                { id: "Modern", name: "Modern" },
-                { id: "Minimal", name: "Minimal" },
-                { id: "Professional", name: "Professional" },
-                { id: "Business Plus", name: "Business Plus" },
-                { id: "Corporate Pro", name: "Corporate Pro" },
-                { id: "Standard Plus", name: "Standard Plus" },
-                { id: "Premium Pro", name: "Premium Pro" }
-              ]).map((tpl) => {
-                const isActive = invoiceTemplate === tpl.id || 
-                  (tpl.id === "Standard (Boxed)" && invoiceTemplate === "GST Boxed") ||
-                  (tpl.id === "Classic" && invoiceTemplate === "Classic White") ||
-                  (tpl.id === "Modern" && invoiceTemplate === "Modern Blue") ||
-                  (tpl.id === "Minimal" && invoiceTemplate === "Minimalist") ||
-                  (tpl.id === "Standard Plus" && invoiceTemplate === "Vyapar Red") ||
-                  (tpl.id === "Premium Pro" && invoiceTemplate === "Vyapar Purple");
+              {/* Desktop Template Selector */}
+              <div className="hidden md:flex flex-wrap gap-2">
+                {(isEwayMode ? [
+                  { id: "Official E-Way", name: "Official E-Way" },
+                  { id: "Official Yellow E-Way", name: "Yellow E-Way" },
+                  { id: "Green E-Way", name: "Green E-Way" },
+                  { id: "Minimal E-Way", name: "Minimal E-Way" }
+                ] : [
+                  { id: "Standard (Boxed)", name: "Standard (Boxed)" },
+                  { id: "Classic", name: "Classic" },
+                  { id: "Modern", name: "Modern" },
+                  { id: "Minimal", name: "Minimal" },
+                  { id: "Professional", name: "Professional" },
+                  { id: "Business Plus", name: "Business Plus" },
+                  { id: "Corporate Pro", name: "Corporate Pro" },
+                  { id: "Standard Plus", name: "Standard Plus" },
+                  { id: "Premium Pro", name: "Premium Pro" }
+                ]).map((tpl) => {
+                  const isActive = invoiceTemplate === tpl.id || 
+                    (tpl.id === "Standard (Boxed)" && invoiceTemplate === "GST Boxed") ||
+                    (tpl.id === "Classic" && invoiceTemplate === "Classic White") ||
+                    (tpl.id === "Modern" && invoiceTemplate === "Modern Blue") ||
+                    (tpl.id === "Minimal" && invoiceTemplate === "Minimalist") ||
+                    (tpl.id === "Standard Plus" && invoiceTemplate === "Vyapar Red") ||
+                    (tpl.id === "Premium Pro" && invoiceTemplate === "Vyapar Purple");
 
-                return (
-                  <button
-                    key={tpl.id}
-                    onClick={() => setInvoiceTemplate(tpl.id)}
-                    className={`h-7 px-3 rounded-xl text-[10px] font-bold transition-all border cursor-pointer ${
-                      isActive
-                        ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
-                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
-                    }`}
-                  >
-                    {tpl.name}
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={tpl.id}
+                      onClick={() => setInvoiceTemplate(tpl.id)}
+                      className={`h-7 px-3 rounded-xl text-[10px] font-bold transition-all border cursor-pointer ${
+                        isActive
+                          ? "bg-slate-800 text-white border-slate-800 shadow-md scale-105"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-400 hover:bg-slate-50"
+                      }`}
+                    >
+                      {tpl.name}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Mobile Template Selector Dropdown */}
+              <div className="md:hidden flex items-center justify-between w-full">
+                <span className="text-[10px] font-medium text-slate-700 uppercase tracking-wider">Design:</span>
+                <select
+                  value={invoiceTemplate}
+                  onChange={(e) => setInvoiceTemplate(e.target.value)}
+                  className="h-7 sm:h-8 px-2 w-44 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
+                >
+                  {isEwayMode ? (
+                    <>
+                      <option value="Official E-Way">Official E-Way</option>
+                      <option value="Official Yellow E-Way">Yellow E-Way</option>
+                      <option value="Green E-Way">Green E-Way</option>
+                      <option value="Minimal E-Way">Minimal E-Way</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="Standard (Boxed)">Standard (Boxed)</option>
+                      <option value="Classic">Classic</option>
+                      <option value="Modern">Modern</option>
+                      <option value="Minimal">Minimal</option>
+                      <option value="Professional">Professional</option>
+                      <option value="Business Plus">Business Plus</option>
+                      <option value="Corporate Pro">Corporate Pro</option>
+                      <option value="Standard Plus">Standard Plus</option>
+                      <option value="Premium Pro">Premium Pro</option>
+                    </>
+                  )}
+                </select>
+              </div>
             </div>
-
-            {/* Mobile Template Selector Dropdown */}
-            <div className="md:hidden flex items-center justify-between w-full">
-              <span className="text-[10px] font-medium text-slate-700 uppercase tracking-wider">Design:</span>
-              <select
-                value={invoiceTemplate}
-                onChange={(e) => setInvoiceTemplate(e.target.value)}
-                className="h-7 sm:h-8 px-2 w-44 text-[10px] font-medium bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400"
-              >
-                {isEwayMode ? (
-                  <>
-                    <option value="Official E-Way">Official E-Way</option>
-                    <option value="Official Yellow E-Way">Yellow E-Way</option>
-                    <option value="Green E-Way">Green E-Way</option>
-                    <option value="Minimal E-Way">Minimal E-Way</option>
-                  </>
-                ) : (
-                  <>
-                    <option value="Standard (Boxed)">Standard (Boxed)</option>
-                    <option value="Classic">Classic</option>
-                    <option value="Modern">Modern</option>
-                    <option value="Minimal">Minimal</option>
-                    <option value="Professional">Professional</option>
-                    <option value="Business Plus">Business Plus</option>
-                    <option value="Corporate Pro">Corporate Pro</option>
-                    <option value="Standard Plus">Standard Plus</option>
-                    <option value="Premium Pro">Premium Pro</option>
-                  </>
-                )}
-              </select>
-            </div>
-          </div>
+          )}
 
           {/* Responsive invoice preview: scales down on mobile to fit screen */}
           <div ref={invoiceWrapperRef} className="invoice-preview-wrapper w-full mx-auto overflow-hidden" style={{ maxWidth: '210mm' }}>
@@ -2471,6 +3224,7 @@ export default function NewSale() {
                     billedToAddress,
                     billedToGstin,
                     billedToMobile,
+                    billedToEmail: hotelDetails?.guestEmail || "",
                     billedToState,
                     bankDetails,
                     invoiceNumber: invoiceNumber || "INV-" + (settings?.lastInvoiceNo || "1001"),
@@ -2486,7 +3240,10 @@ export default function NewSale() {
                     poNumber,
                     poDate,
                     transportDetails,
-                    shippingDetails
+                    shippingDetails,
+                    restaurantDetails,
+                    hotelDetails,
+                    retailDetails
                   }}
                   printSettings={{
                     ...printSet,
@@ -2494,10 +3251,12 @@ export default function NewSale() {
                     address: sellerAddress,
                     email: sellerEmail,
                     phone: sellerPhone,
+                    sellerFssai: businessType === "retail" ? (retailDetails.fssai || sellerFssai) : sellerFssai,
                     signatureText: signatureText,
                     signatureUrl: signatureUrl,
                     signatureImgUrl: signatureImgUrl,
-                    logoUrl: logoUrl
+                    logoUrl: logoUrl,
+                    qrCodeUrl: qrCodeUrl
                   }}
                   gstSettings={{
                     ...gstSet,
@@ -2649,9 +3408,76 @@ export default function NewSale() {
                   <Input type="number" min={1} value={lines[editingItemIndex].qty} onChange={(e) => updateLine(editingItemIndex, 'qty', Number(e.target.value) || 0)} className="h-11 bg-slate-50 border-slate-200 text-center" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Price/Unit (₹)</Label>
+                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Price (₹)</Label>
                   <Input type="number" min={0} value={lines[editingItemIndex].rate === 0 ? "" : lines[editingItemIndex].rate} onChange={(e) => updateLine(editingItemIndex, 'rate', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0.00" className="h-11 bg-slate-50 border-slate-200 text-right font-semibold" />
                 </div>
+              </div>
+
+              {/* Unit Dropdown — always visible */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Unit</Label>
+                  <select
+                    value={lines[editingItemIndex].unit || "Pcs"}
+                    onChange={(e) => updateLine(editingItemIndex, 'unit', e.target.value)}
+                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  >
+                    <option value="Bag">BAGS (Bag)</option>
+                    <option value="Btl">BOTTLES (Btl)</option>
+                    <option value="Box">BOX (Box)</option>
+                    <option value="Bdl">BUNDLES (Bdl)</option>
+                    <option value="Can">CANS (Can)</option>
+                    <option value="Ctn">CARTONS (Ctn)</option>
+                    <option value="Mtq">CUBIC METER (Mtq)</option>
+                    <option value="Day">DAY (Day)</option>
+                    <option value="Dzn">DOZENS (Dzn)</option>
+                    <option value="Gm">GRAMMES (Gm)</option>
+                    <option value="Hur">HOUR (Hur)</option>
+                    <option value="Kg">KILOGRAMS (Kg)</option>
+                    <option value="Kmt">KILOMETER (Kmt)</option>
+                    <option value="Ltr">LITRE (Ltr)</option>
+                    <option value="Mtr">METERS (Mtr)</option>
+                    <option value="Ml">MILILITRE (Ml)</option>
+                    <option value="Nos">NUMBERS (Nos)</option>
+                    <option value="Pac">PACKS (Pac)</option>
+                    <option value="Prs">PAIRS (Prs)</option>
+                    <option value="Pcs">PIECES (Pcs)</option>
+                    <option value="Qtl">QUINTAL (Qtl)</option>
+                    <option value="Rol">ROLLS (Rol)</option>
+                    <option value="Ser">SERVICE (Ser)</option>
+                    <option value="Set">SET (Set)</option>
+                    <option value="Sqf">SQUARE FEET (Sqf)</option>
+                    <option value="Sqm">SQUARE METERS (Sqm)</option>
+                    <option value="Tbs">TABLETS (Tbs)</option>
+                    <option value="Ton">TON / METRIC TON (Ton)</option>
+                  </select>
+                </div>
+                {/* Dynamic Item Total */}
+                {(() => {
+                  const item = lines[editingItemIndex];
+                  const q = Number(item.qty) || 0;
+                  const r = Number(item.rate) || 0;
+                  const d = Number(item.discount) || 0;
+                  const g = Number(item.gst) || 0;
+                  const isExcl = item.taxType === "exclusive";
+                  const rateAfterDisc = r * (1 - d / 100);
+                  let lineTotal = 0;
+                  if (isExcl) {
+                    const taxableVal = q * rateAfterDisc;
+                    const taxVal = taxableVal * (g / 100);
+                    lineTotal = taxableVal + taxVal;
+                  } else {
+                    lineTotal = q * rateAfterDisc;
+                  }
+                  return (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Item Total</Label>
+                      <div className="h-11 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-end px-3">
+                        <span className="text-emerald-700 font-bold text-sm">₹ {lineTotal.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -2777,7 +3603,7 @@ export default function NewSale() {
                 )}
                 {cols.unit && (
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.unit || "Unit"}</Label>
+                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.unit || "Unit (Custom)"}</Label>
                     <Input value={lines[editingItemIndex].unit || ""} onChange={(e) => updateLine(editingItemIndex, 'unit', e.target.value)} placeholder="Pcs/Kgs" className="h-10 bg-slate-50 border-slate-200 text-xs" />
                   </div>
                 )}
@@ -2803,8 +3629,11 @@ export default function NewSale() {
       <div className="sticky bottom-0 shrink-0 bg-white border-t p-1.5 md:p-4 flex flex-col md:flex-row gap-1.5 md:gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:justify-center items-center z-10">
         <div className="flex bg-slate-100 p-0.5 md:p-1 rounded-full border border-slate-200 self-stretch md:self-auto shrink-0 mb-0.5 md:mb-0 overflow-x-auto custom-scrollbar">
           <button
-            className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${!isEwayMode ? 'bg-white shadow-sm text-slate-800 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
-            onClick={() => setInvoiceTemplate(settings?.printSettings?.themeName || "GST Boxed")}
+            className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${!isEwayMode && !isThermalMode ? 'bg-white shadow-sm text-slate-800 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
+            onClick={() => {
+              navigate(`/${rolePrefix}/sale/new`);
+              setInvoiceTemplate(settings?.printSettings?.themeName || "GST Boxed");
+            }}
           >
             Invoice
           </button>
@@ -2812,10 +3641,22 @@ export default function NewSale() {
           <button
             className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${isEwayMode ? 'bg-white shadow-sm text-emerald-700 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
             onClick={() => {
-              if (!isEwayMode) setInvoiceTemplate("Green E-Way");
+              if (!isEwayMode) {
+                navigate(`/${rolePrefix}/sale/new?ewaybill=true`);
+                setInvoiceTemplate("Green E-Way");
+              }
             }}
           >
             E-Way Bill
+          </button>
+
+          <button
+            className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${isThermalMode ? 'bg-white shadow-sm text-orange-600 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
+            onClick={() => {
+              navigate(`/${rolePrefix}/sale/new?thermal=true&template=Thermal%20Receipt&business=restaurant`);
+            }}
+          >
+            🧾 Thermal
           </button>
         </div>
 

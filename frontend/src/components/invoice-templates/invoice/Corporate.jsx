@@ -194,6 +194,16 @@ export function CorporateTemplate({ invoice, printSet, gstSet, activeColor, numb
         <div className="bg-slate-50 border rounded-lg p-4 font-mono text-[9px] w-64 space-y-1.5 shrink-0">
           <div className="flex justify-between"><span>Taxable Subtotal</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></div>
           <div className="flex justify-between"><span>Tax Amount: GST</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
+          {totals.tcsAmount > 0 && (
+            <div className="flex justify-between font-semibold text-emerald-700">
+              <span>TCS (+)</span><span>+{formatAmt(totals.tcsAmount, printSet)}</span>
+            </div>
+          )}
+          {totals.tdsAmount > 0 && (
+            <div className="flex justify-between font-semibold text-blue-700">
+              <span>TDS (-)</span><span>-{formatAmt(totals.tdsAmount, printSet)}</span>
+            </div>
+          )}
           <div className={`flex justify-between font-extrabold text-[11px] border-t pt-1.5 ${activeColor.text}`}>
             <span>Total Outstanding</span><span>{formatAmt(totals.grand, printSet)}</span>
           </div>

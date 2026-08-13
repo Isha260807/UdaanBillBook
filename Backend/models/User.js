@@ -28,6 +28,12 @@ const userSchema = new mongoose.Schema({
   gstin: {
     type: String,
   },
+  panNo: {
+    type: String,
+  },
+  aadhaarNo: {
+    type: String,
+  },
   otp: {
     type: String,
   },

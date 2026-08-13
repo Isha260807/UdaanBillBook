@@ -527,14 +527,8 @@ export default function Settings() {
                     {renderControl("gstSettings", "reverseCharge", "Reverse Charge Option")}
                     {renderControl("gstSettings", "placeOfSupply", "Place of Supply Field")}
                     {renderControl("gstSettings", "compositeScheme", "Composite Scheme Scheme")}
-                    <div className="flex items-center justify-between py-1.5 px-2 opacity-50">
-                      <Label className="text-sm font-medium">Enable TCS Taxes</Label>
-                      <Crown className="h-4 w-4 text-amber-500 fill-amber-500" />
-                    </div>
-                    <div className="flex items-center justify-between py-1.5 px-2 opacity-50">
-                      <Label className="text-sm font-medium">Enable TDS Deductions</Label>
-                      <Crown className="h-4 w-4 text-amber-500 fill-amber-500" />
-                    </div>
+                    {renderControl("gstSettings", "enableTcs", "Enable TCS Taxes")}
+                    {renderControl("gstSettings", "enableTds", "Enable TDS Deductions")}
                   </CardContent>
                 </Card>
 

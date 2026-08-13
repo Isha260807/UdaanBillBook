@@ -84,6 +84,9 @@ export default function VerifyOtp() {
         email: search.email,
         address: search.address,
         businessType: search.businessType,
+        gstNo: state.gstNo,
+        panNo: state.panNo,
+        aadhaarNo: state.aadhaarNo,
         role: search.role
       });
 
@@ -94,6 +97,10 @@ export default function VerifyOtp() {
       mockAuth.signIn({
         name: user.name,
         business: user.businessName,
+        businessAddress: user.businessAddress || search.address,
+        gstin: user.gstin || state.gstNo,
+        panNo: user.panNo || state.panNo,
+        aadhaarNo: user.aadhaarNo || state.aadhaarNo,
         phone: user.phone,
         email: user.email,
         role: user.role,
