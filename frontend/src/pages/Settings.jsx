@@ -133,8 +133,10 @@ export default function Settings() {
   };
 
   const handleDeleteRate = (id) => {
-    const updatedRates = gstSettings.taxRates.filter((r) => r.id !== id);
-    updateSettings("gstSettings", { taxRates: updatedRates });
+    const updatedRates = (gstSettings.taxRates || []).filter((r) => r.id !== id);
+    // Also remove from taxGroups if matching ID or empty sync
+    const updatedGroups = (gstSettings.taxGroups || []).filter((g) => g.id !== id);
+    updateSettings("gstSettings", { taxRates: updatedRates, taxGroups: updatedGroups });
   };
 
   // Tax Group Operations
@@ -144,7 +146,7 @@ export default function Settings() {
     const sgst = Number(newGroupSgst);
     if (isNaN(cgst) || isNaN(sgst)) return toast.error("Enter valid percentages");
 
-    let updatedGroups = [...gstSettings.taxGroups];
+    let updatedGroups = [...(gstSettings.taxGroups || [])];
     if (editingGroupId) {
       updatedGroups = updatedGroups.map((g) =>
         g.id === editingGroupId ? { ...g, name: newGroupName.trim(), cgst, sgst } : g
@@ -167,8 +169,9 @@ export default function Settings() {
   };
 
   const handleDeleteGroup = (id) => {
-    const updatedGroups = gstSettings.taxGroups.filter((g) => g.id !== id);
-    updateSettings("gstSettings", { taxGroups: updatedGroups });
+    const updatedGroups = (gstSettings.taxGroups || []).filter((g) => g.id !== id);
+    const updatedRates = (gstSettings.taxRates || []).filter((r) => r.id !== id);
+    updateSettings("gstSettings", { taxRates: updatedRates, taxGroups: updatedGroups });
   };
 
   // Custom Field Operations
@@ -549,9 +552,8 @@ export default function Settings() {
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
-                  </CardHeader>
-                  <CardContent className="p-0 max-h-[320px] overflow-y-auto divide-y">
-                    {gstSettings.taxRates.map((rate) => (
+                  </CardHeader>                  <CardContent className="p-0 max-h-[320px] overflow-y-auto divide-y">
+                    {(gstSettings.taxRates || []).map((rate) => (
                       <div key={rate.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-muted/10 text-xs">
                         <span className="font-medium text-foreground">{rate.name}</span>
                         <div className="flex items-center gap-3">
@@ -576,6 +578,9 @@ export default function Settings() {
                         </div>
                       </div>
                     ))}
+                    {(!gstSettings.taxRates || gstSettings.taxRates.length === 0) && (
+                      <div className="p-4 text-center text-xs text-muted-foreground">No tax rates added</div>
+                    )}
                   </CardContent>
                 </Card>
 

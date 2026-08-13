@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
-import { ArrowLeft, ReceiptText, Printer, Plus, Send, Trash2, X, ShieldCheck, Eye } from "lucide-react";
+import { ArrowLeft, ReceiptText, Printer, Plus, Send, Trash2, X, ShieldCheck, Eye, Check } from "lucide-react";
 import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -194,6 +194,7 @@ export default function NewSale() {
 
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingItemIndex, setEditingItemIndex] = useState(null);
+  const [taxPickerLineIndex, setTaxPickerLineIndex] = useState(null);
 
   const printSet = settings?.printSettings || {};
   const gstSet = settings?.gstSettings || {};
@@ -2363,23 +2364,23 @@ export default function NewSale() {
                 {lines.map((l, i) => (
                   <div key={i} className="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50/80 to-white p-4 relative group">
                     {/* Row 1: Core fields */}
-                    <div className="grid grid-cols-12 gap-3 items-end">
+                    <div className="grid grid-cols-12 gap-2.5 items-end">
                       {/* Item Name */}
-                      <div className="col-span-12 sm:col-span-5">
+                      <div className="col-span-12 lg:col-span-4">
                         <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Item Name</Label>
-                        <Input value={l.name} onChange={(e) => updateLine(i, 'name', e.target.value)} placeholder="Product description" className="h-9 bg-white text-xs rounded-lg border-slate-200" />
+                        <Input value={l.name} onChange={(e) => updateLine(i, 'name', e.target.value)} placeholder="Product description" className="h-9 bg-white text-xs rounded-lg border-slate-200 px-2.5" />
                       </div>
 
                       {/* HSN/SAC */}
-                      <div className="col-span-4 sm:col-span-2">
+                      <div className="col-span-6 sm:col-span-3 lg:col-span-2">
                         <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">HSN/SAC</Label>
-                        <Input value={l.hsnSac} onChange={(e) => updateLine(i, 'hsnSac', e.target.value)} placeholder="996601" className="h-9 bg-white text-xs rounded-lg border-slate-200" />
+                        <Input value={l.hsnSac} onChange={(e) => updateLine(i, 'hsnSac', e.target.value)} placeholder="996601" className="h-9 bg-white text-xs rounded-lg border-slate-200 px-2.5" />
                       </div>
 
                       {/* Quantity + Free Qty */}
-                      <div className="col-span-4 sm:col-span-2">
+                      <div className="col-span-6 sm:col-span-3 lg:col-span-2">
                         <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Quantity</Label>
-                        <Input type="number" min={1} value={l.qty} onChange={(e) => updateLine(i, 'qty', Number(e.target.value) || 0)} className="h-9 bg-white text-xs text-center rounded-lg border-slate-200" />
+                        <Input type="number" min={1} value={l.qty} onChange={(e) => updateLine(i, 'qty', Number(e.target.value) || 0)} className="h-9 bg-white text-xs text-center rounded-lg border-slate-200 px-1" />
                         {txnSet.freeQty && (
                           <div className="mt-1">
                             <Input
@@ -2387,19 +2388,19 @@ export default function NewSale() {
                               onChange={(e) => updateLine(i, 'freeQty', Number(e.target.value) || 0)}
                               placeholder="Free Qty"
                               title="Free Quantity"
-                              className="h-7 bg-blue-50 text-[10px] text-center rounded border-blue-200 placeholder:text-blue-300"
+                              className="h-7 bg-blue-50 text-[10px] text-center rounded border-blue-200 placeholder:text-blue-300 px-1"
                             />
                           </div>
                         )}
                       </div>
 
                       {/* Unit Dropdown */}
-                      <div className="col-span-4 sm:col-span-2">
+                      <div className="col-span-6 sm:col-span-3 lg:col-span-2">
                         <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Unit</Label>
                         <select
                           value={l.unit || "Pcs"}
                           onChange={(e) => updateLine(i, 'unit', e.target.value)}
-                          className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 truncate"
                         >
                           <option value="Bag">BAGS (Bag)</option>
                           <option value="Btl">BOTTLES (Btl)</option>
@@ -2433,7 +2434,7 @@ export default function NewSale() {
                       </div>
 
                       {/* Rate / Price */}
-                      <div className="col-span-4 sm:col-span-2">
+                      <div className="col-span-5 sm:col-span-2 lg:col-span-1.5">
                         <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Price (₹)</Label>
                         <Input
                           type="number"
@@ -2441,14 +2442,14 @@ export default function NewSale() {
                           value={l.rate === 0 ? "" : l.rate}
                           onChange={(e) => updateLine(i, 'rate', e.target.value === "" ? 0 : Number(e.target.value))}
                           placeholder="0.00"
-                          className="h-9 bg-white text-xs text-right rounded-lg border-slate-200"
+                          className="h-9 bg-white text-xs text-right rounded-lg border-slate-200 px-2"
                           onFocus={(e) => e.target.select()}
                         />
                       </div>
 
                       {/* Delete Button */}
-                      <div className="col-span-12 sm:col-span-1 flex sm:justify-end justify-start items-end">
-                        <Button type="button" size="icon" variant="ghost" className="h-9 w-9 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" onClick={() => removeLine(i)} disabled={lines.length === 1}>
+                      <div className="col-span-1 sm:col-span-1 flex justify-end items-end pb-0.5">
+                        <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" onClick={() => removeLine(i)} disabled={lines.length === 1}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -2475,7 +2476,7 @@ export default function NewSale() {
                         return (
                           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200/60 rounded-lg px-3 py-1.5 max-w-max">
                             <span className="text-[10px] text-emerald-600 font-semibold shrink-0">Item Total</span>
-                            <span className="text-[11px] font-bold text-emerald-800">₹{lineTotal.toFixed(2)}</span>
+                            <span className="text-[11px] font-bold text-emerald-800">₹{(Math.round(lineTotal * 100) / 100).toFixed(2)}</span>
                           </div>
                         );
                       })()}
@@ -2507,38 +2508,37 @@ export default function NewSale() {
                     </div>
 
                     {/* Row 2: Secondary fields */}
-                    <div className="grid grid-cols-12 gap-3 mt-3 items-end">
+                    <div className="flex flex-wrap items-center gap-3 mt-3">
                       {/* Discount */}
-                      <div className="col-span-4 sm:col-span-2">
+                      <div className="w-24">
                         <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Discount %</Label>
-                        <Input type="number" min={0} max={100} value={l.discount === 0 ? "" : l.discount} onChange={(e) => updateLine(i, 'discount', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" className="h-9 bg-white text-xs text-center rounded-lg border-slate-200" onFocus={(e) => e.target.select()} />
+                        <Input type="number" min={0} max={100} value={l.discount === 0 ? "" : l.discount} onChange={(e) => updateLine(i, 'discount', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" className="h-9 bg-white text-xs text-center rounded-lg border-slate-200 px-2" onFocus={(e) => e.target.select()} />
                       </div>
 
                       {/* GST Rate */}
                       {gstSet.enableGst && (
-                        <div className="col-span-4 sm:col-span-2">
+                        <div className="w-32">
                           <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">GST Rate %</Label>
-                          <select
-                            value={[0, 5, 12, 18, 28].includes(Number(l.gst)) ? String(l.gst) : "custom"}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              updateLine(i, 'gst', val === "custom" ? 5 : Number(val));
-                            }}
-                            className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary/30"
+                          <button
+                            type="button"
+                            onClick={() => setTaxPickerLineIndex(i)}
+                            className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-left font-medium text-slate-800 flex items-center justify-between hover:bg-slate-50 transition-colors"
                           >
-                            <option value="0">0%</option>
-                            <option value="5">5%</option>
-                            <option value="12">12%</option>
-                            <option value="18">18%</option>
-                            <option value="28">28%</option>
-                            <option value="custom">Custom</option>
-                          </select>
+                            <span className="truncate">
+                              {(() => {
+                                const currentGst = Number(l.gst ?? 18);
+                                const match = (gstSet?.taxRates || []).find((r) => Number(r.value) === currentGst);
+                                return match ? match.name : `GST@${currentGst}%`;
+                              })()}
+                            </span>
+                            <span className="text-[10px] text-slate-400 ml-1">▼</span>
+                          </button>
                         </div>
                       )}
 
                       {/* Tax Type (Inclusive/Exclusive) */}
                       {txnSet.taxOnRate && gstSet.enableGst && (
-                        <div className="col-span-4 sm:col-span-3">
+                        <div className="w-36">
                           <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Tax Type</Label>
                           <select
                             value={l.taxType || "inclusive"}
@@ -2553,13 +2553,15 @@ export default function NewSale() {
 
                       {/* Cess */}
                       {gstSet.cessOnItem && (
-                        <div className="col-span-4 sm:col-span-2">
+                        <div className="w-24">
                           <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">CESS %</Label>
-                          <Input type="number" min={0} value={l.cess || ""} onChange={(e) => updateLine(i, 'cess', Number(e.target.value) || 0)} placeholder="0" className="h-9 bg-white text-xs text-center rounded-lg border-slate-200" />
+                          <Input type="number" min={0} value={l.cess || ""} onChange={(e) => updateLine(i, 'cess', Number(e.target.value) || 0)} placeholder="0" className="h-9 bg-white text-xs text-center rounded-lg border-slate-200 px-2" />
                         </div>
                       )}
+                    </div>
 
-                      {/* Additional columns from print settings */}
+                    {/* Additional columns from print settings */}
+                    <div className="grid grid-cols-12 gap-3 mt-3 items-end">
                       {cols.itemCode && (
                         <div className="col-span-4 sm:col-span-2">
                           <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">{colNames.itemCode || "Item Code"}</Label>
@@ -3488,21 +3490,20 @@ export default function NewSale() {
                 {gstSet.enableGst && (
                   <div className="space-y-1.5">
                     <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">GST Rate %</Label>
-                    <select
-                      value={[0, 5, 12, 18, 28].includes(Number(lines[editingItemIndex].gst)) ? String(lines[editingItemIndex].gst) : "custom"}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        updateLine(editingItemIndex, 'gst', val === "custom" ? 5 : Number(val));
-                      }}
-                      className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    <button
+                      type="button"
+                      onClick={() => setTaxPickerLineIndex(editingItemIndex)}
+                      className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-left font-semibold text-slate-800 flex items-center justify-between"
                     >
-                      <option value="0">0%</option>
-                      <option value="5">5%</option>
-                      <option value="12">12%</option>
-                      <option value="18">18%</option>
-                      <option value="28">28%</option>
-                      <option value="custom">Custom</option>
-                    </select>
+                      <span>
+                        {(() => {
+                          const currentGst = Number(lines[editingItemIndex]?.gst ?? 18);
+                          const match = (gstSet?.taxRates || []).find((r) => Number(r.value) === currentGst);
+                          return match ? match.name : `GST@${currentGst}%`;
+                        })()}
+                      </span>
+                      <span className="text-xs text-slate-400">▼</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -3670,6 +3671,71 @@ export default function NewSale() {
           </Button>
         </div>
       </div>
+
+      {/* Tax % Modal (Matching User Screenshot) */}
+      {taxPickerLineIndex !== null && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4">
+          <div className="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-100 flex flex-col max-h-[85vh] animate-in slide-in-from-bottom duration-200">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h3 className="font-bold text-base text-slate-800">Tax %</h3>
+              <button
+                type="button"
+                onClick={() => setTaxPickerLineIndex(null)}
+                className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Tax Rates List */}
+            <div className="overflow-y-auto divide-y divide-slate-100 p-2">
+              {(() => {
+                const currentGst = Number(lines[taxPickerLineIndex]?.gst ?? 18);
+                const list = Array.isArray(gstSet?.taxRates) ? gstSet.taxRates : [];
+
+                if (list.length === 0) {
+                  return (
+                    <div className="p-8 text-center text-xs text-slate-400 font-medium">
+                      No tax rates configured in Settings. Please add taxes from Settings &gt; Taxes & GST.
+                    </div>
+                  );
+                }
+
+                return list.map((item, idx) => {
+                  const isSelected = lines[taxPickerLineIndex]?.selectedTaxId 
+                    ? (item.id === lines[taxPickerLineIndex].selectedTaxId)
+                    : (Number(item.value) === currentGst && (item.name === lines[taxPickerLineIndex]?.selectedTaxName || idx === list.findIndex(r => Number(r.value) === currentGst)));
+                  return (
+                    <button
+                      key={item.id || idx}
+                      type="button"
+                      onClick={() => {
+                        updateLine(taxPickerLineIndex, 'gst', Number(item.value));
+                        setLines(prev => prev.map((l, i) => i === taxPickerLineIndex ? { ...l, selectedTaxId: item.id, selectedTaxName: item.name } : l));
+                        setTaxPickerLineIndex(null);
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 text-left transition-colors group"
+                    >
+                      <span className={`text-sm ${isSelected ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
+                        {item.name || `GST@${item.value}%`}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className={`text-xs ${isSelected ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
+                          {item.value.toFixed(item.value % 1 === 0 ? 1 : 2)} %
+                        </span>
+                        {isSelected && (
+                          <Check className="h-4 w-4 text-emerald-600 font-bold" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
