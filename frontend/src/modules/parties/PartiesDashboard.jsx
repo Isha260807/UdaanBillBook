@@ -90,11 +90,11 @@ export function PartiesDashboard() {
   };
 
   const totalReceivable = parties
-    .filter((p) => (p.balanceType ? p.balanceType === 'To Receive' : p.balance > 0) && p.balance > 0)
+    .filter((p) => (p.balanceType === 'To Receive') && (p.balance || 0) > 0)
     .reduce((s, p) => s + Math.abs(p.balance), 0);
 
   const totalPayable = parties
-    .filter((p) => (p.balanceType ? p.balanceType === 'To Pay' : p.balance < 0) && p.balance > 0)
+    .filter((p) => (p.balanceType === 'To Pay') && (p.balance || 0) > 0)
     .reduce((s, p) => s + Math.abs(p.balance), 0);
 
   const filteredParties = parties.filter((p) => {
@@ -109,7 +109,7 @@ export function PartiesDashboard() {
     const cleanPhone = (p.phone || "").replace(/\D/g, "");
     if (!cleanPhone) return toast.error("Phone number not available for WhatsApp");
     const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
-    const isReceivable = p.balanceType ? p.balanceType === 'To Receive' : p.balance >= 0;
+    const isReceivable = p.balanceType === 'To Receive';
     const balanceStr = fmt(p.balance || 0);
 
     let msg = "";
@@ -152,7 +152,7 @@ export function PartiesDashboard() {
             <p className="text-[10px] sm:text-xs font-medium text-muted-foreground truncate">You'll Receive</p>
             <p className="mt-0.5 sm:mt-1 text-sm sm:text-3xl font-bold text-success truncate">{fmt(totalReceivable)}</p>
             <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-xs text-muted-foreground truncate">
-              From {parties.filter((p) => (p.balanceType ? p.balanceType === 'To Receive' : p.balance > 0) && p.balance > 0).length} parties
+              From {parties.filter((p) => p.balanceType === 'To Receive' && (p.balance || 0) > 0).length} parties
             </p>
           </CardContent>
         </Card>
@@ -161,7 +161,7 @@ export function PartiesDashboard() {
             <p className="text-[10px] sm:text-xs font-medium text-muted-foreground truncate">You'll Pay</p>
             <p className="mt-0.5 sm:mt-1 text-sm sm:text-3xl font-bold text-amber-600 truncate">{fmt(totalPayable)}</p>
             <p className="mt-0.5 sm:mt-1 text-[9px] sm:text-xs text-muted-foreground truncate">
-              To {parties.filter((p) => (p.balanceType ? p.balanceType === 'To Pay' : p.balance < 0) && p.balance > 0).length} suppliers
+              To {parties.filter((p) => p.balanceType === 'To Pay' && (p.balance || 0) > 0).length} suppliers
             </p>
           </CardContent>
         </Card>
@@ -196,8 +196,8 @@ export function PartiesDashboard() {
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {filteredParties.map((p) => {
-            const isReceivable = p.balanceType ? p.balanceType === 'To Receive' : p.balance >= 0;
-            const hasBalance = (p.balance || 0) > 0;
+            const isReceivable = p.balanceType === 'To Receive';
+            const hasBalance = Math.abs(p.balance || 0) > 0;
             const formattedPhone = p.phone ? String(p.phone).replace(/^(\+91\s*)+/, "").trim() : "";
             return (
               <div key={p._id || p.name} className="flex items-center gap-2 sm:gap-3 rounded-2xl border border-slate-200/80 bg-white p-2.5 sm:p-3 shadow-sm transition-shadow hover:shadow-md">
@@ -222,8 +222,8 @@ export function PartiesDashboard() {
                     !hasBalance 
                       ? "text-muted-foreground" 
                       : isReceivable 
-                      ? "text-success" 
-                      : "text-accent"
+                      ? "text-emerald-600" 
+                      : "text-amber-600"
                   }`}>
                     {!hasBalance ? "₹0" : (isReceivable ? fmt(p.balance) : `-${fmt(p.balance)}`)}
                   </p>

@@ -32,6 +32,15 @@ const partySchema = new mongoose.Schema({
     type: String,
     enum: ['To Receive', 'To Pay'],
     default: 'To Receive',
+  },
+  openingBalance: {
+    type: Number,
+    default: 0,
+  },
+  openingBalanceType: {
+    type: String,
+    enum: ['To Receive', 'To Pay'],
+    default: 'To Receive',
   }
 }, {
   timestamps: true

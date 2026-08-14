@@ -362,6 +362,47 @@ export default function NewSale() {
     { name: "", hsnSac: "", unit: "Pcs", qty: 1, rate: 0, discount: 0, gst: 18 }
   ]));
 
+  // Inventory Items for autocomplete & auto-fill
+  const [inventoryItems, setInventoryItems] = useState([]);
+
+  useEffect(() => {
+    api.get('/items').then((res) => {
+      if (res.data && res.data.length > 0) {
+        setInventoryItems(res.data);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleItemNameChange = (index, nameValue) => {
+    const matched = inventoryItems.find(
+      (item) => item.name?.toLowerCase().trim() === nameValue.toLowerCase().trim()
+    );
+    if (matched) {
+      const itemGst = matched.taxRate !== undefined && matched.taxRate !== null
+        ? Number(matched.taxRate)
+        : (matched.gst !== undefined && matched.gst !== null ? Number(matched.gst) : 0);
+      setLines((prev) =>
+        prev.map((l, i) =>
+          i === index
+            ? {
+                ...l,
+                name: matched.name,
+                hsnSac: matched.hsnSac || l.hsnSac,
+                unit: matched.unit || l.unit,
+                rate: matched.salePrice || matched.purchasePrice || l.rate,
+                purchasePrice: matched.purchasePrice || 0,
+                gst: itemGst
+              }
+            : l
+        )
+      );
+    } else {
+      setLines((prev) =>
+        prev.map((l, i) => (i === index ? { ...l, name: nameValue } : l))
+      );
+    }
+  };
+
   // Seller Details Fields (Dynamically shown based on PRINT checkboxes)
   const [sellerName, setSellerName] = useState(() => getInitialState("sellerName", ""));
   const [sellerAddress, setSellerAddress] = useState(() => getInitialState("sellerAddress", ""));
@@ -2360,27 +2401,40 @@ export default function NewSale() {
               </div>
 
               {/* Desktop Inline Edit List */}
-              <div className="hidden md:block space-y-3">
+              <div className="hidden md:block space-y-4">
                 {lines.map((l, i) => (
-                  <div key={i} className="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50/80 to-white p-4 relative group">
-                    {/* Row 1: Core fields */}
-                    <div className="grid grid-cols-12 gap-2.5 items-end">
-                      {/* Item Name */}
-                      <div className="col-span-12 lg:col-span-4">
-                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Item Name</Label>
-                        <Input value={l.name} onChange={(e) => updateLine(i, 'name', e.target.value)} placeholder="Product description" className="h-9 bg-white text-xs rounded-lg border-slate-200 px-2.5" />
+                  <div key={i} className="rounded-xl border border-slate-200 bg-gradient-to-b from-slate-50/80 to-white p-4 relative group space-y-3.5 shadow-sm hover:border-slate-300 transition-all">
+                    {/* Row 1: Item Name & HSN/SAC (2 fields - 50% each) */}
+                    <div className="grid grid-cols-12 gap-3 items-end">
+                      <div className="col-span-6">
+                        <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">Item Name</Label>
+                        <Input 
+                          value={l.name} 
+                          onChange={(e) => handleItemNameChange(i, e.target.value)} 
+                          list={`inventory-items-sale-${i}`}
+                          placeholder="Type or select item from inventory..." 
+                          className="h-9 bg-white text-xs rounded-lg border-slate-200 px-3" 
+                        />
+                        <datalist id={`inventory-items-sale-${i}`}>
+                          {inventoryItems.map((item) => (
+                            <option key={item._id || item.name} value={item.name}>
+                              {item.name} {item.hsnSac ? `(HSN: ${item.hsnSac})` : ''} - ₹{item.salePrice || item.purchasePrice || 0}
+                            </option>
+                          ))}
+                        </datalist>
                       </div>
 
-                      {/* HSN/SAC */}
-                      <div className="col-span-6 sm:col-span-3 lg:col-span-2">
-                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">HSN/SAC</Label>
-                        <Input value={l.hsnSac} onChange={(e) => updateLine(i, 'hsnSac', e.target.value)} placeholder="996601" className="h-9 bg-white text-xs rounded-lg border-slate-200 px-2.5" />
+                      <div className="col-span-6">
+                        <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">HSN / SAC</Label>
+                        <Input value={l.hsnSac} onChange={(e) => updateLine(i, 'hsnSac', e.target.value)} placeholder="000000" className="h-9 bg-white text-xs rounded-lg border-slate-200 px-3 font-medium" />
                       </div>
+                    </div>
 
-                      {/* Quantity + Free Qty */}
-                      <div className="col-span-6 sm:col-span-3 lg:col-span-2">
-                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Quantity</Label>
-                        <Input type="number" min={1} value={l.qty} onChange={(e) => updateLine(i, 'qty', Number(e.target.value) || 0)} className="h-9 bg-white text-xs text-center rounded-lg border-slate-200 px-1" />
+                    {/* Row 2: Quantity & Unit (2 fields) */}
+                    <div className="grid grid-cols-12 gap-3 items-end">
+                      <div className="col-span-6">
+                        <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">Quantity</Label>
+                        <Input type="number" min={1} value={l.qty} onChange={(e) => updateLine(i, 'qty', Number(e.target.value) || 0)} className="h-9 bg-white text-xs text-center rounded-lg border-slate-200 px-2 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-medium" />
                         {txnSet.freeQty && (
                           <div className="mt-1">
                             <Input
@@ -2394,69 +2448,107 @@ export default function NewSale() {
                         )}
                       </div>
 
-                      {/* Unit Dropdown */}
-                      <div className="col-span-6 sm:col-span-3 lg:col-span-2">
-                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Unit</Label>
+                      <div className="col-span-6">
+                        <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">Unit</Label>
                         <select
                           value={l.unit || "Pcs"}
                           onChange={(e) => updateLine(i, 'unit', e.target.value)}
-                          className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary/20 truncate"
+                          className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium focus:outline-none"
                         >
-                          <option value="Bag">BAGS (Bag)</option>
-                          <option value="Btl">BOTTLES (Btl)</option>
-                          <option value="Box">BOX (Box)</option>
-                          <option value="Bdl">BUNDLES (Bdl)</option>
-                          <option value="Can">CANS (Can)</option>
-                          <option value="Ctn">CARTONS (Ctn)</option>
-                          <option value="Mtq">CUBIC METER (Mtq)</option>
-                          <option value="Day">DAY (Day)</option>
-                          <option value="Dzn">DOZENS (Dzn)</option>
-                          <option value="Gm">GRAMMES (Gm)</option>
-                          <option value="Hur">HOUR (Hur)</option>
-                          <option value="Kg">KILOGRAMS (Kg)</option>
-                          <option value="Kmt">KILOMETER (Kmt)</option>
-                          <option value="Ltr">LITRE (Ltr)</option>
-                          <option value="Mtr">METERS (Mtr)</option>
-                          <option value="Ml">MILILITRE (Ml)</option>
-                          <option value="Nos">NUMBERS (Nos)</option>
-                          <option value="Pac">PACKS (Pac)</option>
-                          <option value="Prs">PAIRS (Prs)</option>
-                          <option value="Pcs">PIECES (Pcs)</option>
-                          <option value="Qtl">QUINTAL (Qtl)</option>
-                          <option value="Rol">ROLLS (Rol)</option>
-                          <option value="Ser">SERVICE (Ser)</option>
-                          <option value="Set">SET (Set)</option>
-                          <option value="Sqf">SQUARE FEET (Sqf)</option>
-                          <option value="Sqm">SQUARE METERS (Sqm)</option>
-                          <option value="Tbs">TABLETS (Tbs)</option>
-                          <option value="Ton">TON / METRIC TON (Ton)</option>
+                          <option value="Bag">Bag (Bags)</option>
+                          <option value="Btl">Btl (Bottles)</option>
+                          <option value="Box">Box (Boxes)</option>
+                          <option value="Bdl">Bdl (Bundles)</option>
+                          <option value="Can">Can (Cans)</option>
+                          <option value="Ctn">Ctn (Cartons)</option>
+                          <option value="Mtq">Mtq (Cubic Mtr)</option>
+                          <option value="Day">Day (Days)</option>
+                          <option value="Dzn">Dzn (Dozens)</option>
+                          <option value="Gm">Gm (Grams)</option>
+                          <option value="Hur">Hur (Hours)</option>
+                          <option value="Kg">Kg (Kilograms)</option>
+                          <option value="Kmt">Kmt (Kilometers)</option>
+                          <option value="Ltr">Ltr (Litres)</option>
+                          <option value="Mtr">Mtr (Meters)</option>
+                          <option value="Ml">Ml (Millilitres)</option>
+                          <option value="Nos">Nos (Numbers)</option>
+                          <option value="Pac">Pac (Packs)</option>
+                          <option value="Prs">Prs (Pairs)</option>
+                          <option value="Pcs">Pcs (Pieces)</option>
+                          <option value="Qtl">Qtl (Quintals)</option>
+                          <option value="Rol">Rol (Rolls)</option>
+                          <option value="Ser">Ser (Services)</option>
+                          <option value="Set">Set (Sets)</option>
+                          <option value="Sqf">Sqf (Sq. Feet)</option>
+                          <option value="Sqm">Sqm (Sq. Meters)</option>
+                          <option value="Tbs">Tbs (Tablets)</option>
+                          <option value="Ton">Ton (Tons)</option>
                         </select>
                       </div>
+                    </div>
 
-                      {/* Rate / Price */}
-                      <div className="col-span-5 sm:col-span-2 lg:col-span-1.5">
-                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Price (₹)</Label>
+                    {/* Row 3: Price & Discount % (2 fields) */}
+                    <div className="grid grid-cols-12 gap-3 items-end">
+                      <div className="col-span-6">
+                        <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">Price / Rate (₹)</Label>
                         <Input
                           type="number"
                           min={0}
                           value={l.rate === 0 ? "" : l.rate}
                           onChange={(e) => updateLine(i, 'rate', e.target.value === "" ? 0 : Number(e.target.value))}
                           placeholder="0.00"
-                          className="h-9 bg-white text-xs text-right rounded-lg border-slate-200 px-2"
+                          className="h-9 bg-white text-xs font-semibold rounded-lg border-slate-200 px-3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           onFocus={(e) => e.target.select()}
                         />
                       </div>
 
-                      {/* Delete Button */}
-                      <div className="col-span-1 sm:col-span-1 flex justify-end items-end pb-0.5">
-                        <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" onClick={() => removeLine(i)} disabled={lines.length === 1}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                      <div className="col-span-6">
+                        <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">Discount %</Label>
+                        <Input type="number" min={0} max={100} value={l.discount === 0 ? "" : l.discount} onChange={(e) => updateLine(i, 'discount', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" className="h-9 bg-white text-xs text-center rounded-lg border-slate-200 px-3 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-medium" onFocus={(e) => e.target.select()} />
                       </div>
                     </div>
 
-                    {/* Tags Row */}
-                    <div className="flex flex-wrap items-center gap-3 mt-2.5">
+                    {/* Row 4: GST Rate % & Tax Type (2 fields) */}
+                    {(gstSet.enableGst || (txnSet.taxOnRate && gstSet.enableGst)) && (
+                      <div className="grid grid-cols-12 gap-3 items-end">
+                        {gstSet.enableGst && (
+                          <div className={txnSet.taxOnRate ? "col-span-6" : "col-span-12"}>
+                            <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">GST Rate %</Label>
+                            <button
+                              type="button"
+                              onClick={() => setTaxPickerLineIndex(i)}
+                              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-left font-medium text-slate-800 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                            >
+                              <span className="truncate">
+                                {(() => {
+                                  const currentGst = Number(l.gst ?? 18);
+                                  const match = (gstSet?.taxRates || []).find((r) => Number(r.value) === currentGst);
+                                  return match ? match.name : `GST@${currentGst}%`;
+                                })()}
+                              </span>
+                              <span className="text-[10px] text-slate-400 ml-1">▼</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {txnSet.taxOnRate && gstSet.enableGst && (
+                          <div className="col-span-6">
+                            <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">Tax Type</Label>
+                            <select
+                              value={l.taxType || "inclusive"}
+                              onChange={(e) => updateLine(i, 'taxType', e.target.value)}
+                              className="h-9 w-full text-xs rounded-lg border border-slate-200 bg-emerald-50 px-3 font-semibold text-emerald-700 focus:outline-none"
+                            >
+                              <option value="inclusive">Tax Inclusive</option>
+                              <option value="exclusive">Tax Exclusive</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Row 5: Tags & Delete Action (50-50 Grid) */}
+                    <div className="grid grid-cols-12 gap-2.5 items-center pt-2.5 border-t border-slate-200/60">
                       {/* Item Total Tag */}
                       {(() => {
                         const q = Number(l.qty) || 0;
@@ -2474,90 +2566,41 @@ export default function NewSale() {
                           lineTotal = q * rateAfterDisc;
                         }
                         return (
-                          <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200/60 rounded-lg px-3 py-1.5 max-w-max">
-                            <span className="text-[10px] text-emerald-600 font-semibold shrink-0">Item Total</span>
-                            <span className="text-[11px] font-bold text-emerald-800">₹{(Math.round(lineTotal * 100) / 100).toFixed(2)}</span>
+                          <div className={txnSet.displayPurchasePrice ? "col-span-6 flex items-center justify-between bg-emerald-50 border border-emerald-200/60 rounded-xl px-3 py-1.5" : "col-span-11 flex items-center justify-between bg-emerald-50 border border-emerald-200/60 rounded-xl px-3 py-1.5"}>
+                            <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Item Total</span>
+                            <span className="text-xs font-extrabold text-emerald-800">₹{(Math.round(lineTotal * 100) / 100).toFixed(2)}</span>
                           </div>
                         );
                       })()}
 
                       {/* Purchase Price Tag */}
                       {txnSet.displayPurchasePrice && (
-                        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200/60 rounded-lg px-3 py-1.5 max-w-max">
-                          <span className="text-[10px] text-amber-600 font-semibold shrink-0">Purchase Price ₹</span>
-                        <input
-                          type="number"
-                          value={l.purchasePrice === 0 ? "" : (l.purchasePrice || "")}
-                          onChange={(e) => {
-                            const val = e.target.value === "" ? 0 : Number(e.target.value);
-                            setLines((prev) => prev.map((item, idx) => {
-                              if (idx === i) {
-                                return {
-                                  ...item,
-                                  purchasePrice: val
-                                };
-                              }
-                              return item;
-                            }));
-                          }}
-                          placeholder="0.00"
-                          className="h-5 w-16 bg-transparent text-[11px] font-bold text-amber-800 focus:outline-none"
-                        />
+                        <div className="col-span-5 flex items-center justify-between bg-amber-50 border border-amber-200/60 rounded-xl px-3 py-1.5">
+                          <span className="text-[10px] text-amber-600 font-bold uppercase tracking-wider truncate">Purchase Price ₹</span>
+                          <input
+                            type="number"
+                            value={l.purchasePrice === 0 ? "" : (l.purchasePrice || "")}
+                            onChange={(e) => {
+                              const val = e.target.value === "" ? 0 : Number(e.target.value);
+                              setLines((prev) => prev.map((item, idx) => {
+                                if (idx === i) {
+                                  return { ...item, purchasePrice: val };
+                                }
+                                return item;
+                              }));
+                            }}
+                            placeholder="0.00"
+                            className="h-5 w-14 bg-transparent text-xs text-right font-bold text-amber-800 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          />
+                        </div>
+                      )}
+
+                      {/* Delete Button */}
+                      <div className="col-span-1 flex justify-end">
+                        <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" onClick={() => removeLine(i)} disabled={lines.length === 1} title="Remove Item">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    )}
-                    </div>
-
-                    {/* Row 2: Secondary fields */}
-                    <div className="flex flex-wrap items-center gap-3 mt-3">
-                      {/* Discount */}
-                      <div className="w-24">
-                        <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Discount %</Label>
-                        <Input type="number" min={0} max={100} value={l.discount === 0 ? "" : l.discount} onChange={(e) => updateLine(i, 'discount', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0" className="h-9 bg-white text-xs text-center rounded-lg border-slate-200 px-2" onFocus={(e) => e.target.select()} />
-                      </div>
-
-                      {/* GST Rate */}
-                      {gstSet.enableGst && (
-                        <div className="w-32">
-                          <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">GST Rate %</Label>
-                          <button
-                            type="button"
-                            onClick={() => setTaxPickerLineIndex(i)}
-                            className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-xs text-left font-medium text-slate-800 flex items-center justify-between hover:bg-slate-50 transition-colors"
-                          >
-                            <span className="truncate">
-                              {(() => {
-                                const currentGst = Number(l.gst ?? 18);
-                                const match = (gstSet?.taxRates || []).find((r) => Number(r.value) === currentGst);
-                                return match ? match.name : `GST@${currentGst}%`;
-                              })()}
-                            </span>
-                            <span className="text-[10px] text-slate-400 ml-1">▼</span>
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Tax Type (Inclusive/Exclusive) */}
-                      {txnSet.taxOnRate && gstSet.enableGst && (
-                        <div className="w-36">
-                          <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">Tax Type</Label>
-                          <select
-                            value={l.taxType || "inclusive"}
-                            onChange={(e) => updateLine(i, 'taxType', e.target.value)}
-                            className="h-9 w-full text-xs rounded-lg border border-slate-200 bg-emerald-50 px-2.5 font-semibold text-emerald-700 focus:outline-none"
-                          >
-                            <option value="inclusive">Tax Inclusive</option>
-                            <option value="exclusive">Tax Exclusive</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {/* Cess */}
-                      {gstSet.cessOnItem && (
-                        <div className="w-24">
-                          <Label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1">CESS %</Label>
-                          <Input type="number" min={0} value={l.cess || ""} onChange={(e) => updateLine(i, 'cess', Number(e.target.value) || 0)} placeholder="0" className="h-9 bg-white text-xs text-center rounded-lg border-slate-200 px-2" />
-                        </div>
-                      )}
                     </div>
 
                     {/* Additional columns from print settings */}

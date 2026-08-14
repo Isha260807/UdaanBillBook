@@ -26,7 +26,17 @@ const getParties = async (req, res) => {
         return false;
       });
 
-      let mathBalance = 0;
+      // Start with Party's Opening Balance
+      let initialOp = Math.abs(p.openingBalance || 0);
+      let opType = p.openingBalanceType || p.balanceType || (p.type === 'Supplier' ? 'To Pay' : 'To Receive');
+
+      // Fallback for legacy parties where openingBalance field wasn't set explicitly
+      if ((p.openingBalance === undefined || p.openingBalance === null) && p.balance) {
+        initialOp = Math.abs(p.balance);
+        opType = p.balanceType || (p.type === 'Supplier' ? 'To Pay' : 'To Receive');
+      }
+
+      let mathBalance = (opType === 'To Pay') ? -initialOp : initialOp;
 
       for (const inv of partyInvoices) {
         const grandTotal = Number(inv.grandTotal) || 0;
@@ -48,9 +58,13 @@ const getParties = async (req, res) => {
       const calculatedType = mathBalance >= 0 ? 'To Receive' : 'To Pay';
 
       // Persist in DB if changed
-      if (partyDoc.balance !== calculatedBalance || partyDoc.balanceType !== calculatedType) {
+      if (partyDoc.balance !== calculatedBalance || partyDoc.balanceType !== calculatedType || partyDoc.openingBalance === undefined) {
         partyDoc.balance = calculatedBalance;
         partyDoc.balanceType = calculatedType;
+        if (partyDoc.openingBalance === undefined) {
+          partyDoc.openingBalance = initialOp;
+          partyDoc.openingBalanceType = opType;
+        }
         await partyDoc.save();
       }
 
@@ -80,6 +94,10 @@ const createParty = async (req, res) => {
       return res.status(400).json({ message: 'Name, phone, and type are required' });
     }
 
+    const rawBal = Number(balance) || 0;
+    const opBal = Math.abs(rawBal);
+    const opType = balanceType || (rawBal >= 0 ? 'To Receive' : 'To Pay');
+
     const party = await Party.create({
       user: ownerId,
       name,
@@ -87,8 +105,10 @@ const createParty = async (req, res) => {
       type,
       gstin,
       address,
-      balance,
-      balanceType
+      balance: opBal,
+      balanceType: opType,
+      openingBalance: opBal,
+      openingBalanceType: opType
     });
 
     res.status(201).json(party);

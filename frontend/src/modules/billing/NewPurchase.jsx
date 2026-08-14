@@ -10,6 +10,7 @@ import api from "@/lib/api";
 import { validateUtr, validateUpi } from "@/lib/validation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useMockAuth } from "@/lib/auth-store";
+import { usePlatformSettings } from "@/lib/platform-settings";
 
 const fmt = (n) => "₹" + Number(n).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -17,6 +18,17 @@ export default function NewPurchase() {
   const navigate = useNavigate();
   const { addInvoice } = useInvoices();
   const { user } = useMockAuth();
+  const { settings } = usePlatformSettings();
+  const gstSettings = settings?.gstSettings || {};
+  const availableTaxRates = (gstSettings.taxRates && gstSettings.taxRates.length > 0)
+    ? gstSettings.taxRates
+    : [
+        { id: "r1", name: "0% GST", value: 0 },
+        { id: "r4", name: "5% GST", value: 5 },
+        { id: "r5", name: "12% GST", value: 12 },
+        { id: "r6", name: "18% GST", value: 18 },
+        { id: "r7", name: "28% GST", value: 28 },
+      ];
   const todayStr = new Date().toISOString().split("T")[0];
 
   const getInitialState = (key, fallback) => {
@@ -43,7 +55,7 @@ export default function NewPurchase() {
 
   // 2. Items
   const [lines, setLines] = useState(() => getInitialState("lines", [
-    { name: "", hsnSac: "", unit: "Pcs", qty: 1, rate: 0, discount: 0, gst: 18 }
+    { name: "", hsnSac: "", unit: "Pcs", qty: 1, rate: 0, discount: 0, gst: 18, taxType: "exclusive" }
   ]));
 
   // 3. Additional Charges
@@ -76,13 +88,49 @@ export default function NewPurchase() {
     { name: "Patel Stores", phone: "9876543213", gstin: "07DDDDD3333D1Z8" },
   ]);
 
+  // Inventory Items for autocomplete & auto-fill
+  const [inventoryItems, setInventoryItems] = useState([]);
+
   useEffect(() => {
     api.get('/parties').then((res) => {
       if (res.data && res.data.length > 0) {
         setSuppliersList(res.data);
       }
     }).catch(() => {});
+
+    api.get('/items').then((res) => {
+      if (res.data && res.data.length > 0) {
+        setInventoryItems(res.data);
+      }
+    }).catch(() => {});
   }, []);
+
+  const handleItemNameChange = (index, nameValue) => {
+    const matched = inventoryItems.find(
+      (item) => item.name?.toLowerCase().trim() === nameValue.toLowerCase().trim()
+    );
+    if (matched) {
+      const itemGst = matched.taxRate !== undefined && matched.taxRate !== null
+        ? Number(matched.taxRate)
+        : (matched.gst !== undefined && matched.gst !== null ? Number(matched.gst) : 0);
+      setLines((prev) =>
+        prev.map((l, i) =>
+          i === index
+            ? {
+                ...l,
+                name: matched.name,
+                hsnSac: matched.hsnSac || l.hsnSac,
+                unit: matched.unit || l.unit,
+                rate: matched.purchasePrice || matched.salePrice || l.rate,
+                gst: itemGst
+              }
+            : l
+        )
+      );
+    } else {
+      updateLine(index, 'name', nameValue);
+    }
+  };
 
   // Persist draft to localStorage
   useEffect(() => {
@@ -130,11 +178,20 @@ export default function NewPurchase() {
       const r = Number(l.rate) || 0;
       const d = Number(l.discount) || 0;
       const g = Number(l.gst) || 0;
+      const isExcl = (l.taxType || "exclusive") === "exclusive";
 
       const rateAfterDisc = r * (1 - d / 100);
-      const lineTotal = q * rateAfterDisc;
-      const taxableVal = lineTotal / (1 + g / 100);
-      const taxVal = lineTotal - taxableVal;
+      let taxableVal, taxVal, lineTotal;
+
+      if (isExcl) {
+        taxableVal = q * rateAfterDisc;
+        taxVal = taxableVal * (g / 100);
+        lineTotal = taxableVal + taxVal;
+      } else {
+        lineTotal = q * rateAfterDisc;
+        taxableVal = lineTotal / (1 + g / 100);
+        taxVal = lineTotal - taxableVal;
+      }
 
       subtotal += (q * r);
       discountAmount += (q * r) - (q * rateAfterDisc);
@@ -181,7 +238,7 @@ export default function NewPurchase() {
   };
 
   const addLine = () => {
-    setLines([...lines, { name: "", hsnSac: "", unit: "Pcs", qty: 1, rate: 0, discount: 0, gst: 18 }]);
+    setLines([...lines, { name: "", hsnSac: "", unit: "Pcs", qty: 1, rate: 0, discount: 0, gst: 18, taxType: "exclusive" }]);
   };
 
   const removeLine = (index) => {
@@ -253,7 +310,8 @@ export default function NewPurchase() {
         qty: Number(l.qty) || 1,
         rate: Number(l.rate) || 0,
         discount: Number(l.discount) || 0,
-        gst: Number(l.gst) || 0
+        gst: Number(l.gst) || 0,
+        taxType: l.taxType || "exclusive"
       })),
       additionalCharges: {
         freight: Number(freight) || 0,
@@ -409,104 +467,147 @@ export default function NewPurchase() {
               const q = Number(l.qty) || 0;
               const r = Number(l.rate) || 0;
               const d = Number(l.discount) || 0;
-              const lineTotal = (q * r * (1 - d / 100)).toFixed(2);
+              const g = Number(l.gst) || 0;
+              const isExcl = (l.taxType || "exclusive") === "exclusive";
+              const rateAfterDisc = r * (1 - d / 100);
+
+              let lineTotalVal = 0;
+              if (isExcl) {
+                const taxableVal = q * rateAfterDisc;
+                const taxVal = taxableVal * (g / 100);
+                lineTotalVal = taxableVal + taxVal;
+              } else {
+                lineTotalVal = q * rateAfterDisc;
+              }
+              const lineTotal = lineTotalVal.toFixed(2);
 
               return (
-                <div key={i} className="flex flex-col gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 sm:p-4 relative">
-                  <div className="grid grid-cols-12 gap-2.5 sm:gap-3">
-                    <div className="col-span-12 md:col-span-3">
-                      <label className="text-[11px] font-medium text-slate-500 mb-1 block">Product Name</label>
-                      <Input value={l.name} onChange={(e) => updateLine(i, 'name', e.target.value)} placeholder="Item description" className="h-9 bg-white" />
+                <div key={i} className="flex flex-col gap-3.5 rounded-xl border border-slate-200 bg-slate-50/50 p-3 sm:p-4 relative shadow-none hover:border-slate-300 transition-colors">
+                  {/* Row 1: Product Name & HSN/SAC (2 fields - 50% each) */}
+                  <div className="grid grid-cols-12 gap-3 items-end">
+                    <div className="col-span-6">
+                      <label className="text-[11px] font-semibold text-slate-600 mb-1 block">Product Name</label>
+                      <Input 
+                        value={l.name} 
+                        onChange={(e) => handleItemNameChange(i, e.target.value)} 
+                        list={`inventory-items-${i}`}
+                        placeholder="Type or select item from inventory..." 
+                        className="h-9 bg-white text-xs rounded-lg" 
+                      />
+                      <datalist id={`inventory-items-${i}`}>
+                        {inventoryItems.map((item) => (
+                          <option key={item._id || item.name} value={item.name}>
+                            {item.name} {item.hsnSac ? `(HSN: ${item.hsnSac})` : ''} - ₹{item.purchasePrice || item.salePrice || 0}
+                          </option>
+                        ))}
+                      </datalist>
                     </div>
                     
-                    <div className="col-span-6 md:col-span-2">
-                      <label className="text-[11px] font-medium text-slate-500 mb-1 block">HSN/SAC</label>
-                      <Input value={l.hsnSac} onChange={(e) => updateLine(i, 'hsnSac', e.target.value)} placeholder="000000" className="h-9 bg-white" />
+                    <div className="col-span-6">
+                      <label className="text-[11px] font-semibold text-slate-600 mb-1 block">HSN / SAC</label>
+                      <Input value={l.hsnSac} onChange={(e) => updateLine(i, 'hsnSac', e.target.value)} placeholder="000000" className="h-9 bg-white text-xs rounded-lg font-medium" />
+                    </div>
+                  </div>
+
+                  {/* Row 2: Quantity & Unit (2 fields - 50% each) */}
+                  <div className="grid grid-cols-12 gap-3 items-end">
+                    <div className="col-span-6">
+                      <label className="text-[11px] font-semibold text-slate-600 mb-1 block">Quantity</label>
+                      <Input type="number" min={1} value={l.qty} onChange={(e) => updateLine(i, 'qty', e.target.value)} className="h-9 bg-white text-center text-xs rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-medium" />
                     </div>
 
-                    <div className="col-span-6 md:col-span-1">
-                      <label className="text-[11px] font-medium text-slate-500 mb-1 block">Unit</label>
+                    <div className="col-span-6">
+                      <label className="text-[11px] font-semibold text-slate-600 mb-1 block">Unit</label>
                       <select 
                         value={l.unit || "Pcs"} 
                         onChange={(e) => updateLine(i, 'unit', e.target.value)} 
-                        className="h-9 w-full rounded-md border border-input bg-white px-2 py-1 text-xs shadow-sm focus-visible:outline-none"
+                        className="h-9 w-full rounded-lg border border-input bg-white px-3 py-1 text-xs font-medium focus-visible:outline-none"
                       >
-                        <option value="Bag">BAGS (Bag)</option>
-                        <option value="Btl">BOTTLES (Btl)</option>
-                        <option value="Box">BOX (Box)</option>
-                        <option value="Bdl">BUNDLES (Bdl)</option>
-                        <option value="Can">CANS (Can)</option>
-                        <option value="Ctn">CARTONS (Ctn)</option>
-                        <option value="Mtq">CUBIC METER (Mtq)</option>
-                        <option value="Day">DAY (Day)</option>
-                        <option value="Dzn">DOZENS (Dzn)</option>
-                        <option value="Gm">GRAMMES (Gm)</option>
-                        <option value="Hur">HOUR (Hur)</option>
-                        <option value="Kg">KILOGRAMS (Kg)</option>
-                        <option value="Kmt">KILOMETER (Kmt)</option>
-                        <option value="Ltr">LITRE (Ltr)</option>
-                        <option value="Mtr">METERS (Mtr)</option>
-                        <option value="Ml">MILILITRE (Ml)</option>
-                        <option value="Nos">NUMBERS (Nos)</option>
-                        <option value="Pac">PACKS (Pac)</option>
-                        <option value="Prs">PAIRS (Prs)</option>
-                        <option value="Pcs">PIECES (Pcs)</option>
-                        <option value="Qtl">QUINTAL (Qtl)</option>
-                        <option value="Rol">ROLLS (Rol)</option>
-                        <option value="Ser">SERVICE (Ser)</option>
-                        <option value="Set">SET (Set)</option>
-                        <option value="Sqf">SQUARE FEET (Sqf)</option>
-                        <option value="Sqm">SQUARE METERS (Sqm)</option>
-                        <option value="Tbs">TABLETS (Tbs)</option>
-                        <option value="Ton">TON / METRIC TON (Ton)</option>
+                        <option value="Pcs">Pcs (Pieces)</option>
+                        <option value="Bag">Bag (Bags)</option>
+                        <option value="Btl">Btl (Bottles)</option>
+                        <option value="Box">Box (Boxes)</option>
+                        <option value="Bdl">Bdl (Bundles)</option>
+                        <option value="Can">Can (Cans)</option>
+                        <option value="Ctn">Ctn (Cartons)</option>
+                        <option value="Mtq">Mtq (Cubic Mtr)</option>
+                        <option value="Day">Day (Days)</option>
+                        <option value="Dzn">Dzn (Dozens)</option>
+                        <option value="Gm">Gm (Grams)</option>
+                        <option value="Hur">Hur (Hours)</option>
+                        <option value="Kg">Kg (Kilograms)</option>
+                        <option value="Kmt">Kmt (Kilometers)</option>
+                        <option value="Ltr">Ltr (Litres)</option>
+                        <option value="Mtr">Mtr (Meters)</option>
+                        <option value="Ml">Ml (Millilitres)</option>
+                        <option value="Nos">Nos (Numbers)</option>
+                        <option value="Pac">Pac (Packs)</option>
+                        <option value="Prs">Prs (Pairs)</option>
+                        <option value="Qtl">Qtl (Quintals)</option>
+                        <option value="Rol">Rol (Rolls)</option>
+                        <option value="Ser">Ser (Services)</option>
+                        <option value="Set">Set (Sets)</option>
+                        <option value="Sqf">Sqf (Sq. Feet)</option>
+                        <option value="Sqm">Sqm (Sq. Meters)</option>
+                        <option value="Tbs">Tbs (Tablets)</option>
+                        <option value="Ton">Ton (Tons)</option>
                       </select>
                     </div>
+                  </div>
 
-                    <div className="col-span-3 md:col-span-1">
-                      <label className="text-[11px] font-medium text-slate-500 mb-1 block">Qty</label>
-                      <Input type="number" min={1} value={l.qty} onChange={(e) => updateLine(i, 'qty', e.target.value)} className="h-9 bg-white text-center" />
+                  {/* Row 3: Rate & Disc % (2 fields - 50% each) */}
+                  <div className="grid grid-cols-12 gap-3 items-end">
+                    <div className="col-span-6">
+                      <label className="text-[11px] font-semibold text-slate-600 mb-1 block">Rate ({isExcl ? "Exc Tax" : "Inc Tax"})</label>
+                      <Input type="number" min={0} value={l.rate} onChange={(e) => updateLine(i, 'rate', e.target.value)} className="h-9 bg-white text-xs rounded-lg font-semibold [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                     </div>
 
-                    <div className="col-span-4 md:col-span-2">
-                      <label className="text-[11px] font-medium text-slate-500 mb-1 block">Rate (Inc)</label>
-                      <Input type="number" min={0} value={l.rate} onChange={(e) => updateLine(i, 'rate', e.target.value)} className="h-9 bg-white" />
+                    <div className="col-span-6">
+                      <label className="text-[11px] font-semibold text-slate-600 mb-1 block">Disc %</label>
+                      <Input type="number" min={0} max={100} value={l.discount} onChange={(e) => updateLine(i, 'discount', e.target.value)} className="h-9 bg-white text-center text-xs rounded-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none font-medium" />
                     </div>
+                  </div>
 
-                    <div className="col-span-3 md:col-span-1">
-                      <label className="text-[11px] font-medium text-slate-500 mb-1 block">Disc %</label>
-                      <Input type="number" min={0} max={100} value={l.discount} onChange={(e) => updateLine(i, 'discount', e.target.value)} className="h-9 bg-white text-center" />
-                    </div>
-
-                    <div className="col-span-4 md:col-span-1">
-                      <label className="text-[11px] font-medium text-slate-500 mb-1 block">GST %</label>
+                  {/* Row 4: GST % & Tax Type (2 fields - 50% each) */}
+                  <div className="grid grid-cols-12 gap-3 items-end">
+                    <div className="col-span-6">
+                      <label className="text-[11px] font-semibold text-slate-600 mb-1 block">GST %</label>
                       <select 
-                        value={[0, 5, 12, 18, 28].includes(Number(l.gst)) ? String(l.gst) : "custom"} 
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "custom") updateLine(i, 'gst', 3);
-                          else updateLine(i, 'gst', Number(val));
-                        }} 
-                        className="h-9 w-full rounded-md border border-input bg-white px-2 py-1 text-xs shadow-sm focus-visible:outline-none"
+                        value={String(l.gst ?? 18)} 
+                        onChange={(e) => updateLine(i, 'gst', Number(e.target.value))} 
+                        className="h-9 w-full rounded-lg border border-input bg-white px-3 text-xs font-medium focus-visible:outline-none"
                       >
-                        <option value="0">0%</option>
-                        <option value="5">5%</option>
-                        <option value="12">12%</option>
-                        <option value="18">18%</option>
-                        <option value="28">28%</option>
-                        <option value="custom">Custom</option>
+                        {availableTaxRates.map((tr) => (
+                          <option key={tr.id || tr.value} value={String(tr.value)}>
+                            {tr.name ? (tr.name.includes('%') ? tr.name : `${tr.name}% GST`) : `${tr.value}% GST`}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
-                    <div className="col-span-6 md:col-span-1 flex flex-col justify-center">
-                      <label className="text-[11px] font-medium text-slate-500 mb-1 block">Amount</label>
-                      <span className="text-xs font-semibold text-slate-800 pt-1">₹{lineTotal}</span>
+                    <div className="col-span-6">
+                      <label className="text-[11px] font-semibold text-slate-600 mb-1 block">Tax Type</label>
+                      <select 
+                        value={l.taxType || "exclusive"} 
+                        onChange={(e) => updateLine(i, 'taxType', e.target.value)} 
+                        className="h-9 w-full rounded-lg border border-slate-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 focus:outline-none"
+                      >
+                        <option value="exclusive">Tax Exclusive</option>
+                        <option value="inclusive">Tax Inclusive</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Row 5: Amount Total & Remove Action */}
+                  <div className="flex items-center justify-between gap-3 pt-2.5 border-t border-slate-200/60">
+                    <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200/60 rounded-lg px-3 py-1.5">
+                      <span className="text-[10px] text-emerald-600 font-semibold uppercase tracking-wider">Item Amount</span>
+                      <span className="text-xs font-extrabold text-emerald-800">₹{lineTotal}</span>
                     </div>
 
-                    <div className="col-span-6 md:col-span-1 flex items-end justify-end pb-1">
-                      <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600" onClick={() => removeLine(i)} disabled={lines.length === 1}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <Button type="button" size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg ml-auto" onClick={() => removeLine(i)} disabled={lines.length === 1} title="Remove Item">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               );

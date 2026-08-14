@@ -18,7 +18,7 @@ export function AddProductDialog({
   open, onOpenChange, onAdd,
 }) {
   const { settings } = usePlatformSettings();
-  const { itemSettings } = settings;
+  const { itemSettings, gstSettings } = settings || {};
   const [showScanner, setShowScanner] = useState(false);
 
   const [f, setF] = useState({
@@ -251,14 +251,20 @@ export function AddProductDialog({
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="pgst">Default GST Rate</Label>
-                    <Select value={f.gst} onValueChange={(v) => set("gst", v)}>
+                    <Select value={String(f.gst)} onValueChange={(v) => set("gst", v)}>
                       <SelectTrigger id="pgst" className="h-10 rounded-xl"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="0">0%</SelectItem>
-                        <SelectItem value="5">5%</SelectItem>
-                        <SelectItem value="12">12%</SelectItem>
-                        <SelectItem value="18">18%</SelectItem>
-                        <SelectItem value="28">28%</SelectItem>
+                        {(gstSettings?.taxRates && gstSettings.taxRates.length > 0 ? gstSettings.taxRates : [
+                          { id: "r1", name: "0%", value: 0 },
+                          { id: "r4", name: "5%", value: 5 },
+                          { id: "r5", name: "12%", value: 12 },
+                          { id: "r6", name: "18%", value: 18 },
+                          { id: "r7", name: "28%", value: 28 },
+                        ]).map((tr) => (
+                          <SelectItem key={tr.id || tr.value} value={String(tr.value)}>
+                            {tr.name || `${tr.value}%`}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -515,13 +521,16 @@ export function AddPartyDialog({
               if (!f.name.trim()) return toast.error("Enter party name");
               if (partySettings.phone && f.phone.length !== 10) return toast.error("Enter 10-digit phone");
 
-              const balanceVal = Number(f.opening) || 0;
+              const rawAmount = Math.abs(Number(f.opening) || 0);
+              const selectedBType = f.balanceType || (f.type === "Supplier" ? "To Pay" : "To Receive");
+              const balanceVal = selectedBType === "To Pay" ? -rawAmount : rawAmount;
+
               const payload = {
                 name: f.name.trim(),
                 type: partySettings.partyType ? f.type : "Customer",
                 phone: partySettings.phone ? `+91 ${f.phone.slice(0, 4)} ${f.phone.slice(4)}` : "N/A",
                 balance: balanceVal,
-                balanceType: balanceVal >= 0 ? "To Receive" : "To Pay"
+                balanceType: selectedBType
               };
 
               if (partySettings.gstin) payload.gstin = f.gstin.trim();
@@ -565,7 +574,12 @@ export function AddPartyDialog({
                       + Add Type
                     </button>
                   </div>
-                  <Select value={f.type} onValueChange={(v) => set("type", v)}>
+                  <Select value={f.type} onValueChange={(v) => {
+                    set("type", v);
+                    if (!f.balanceType) {
+                      set("balanceType", v === "Supplier" ? "To Pay" : "To Receive");
+                    }
+                  }}>
                     <SelectTrigger className="h-10 rounded-xl w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {partyTypes.map((t) => (
@@ -578,9 +592,38 @@ export function AddPartyDialog({
             </div>
 
             {partySettings.openingBalance && (
-              <div className="space-y-1.5">
-                <Label htmlFor="paopen">Opening balance (₹)</Label>
-                <Input id="paopen" type="number" value={f.opening} onChange={(e) => set("opening", e.target.value)} className="h-10 rounded-xl" placeholder="0" />
+              <div className="flex gap-3">
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <Label htmlFor="paopen">Opening balance (₹)</Label>
+                  <Input 
+                    id="paopen" 
+                    type="number" 
+                    min={0}
+                    value={f.opening} 
+                    onChange={(e) => set("opening", e.target.value)} 
+                    className="h-10 rounded-xl font-medium" 
+                    placeholder="0" 
+                  />
+                </div>
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <Label>Balance Type</Label>
+                  <Select 
+                    value={f.balanceType || (f.type === "Supplier" ? "To Pay" : "To Receive")} 
+                    onValueChange={(v) => set("balanceType", v)}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl w-full text-xs font-semibold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="To Receive">
+                        <span className="text-emerald-600 font-semibold">To Receive</span>
+                      </SelectItem>
+                      <SelectItem value="To Pay">
+                        <span className="text-red-600 font-semibold">To Pay</span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             )}
 

@@ -182,13 +182,17 @@ const getAccountingData = async (userId) => {
   // Get Payments
   const payments = await Payment.find({ user: objectId }).populate('party', 'name').lean();
   
-  // Get Expenses
-  const expenses = await Expense.find({ user: objectId }).lean();
-  
   // Get Invoices
   const invoices = await Invoice.find({ user: objectId }).populate('party', 'name').lean();
 
-  let cashInHand = 0;
+  // Get Expenses
+  const expenses = await Expense.find({ user: objectId }).lean();
+
+  // Fetch user for Opening Balance & Bank Accounts
+  const userDoc = await User.findById(objectId).lean();
+  const opBal = userDoc?.openingBalance || 0;
+
+  let cashInHand = opBal;
   let bankBalance = 0;
   let banks = {};
   let entries = [];
@@ -247,7 +251,6 @@ const getAccountingData = async (userId) => {
   });
 
   // Process Journal Vouchers
-  const userDoc = await User.findById(objectId).lean();
   const journals = await Journal.find({ user: objectId }).sort({ createdAt: -1 }).lean();
 
   journals.forEach(j => {
