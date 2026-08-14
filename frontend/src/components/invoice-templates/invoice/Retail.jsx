@@ -1,9 +1,10 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, getIsInterstate } from "../templateUtils.jsx";
 
 export function RetailTemplate({ invoice, printSet, gstSet, activeColor, numberToWords }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
-  const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet);
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
+  const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet, isInterstate);
   return (
     <div className="font-mono bg-white border border-slate-300 text-slate-800 text-[10px] p-4 shadow-sm flex flex-col space-y-4 max-w-md mx-auto">
       {/* Retail Banner Header */}
@@ -67,6 +68,12 @@ export function RetailTemplate({ invoice, printSet, gstSet, activeColor, numberT
                 if (key === "discountPercent") return <th key={key} className={`${thClasses} text-right w-[5%]`}>{colNames.discountPercent || "Disc%"}</th>;
                 if (key === "taxablePriceUnit") return <th key={key} className={`${thClasses} text-right w-[8%]`}>{colNames.taxablePriceUnit || "Tax Rate"}</th>;
                 if (key === "taxableValue") return <th key={key} className={`${thClasses} text-right w-[9%]`}>Tax Amt</th>;
+                if (key === "igst") return (
+                  <React.Fragment key={key}>
+                    <th className={`${thClasses} w-[4%]`}>IGST%</th>
+                    <th className={`${thClasses} text-right w-[6%]`}>IGST</th>
+                  </React.Fragment>
+                );
                 if (key === "cgst") return (
                   <React.Fragment key={key}>
                     <th className={`${thClasses} w-[4%]`}>CGST%</th>
@@ -127,6 +134,12 @@ export function RetailTemplate({ invoice, printSet, gstSet, activeColor, numberT
                     if (key === "discountPercent") return <td key={key} className={numTd}>{d}%</td>;
                     if (key === "taxablePriceUnit") return <td key={key} className={numTd}>{formatAmt(rateAfterDisc / (1 + g/100), printSet)}</td>;
                     if (key === "taxableValue") return <td key={key} className={numTd}>{formatAmt(taxableVal, printSet)}</td>;
+                    if (key === "igst") return (
+                      <React.Fragment key={key}>
+                        <td className={`${textTd} font-mono text-emerald-700 font-bold`}>{g}%</td>
+                        <td className={`${numTd} font-bold text-emerald-800`}>{formatAmt(totalTax, printSet)}</td>
+                      </React.Fragment>
+                    );
                     if (key === "cgst") return (
                       <React.Fragment key={key}>
                         <td className={`${textTd} font-mono text-slate-400`}>{(g / 2)}%</td>

@@ -1,5 +1,6 @@
 import React from "react";
 import Barcode from "react-barcode";
+import { getIsInterstate } from "../templateUtils.jsx";
 
 export function OfficialEWay({ invoice, printSet, gstSet, numberToWords }) {
   const { customer, lines, totals, meta, transportDetails = {}, shippingDetails = {} } = invoice;
@@ -14,13 +15,7 @@ export function OfficialEWay({ invoice, printSet, gstSet, numberToWords }) {
   const customerState = meta?.billedToState || meta?.placeOfSupply || "";
   const customerMobile = meta?.billedToMobile || "";
 
-  let isInterstate = false;
-  if (sellerGstin.length >= 2 && customerGstin.length >= 2) {
-    isInterstate = sellerGstin.substring(0, 2) !== customerGstin.substring(0, 2);
-  } else {
-    isInterstate = Boolean(sellerState && customerState &&
-      (sellerState.toLowerCase().replace(/[^a-z]/g, '') !== customerState.toLowerCase().replace(/[^a-z]/g, '')));
-  }
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
 
   let totalTaxable = 0;
   let totalCgst = 0;
@@ -182,14 +177,19 @@ export function OfficialEWay({ invoice, printSet, gstSet, numberToWords }) {
               const igst = isInterstate ? g : 0;
               const cess = Number(l.cess) || 0;
 
+              const fmtRate = (val) => {
+                const n = Number(val) || 0;
+                return n % 1 === 0 ? String(n) : String(n);
+              };
+
               return (
                 <tr key={idx} className="text-[8.5px]">
                   <td className="p-1.5 border-r border-slate-900 font-mono">{l.hsnSac || l.hsnCode || "-"}</td>
                   <td className="p-1.5 border-r border-slate-900 font-medium">{l.name || l.item || "-"}</td>
-                  <td className="p-1.5 border-r border-slate-900 text-center font-mono">{q.toFixed(2)} Kgs</td>
+                  <td className="p-1.5 border-r border-slate-900 text-center font-mono">{q} Kgs</td>
                   <td className="p-1.5 border-r border-slate-900 text-right font-mono">{taxable.toFixed(2)}</td>
                   <td className="p-1.5 text-right font-mono">
-                    {cgst.toFixed(3)}+{sgst.toFixed(3)}+{igst > 0 ? `${igst.toFixed(3)}+NE` : '0.000'}+{cess.toFixed(3)}+0.00
+                    {fmtRate(cgst)}+{fmtRate(sgst)}+{fmtRate(igst)}+{fmtRate(cess)}+0
                   </td>
                 </tr>
               );

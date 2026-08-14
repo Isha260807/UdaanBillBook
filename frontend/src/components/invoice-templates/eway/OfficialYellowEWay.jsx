@@ -1,4 +1,5 @@
 import React from "react";
+import { getIsInterstate } from "../templateUtils.jsx";
 
 export function OfficialYellowEWay({ invoice, printSet, gstSet }) {
   const { customer, lines = [], totals = {}, meta = {}, transportDetails = {}, shippingDetails = {} } = invoice;
@@ -13,13 +14,7 @@ export function OfficialYellowEWay({ invoice, printSet, gstSet }) {
   const customerState = meta?.billedToState || shippingDetails?.state || meta?.placeOfSupply || "Delhi";
   const shipToAddress = shippingDetails?.shipToAddress || shippingDetails?.placeOfDelivery || meta?.billedToAddress || "-";
 
-  let isInterstate = false;
-  if (sellerGstin.length >= 2 && customerGstin.length >= 2) {
-    isInterstate = sellerGstin.substring(0, 2) !== customerGstin.substring(0, 2);
-  } else {
-    isInterstate = Boolean(sellerState && customerState &&
-      (sellerState.toLowerCase().replace(/[^a-z]/g, '') !== customerState.toLowerCase().replace(/[^a-z]/g, '')));
-  }
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
 
   let totalTaxable = 0;
   let totalCgst = 0;

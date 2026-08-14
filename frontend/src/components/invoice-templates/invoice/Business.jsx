@@ -1,9 +1,10 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines, getIsInterstate } from "../templateUtils.jsx";
 
 export function BusinessTemplate({ invoice, printSet, gstSet, activeColor, numberToWords }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
-  const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet);
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
+  const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet, isInterstate);
   return (
     <div className="font-sans bg-white p-6 border-2 border-slate-200 text-slate-800 text-[11px] leading-relaxed shadow-sm">
       {/* Split Header layout */}
@@ -92,6 +93,12 @@ export function BusinessTemplate({ invoice, printSet, gstSet, activeColor, numbe
               if (key === "discountPercent") return <th key={key} className={`${thClasses} text-right w-[5%]`}>{colNames.discountPercent || "Disc%"}</th>;
               if (key === "taxablePriceUnit") return <th key={key} className={`${thClasses} text-right w-[8%]`}>{colNames.taxablePriceUnit || "Taxable"}</th>;
               if (key === "taxableValue") return <th key={key} className={`${thClasses} text-right w-[9%]`}>Taxable Amt</th>;
+              if (key === "igst") return (
+                <React.Fragment key={key}>
+                  <th className={`${thClasses} w-[4%]`}>IGST%</th>
+                  <th className={`${thClasses} text-right w-[6%]`}>IGST Amt</th>
+                </React.Fragment>
+              );
               if (key === "cgst") return (
                 <React.Fragment key={key}>
                   <th className={`${thClasses} w-[4%]`}>CGST%</th>
@@ -152,6 +159,12 @@ export function BusinessTemplate({ invoice, printSet, gstSet, activeColor, numbe
                   if (key === "discountPercent") return <td key={key} className={numTd}>{d}%</td>;
                   if (key === "taxablePriceUnit") return <td key={key} className={numTd}>{formatAmt(rateAfterDisc / (1 + g/100), printSet)}</td>;
                   if (key === "taxableValue") return <td key={key} className={numTd}>{formatAmt(taxableVal, printSet)}</td>;
+                  if (key === "igst") return (
+                    <React.Fragment key={key}>
+                      <td className={`${textTd} font-mono text-slate-800 font-bold`}>{g}%</td>
+                      <td className={`${numTd} font-bold text-slate-900`}>{formatAmt(totalTax, printSet)}</td>
+                    </React.Fragment>
+                  );
                   if (key === "cgst") return (
                     <React.Fragment key={key}>
                       <td className={`${textTd} font-mono text-slate-400`}>{(g / 2)}%</td>
@@ -183,7 +196,7 @@ export function BusinessTemplate({ invoice, printSet, gstSet, activeColor, numbe
         </div>
         <div className="w-72 bg-slate-50 border rounded-lg p-3 space-y-1.5 font-mono text-[10px]">
           <div className="flex justify-between"><span>Gross Subtotal</span><span>{formatAmt(totals.taxableAmount, printSet)}</span></div>
-          <div className="flex justify-between"><span>CGST / SGST</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
+          <div className="flex justify-between"><span>{isInterstate ? "IGST Tax" : "CGST / SGST"}</span><span>{formatAmt(totals.gstAmount, printSet)}</span></div>
           {totals.tcsAmount > 0 && (
             <div className="flex justify-between font-semibold text-emerald-700">
               <span>TCS (+)</span><span>+{formatAmt(totals.tcsAmount, printSet)}</span>

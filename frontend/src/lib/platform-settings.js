@@ -29,7 +29,13 @@ const defaultSettings = {
       { id: "r5", name: "GST@12%", value: 12 },
       { id: "r6", name: "GST@18%", value: 18 },
       { id: "r7", name: "GST@28%", value: 28 },
-      { id: "r8", name: "GST@40%", value: 40 }
+      { id: "r8", name: "GST@40%", value: 40 },
+      { id: "ir1", name: "IGST@0%", value: 0 },
+      { id: "ir4", name: "IGST@5%", value: 5 },
+      { id: "ir5", name: "IGST@12%", value: 12 },
+      { id: "ir6", name: "IGST@18%", value: 18 },
+      { id: "ir7", name: "IGST@28%", value: 28 },
+      { id: "ir8", name: "IGST@40%", value: 40 }
     ],
     taxGroups: [
       { id: "g1", name: "GST@0%", cgst: 0, sgst: 0 },
@@ -39,7 +45,13 @@ const defaultSettings = {
       { id: "g5", name: "GST@12%", cgst: 6, sgst: 6 },
       { id: "g6", name: "GST@18%", cgst: 9, sgst: 9 },
       { id: "g7", name: "GST@28%", cgst: 14, sgst: 14 },
-      { id: "g8", name: "GST@40%", cgst: 20, sgst: 20 }
+      { id: "g8", name: "GST@40%", cgst: 20, sgst: 20 },
+      { id: "ig1", name: "IGST@0%", igst: 0 },
+      { id: "ig4", name: "IGST@5%", igst: 5 },
+      { id: "ig5", name: "IGST@12%", igst: 12 },
+      { id: "ig6", name: "IGST@18%", igst: 18 },
+      { id: "ig7", name: "IGST@28%", igst: 28 },
+      { id: "ig8", name: "IGST@40%", igst: 40 }
     ],
   },
   txnSettings: {

@@ -293,6 +293,19 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
   doc.setFontSize(7.5);
   doc.text(data.party.stateCode, 515, billedToEndY - 8, { align: "center" });
 
+  // 5. Inter-state detection for PDF
+  const sellerStateCode = (data.business.gstin || "").slice(0, 2);
+  const customerStateCode = (data.party.gstin || "").slice(0, 2);
+  const sellerStateName = (data.business.address || "").toLowerCase();
+  const customerStateName = (data.placeOfSupply || data.party.state || "").toLowerCase();
+
+  let isInterstate = false;
+  if (sellerStateCode && customerStateCode && sellerStateCode.length === 2 && customerStateCode.length === 2 && /^\d+$/.test(sellerStateCode) && /^\d+$/.test(customerStateCode)) {
+    isInterstate = sellerStateCode !== customerStateCode;
+  } else if (sellerStateName && customerStateName && sellerStateName.length > 2 && customerStateName.length > 2) {
+    isInterstate = !sellerStateName.includes(customerStateName) && !customerStateName.includes(sellerStateName);
+  }
+
   // 5. Items table
   const rows = data.lines.map((l, i) => {
     const qty = Number(l.qty) || 0;
@@ -319,6 +332,21 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
     const sgstAmount = fmtNum(gstAmount / 2);
     const discount = Number(l.discount) || 0;
     
+    if (isInterstate) {
+      return [
+        String(i + 1),
+        l.name || "",
+        l.hsnSac || "",
+        String(qty),
+        fmtNum(rate),
+        fmtNum(discount),
+        fmtNum(taxableValue),
+        `${gst.toFixed(1)}%`,
+        fmtNum(gstAmount),
+        fmtNum(lineTotal)
+      ];
+    }
+
     return [
       String(i + 1),
       l.name || "",
@@ -373,22 +401,53 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
   }
 
   // Add the summary row at the end of body
-  rows.push([
-    "",
-    "Total Summary",
-    "",
-    String(totalQty),
-    "",
-    "",
-    fmtNum(totalTaxable),
-    "",
-    fmtNum(totalCgst),
-    "",
-    fmtNum(totalSgst),
-    fmtNum(totalGrand)
-  ]);
+  if (isInterstate) {
+    rows.push([
+      "",
+      "Total Summary",
+      "",
+      String(totalQty),
+      "",
+      "",
+      fmtNum(totalTaxable),
+      "",
+      fmtNum(totalCgst + totalSgst),
+      fmtNum(totalGrand)
+    ]);
+  } else {
+    rows.push([
+      "",
+      "Total Summary",
+      "",
+      String(totalQty),
+      "",
+      "",
+      fmtNum(totalTaxable),
+      "",
+      fmtNum(totalCgst),
+      "",
+      fmtNum(totalSgst),
+      fmtNum(totalGrand)
+    ]);
+  }
 
-  const head = [
+  const head = isInterstate ? [
+    [
+      { content: '#', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'ITEM NAME', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'HSN/SAC', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'QUANTITY', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'PRICE/UNIT', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'DISCOUNT', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'TAXABLE\nVALUE', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
+      { content: 'IGST', colSpan: 2, styles: { halign: 'center' } },
+      { content: 'AMOUNT', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } }
+    ],
+    [
+      { content: 'Rate', styles: { halign: 'center' } },
+      { content: 'Amount', styles: { halign: 'center' } }
+    ]
+  ] : [
     [
       { content: '#', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
       { content: 'ITEM NAME', rowSpan: 2, styles: { valign: 'middle', halign: 'center' } },
@@ -430,7 +489,18 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
       lineWidth: 0.5,
       lineColor: [0, 0, 0]
     },
-    columnStyles: {
+    columnStyles: isInterstate ? {
+      0: { cellWidth: 20, halign: 'center' },
+      1: { cellWidth: 155, halign: 'left' },
+      2: { cellWidth: 45, halign: 'center' },
+      3: { cellWidth: 30, halign: 'center' },
+      4: { cellWidth: 35, halign: 'center' },
+      5: { cellWidth: 45, halign: 'right' },
+      6: { cellWidth: 55, halign: 'right' },
+      7: { cellWidth: 35, halign: 'center' },
+      8: { cellWidth: 50, halign: 'right' },
+      9: { cellWidth: 55, halign: 'right' }
+    } : {
       0: { cellWidth: 20, halign: 'center' },
       1: { cellWidth: 135, halign: 'left' },
       2: { cellWidth: 40, halign: 'center' },
@@ -498,7 +568,12 @@ export async function downloadInvoicePdf(rawDocData, options = {}) {
 
   const isRcmDoc = String(data.reverseCharge || "").toLowerCase() === "yes";
 
-  const totalLines = [
+  const totalLines = isInterstate ? [
+    { label: "Total Amount Before Tax", val: fmtNum(totalTaxable), bold: false },
+    { label: "Add : IGST", val: fmtNum(totalCgst + totalSgst), bold: false },
+    { label: "Tax Amount : GST", val: fmtNum(totalCgst + totalSgst), bold: false },
+    { label: isRcmDoc ? "Total Payable (Excl. Tax RCM)" : "Amount With Tax", val: fmtNum(totalGrand), bold: true },
+  ] : [
     { label: "Total Amount Before Tax", val: fmtNum(totalTaxable), bold: false },
     { label: "Add : CGST", val: fmtNum(totalCgst), bold: false },
     { label: "Add : SGST", val: fmtNum(totalSgst), bold: false },

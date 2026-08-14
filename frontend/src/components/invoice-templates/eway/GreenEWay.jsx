@@ -1,8 +1,10 @@
 import React from "react";
 import Barcode from "react-barcode";
+import { getIsInterstate } from "../templateUtils.jsx";
 
 export function GreenEWay({ invoice, printSet, gstSet, numberToWords }) {
   const { customer, lines, totals, meta, transportDetails = {}, shippingDetails = {} } = invoice;
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
   
   const getInvoiceSizeClass = (size, fallback) => {
     if (!size || size === "Medium") return fallback;
@@ -126,19 +128,6 @@ export function GreenEWay({ invoice, printSet, gstSet, numberToWords }) {
               const g = Number(l.gst) || 0;
               const rateAfterDisc = r * (1 - d / 100);
               const taxable = q * rateAfterDisc;
-              
-              const sellerGstin = gstSet?.gstin || "";
-              const customerGstin = meta?.billedToGstin || invoice.shippingDetails?.shippingGstin || "";
-              let isInterstate = false;
-              
-              if (sellerGstin.length >= 2 && customerGstin.length >= 2) {
-                isInterstate = sellerGstin.substring(0, 2) !== customerGstin.substring(0, 2);
-              } else {
-                const sellerStateStr = printSet?.state || invoice.sellerDetails?.state || "";
-                const customerStateStr = meta?.billedToState || "";
-                isInterstate = Boolean(sellerStateStr && customerStateStr &&
-                  (sellerStateStr.toLowerCase().replace(/[^a-z]/g, '') !== customerStateStr.toLowerCase().replace(/[^a-z]/g, '')));
-              }
 
               const cgst = isInterstate ? 0 : g / 2;
               const sgst = isInterstate ? 0 : g / 2;
@@ -181,19 +170,6 @@ export function GreenEWay({ invoice, printSet, gstSet, numberToWords }) {
           </thead>
           <tbody className="bg-white">
             {(() => {
-              const sellerGstin = gstSet?.gstin || "";
-              const customerGstin = meta?.billedToGstin || invoice.shippingDetails?.shippingGstin || "";
-              let isInterstate = false;
-              
-              if (sellerGstin.length >= 2 && customerGstin.length >= 2) {
-                isInterstate = sellerGstin.substring(0, 2) !== customerGstin.substring(0, 2);
-              } else {
-                const sellerStateStr = printSet?.state || invoice.sellerDetails?.state || "";
-                const customerStateStr = meta?.billedToState || "";
-                isInterstate = Boolean(sellerStateStr && customerStateStr &&
-                  (sellerStateStr.toLowerCase().replace(/[^a-z]/g, '') !== customerStateStr.toLowerCase().replace(/[^a-z]/g, '')));
-              }
-
               const formatSummaryAmt = (val) => {
                 const num = Number(val) || 0;
                 return num === 0 ? "-" : num.toFixed(2);

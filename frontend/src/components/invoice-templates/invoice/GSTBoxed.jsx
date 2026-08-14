@@ -1,16 +1,17 @@
 import React from "react";
 import { Building2 } from "lucide-react";
-import { getTemplateColumns, getTransactionTitle, formatAmt, renderCommonFooter, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
+import { getTemplateColumns, getTransactionTitle, formatAmt, renderCommonFooter, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines, getIsInterstate } from "../templateUtils.jsx";
 
 export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
   const {
     cols,
     colNames,
     activeColsInOrder,
     colSpanBeforeTax,
     colSpanTotalSummaryLabel
-  } = getTemplateColumns(printSet);
+  } = getTemplateColumns(printSet, isInterstate);
 
   const getCompanyNameSizeClass = (size) => {
     switch (size) {
@@ -211,6 +212,7 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
                 if (key === "discountPercent") return <th key={key} rowSpan={rowSpanAttr} className={`${thClasses} text-right w-[5%]`}>{colNames.discountPercent || "Disc%"}</th>;
                 if (key === "taxablePriceUnit") return <th key={key} rowSpan={rowSpanAttr} className={`${thClasses} text-right w-[8%]`}>{colNames.taxablePriceUnit || "Taxable Price"}</th>;
                 if (key === "taxableValue") return <th key={key} rowSpan={rowSpanAttr} className={`${thClasses} text-right w-[9%]`}>Taxable Value</th>;
+                if (key === "igst") return <th key={key} className={`${thClasses} w-[10%]`} colSpan="2">IGST</th>;
                 if (key === "cgst") return <th key={key} className={`${thClasses} w-[10%]`} colSpan="2">CGST</th>;
                 if (key === "sgst") return <th key={key} className={`${thClasses} w-[10%]`} colSpan="2">SGST</th>;
                 if (key === "amount") return <th key={key} rowSpan={rowSpanAttr} className={`${thClasses} text-right w-[9%]`}>{colNames.amount || "Total"}</th>;
@@ -221,8 +223,12 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
               <tr className="bg-slate-100 border-b border-slate-800 text-[8px] font-bold text-center divide-x divide-slate-800">
                 <td className="px-1 py-0.5 align-middle break-words">Rate</td>
                 <td className="px-1 py-0.5 align-middle break-words">Amount</td>
-                <td className="px-1 py-0.5 align-middle break-words">Rate</td>
-                <td className="px-1 py-0.5 align-middle break-words">Amount</td>
+                {!isInterstate && (
+                  <>
+                    <td className="px-1 py-0.5 align-middle break-words">Rate</td>
+                    <td className="px-1 py-0.5 align-middle break-words">Amount</td>
+                  </>
+                )}
               </tr>
             )}
           </thead>
@@ -280,6 +286,12 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
                     if (key === "discountPercent") return <td key={key} className={numTd}>{d}%</td>;
                     if (key === "taxablePriceUnit") return <td key={key} className={numTd}>{formatAmt(isExcl ? rateAfterDisc : (rateAfterDisc / (1 + g/100)), printSet)}</td>;
                     if (key === "taxableValue") return <td key={key} className={numTd}>{formatAmt(taxableVal, printSet)}</td>;
+                    if (key === "igst") return (
+                      <React.Fragment key={key}>
+                        <td className={`${textTd} font-mono text-emerald-700 font-semibold`}>{g}%</td>
+                        <td className={`${numTd} font-semibold text-emerald-800`}>{formatAmt(totalTax, printSet)}</td>
+                      </React.Fragment>
+                    );
                     if (key === "cgst") return (
                       <React.Fragment key={key}>
                         <td className={`${textTd} font-mono text-slate-500`}>{(g / 2)}%</td>
@@ -308,6 +320,12 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
 
                 if (key === "quantity") return <td key={key} className={textFootTd}>{printSet.totalItemQuantity ? lines.reduce((sum, l) => sum + (Number(l.qty) || 0), 0) : "-"}</td>;
                 if (key === "taxableValue") return <td key={key} className={numFootTd}>{formatAmt(totals.taxableAmount, printSet)}</td>;
+                if (key === "igst") return (
+                  <React.Fragment key={key}>
+                    <td></td>
+                    <td className={`${numFootTd} font-bold text-emerald-800`}>{formatAmt(totals.gstAmount, printSet)}</td>
+                  </React.Fragment>
+                );
                 if (key === "cgst") return (
                   <React.Fragment key={key}>
                     <td></td>
@@ -362,6 +380,15 @@ export function GSTBoxedTemplate({ invoice, printSet, gstSet, activeColor, numbe
             )}
             {(() => {
               const uniqueGst = [...new Set(lines.map(l => Number(l.gst) || 0))];
+              if (isInterstate) {
+                const gstLabel = uniqueGst.length === 1 && uniqueGst[0] > 0 ? ` (${uniqueGst[0]}%)` : '';
+                return (
+                  <div className="py-0.5 flex justify-between font-semibold text-emerald-800">
+                    <span>IGST{gstLabel}</span>
+                    <span>{formatAmt(totals.gstAmount, printSet)}</span>
+                  </div>
+                );
+              }
               const gstLabel = uniqueGst.length === 1 && uniqueGst[0] > 0 ? ` (${uniqueGst[0] / 2}%)` : '';
               return (
                 <>

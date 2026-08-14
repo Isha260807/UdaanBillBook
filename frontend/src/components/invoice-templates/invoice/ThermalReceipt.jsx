@@ -1,8 +1,9 @@
 import React from "react";
-import { getTransactionTitle } from "../templateUtils.jsx";
+import { getTransactionTitle, getIsInterstate } from "../templateUtils.jsx";
 
 export function ThermalReceiptTemplate({ invoice, printSet, gstSet }) {
   const { customer, lines, totals, meta, paymentDetails, restaurantDetails, hotelDetails, retailDetails } = invoice;
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
 
   const businessName = printSet?.companyName || meta?.sellerName || "";
   const sellerAddress = printSet?.address || meta?.sellerAddress || "";
@@ -132,7 +133,7 @@ export function ThermalReceiptTemplate({ invoice, printSet, gstSet }) {
               {/* Row 2: Compact Details (Qty, Rate, GST %, HSN) */}
               <div className="flex justify-between items-center text-[9px] text-gray-600">
                 <span className="w-1/2">x{qty} {l.unit || 'NOS'} {rate > 0 ? `@ ₹${formatCur(rate)}` : ''}</span>
-                <span className="w-1/4 text-center">{gstPercent > 0 ? `+ ${gstPercent.toFixed(2)} %` : ''}</span>
+                <span className="w-1/4 text-center">{gstPercent > 0 ? `+ ${gstPercent.toFixed(2)} %${isInterstate ? ' (IGST)' : ''}` : ''}</span>
                 <span className="w-1/4 text-right">{l.hsnSac ? `HSN:${l.hsnSac}` : ''}</span>
               </div>
             </div>
@@ -153,10 +154,23 @@ export function ThermalReceiptTemplate({ invoice, printSet, gstSet }) {
         </div>
 
         {totals.gstAmount > 0 && (
-          <div className="flex justify-between">
-            <span>Add : IGST / GST</span>
-            <span>{formatCur(totals.gstAmount)}</span>
-          </div>
+          isInterstate ? (
+            <div className="flex justify-between">
+              <span>Add : IGST</span>
+              <span>{formatCur(totals.gstAmount)}</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-between">
+                <span>Add : CGST</span>
+                <span>{formatCur(totals.gstAmount / 2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Add : SGST</span>
+                <span>{formatCur(totals.gstAmount / 2)}</span>
+              </div>
+            </>
+          )
         )}
 
         {totals.tcsAmount > 0 && (
@@ -176,7 +190,7 @@ export function ThermalReceiptTemplate({ invoice, printSet, gstSet }) {
         {totals.gstAmount > 0 && (
           <>
             <div className="flex justify-between font-semibold border-t pt-0.5 mt-0.5">
-              <span>Total Tax</span>
+              <span>Total Tax ({isInterstate ? "IGST" : "GST"})</span>
               <span>{formatCur(totals.gstAmount)}</span>
             </div>
             <div className="flex justify-between">

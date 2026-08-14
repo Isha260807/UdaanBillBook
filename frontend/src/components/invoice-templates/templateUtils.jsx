@@ -33,6 +33,46 @@ export function getTransactionTitle(invoice, printSet = {}, gstSet = {}) {
   return "TAX INVOICE";
 }
 
+// Universal Inter-State (IGST) vs Intra-State (CGST + SGST) detection
+export function getIsInterstate(invoice = {}, printSet = {}, gstSet = {}) {
+  const sellerGstin = invoice?.sellerDetails?.gstin || invoice?.meta?.sellerGstin || printSet.gstinOnSale || printSet.gstin || gstSet.gstin || "";
+  const customerGstin = invoice?.meta?.billedToGstin || invoice?.billedToGstin || invoice?.customer?.gstin || invoice?.shippingDetails?.shippingGstin || "";
+  
+  const sellerStateCode = sellerGstin.trim().slice(0, 2);
+  const customerStateCode = customerGstin.trim().slice(0, 2);
+
+  const sellerAddress = (invoice?.sellerDetails?.address || invoice?.sellerDetails?.state || printSet.address || printSet.state || "").toLowerCase();
+  const placeOfSupply = (invoice?.meta?.placeOfSupply || invoice?.placeOfSupply || invoice?.meta?.billedToState || invoice?.shippingDetails?.placeOfDelivery || invoice?.shippingDetails?.shipToAddress || "").toLowerCase();
+
+  // If 2-digit numeric state codes are in both GSTINs
+  if (sellerStateCode.length === 2 && customerStateCode.length === 2 && /^\d+$/.test(sellerStateCode) && /^\d+$/.test(customerStateCode)) {
+    return sellerStateCode !== customerStateCode;
+  }
+
+  // If seller state code is known (e.g. "24") and placeOfSupply state code is in text e.g. "Delhi (07)"
+  const stateCodeMatchInSupply = placeOfSupply.match(/\b(\d{2})\b/);
+  if (sellerStateCode.length === 2 && /^\d+$/.test(sellerStateCode) && stateCodeMatchInSupply) {
+    return sellerStateCode !== stateCodeMatchInSupply[1];
+  }
+
+  // If placeOfSupply state string is specified and seller address is specified
+  if (sellerAddress && placeOfSupply && sellerAddress.length > 2 && placeOfSupply.length > 2) {
+    return !sellerAddress.includes(placeOfSupply) && !placeOfSupply.includes(sellerAddress);
+  }
+
+  // Fallback: If customer state is explicitly provided and different from seller state
+  if (placeOfSupply && (sellerStateCode || sellerAddress)) {
+    const knownStateNames = ["delhi", "gujarat", "maharashtra", "karnataka", "punjab", "haryana", "rajasthan", "uttar pradesh", "west bengal", "tamil nadu", "kerala", "andhra pradesh", "telangana", "madhya pradesh", "bihar", "odisha", "assam", "jharkhand", "chhattisgarh", "uttarakhand", "himachal pradesh", "jammu & kashmir", "goa"];
+    const matchedSellerState = knownStateNames.find(s => sellerAddress.includes(s));
+    const matchedCustomerState = knownStateNames.find(s => placeOfSupply.includes(s));
+    if (matchedSellerState && matchedCustomerState) {
+      return matchedSellerState !== matchedCustomerState;
+    }
+  }
+
+  return false;
+}
+
 // Doc types that don't involve money collection at time of issue — payment/balance
 // sections should stay hidden on the printed document regardless of print-settings toggles.
 export function isPaymentRelevantForType(type) {
@@ -73,7 +113,7 @@ export function getDocTypeDetailLines(meta = {}) {
   return out;
 }
 
-export function getTemplateColumns(printSet) {
+export function getTemplateColumns(printSet, isInterstate = false) {
   const cols = printSet.tableColumns && Object.keys(printSet.tableColumns).length > 0 ? printSet.tableColumns : {
     slNo: true,
     itemName: true,
@@ -123,8 +163,12 @@ export function getTemplateColumns(printSet) {
     if (cols[key]) {
       if (key === "amount" && printSet.taxDetails) {
         activeColsInOrder.push("taxableValue");
-        activeColsInOrder.push("cgst");
-        activeColsInOrder.push("sgst");
+        if (isInterstate) {
+          activeColsInOrder.push("igst");
+        } else {
+          activeColsInOrder.push("cgst");
+          activeColsInOrder.push("sgst");
+        }
       }
       activeColsInOrder.push(key);
     }

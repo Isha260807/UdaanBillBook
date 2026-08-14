@@ -1,9 +1,10 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines, getIsInterstate } from "../templateUtils.jsx";
 
 export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
-  const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet);
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
+  const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet, isInterstate);
   return (
     <div className="font-sans bg-white p-6 border-t-8 border-b-8 border-l border-r border-slate-200 text-slate-800 text-[10px] leading-relaxed shadow-sm flex flex-col space-y-6"
       style={{ borderTopColor: activeColor.raw || "#1e293b", borderBottomColor: activeColor.raw || "#1e293b" }}
@@ -108,6 +109,12 @@ export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, n
                 if (key === "discountPercent") return <th key={key} className={`${thClasses} text-right w-[5%]`}>{colNames.discountPercent || "Disc%"}</th>;
                 if (key === "taxablePriceUnit") return <th key={key} className={`${thClasses} text-right w-[8%]`}>{colNames.taxablePriceUnit || "Taxable"}</th>;
                 if (key === "taxableValue") return <th key={key} className={`${thClasses} text-right w-[9%]`}>Taxable Amt</th>;
+                if (key === "igst") return (
+                  <React.Fragment key={key}>
+                    <th className={`${thClasses} w-[4%]`}>IGST%</th>
+                    <th className={`${thClasses} text-right w-[6%]`}>IGST Amt</th>
+                  </React.Fragment>
+                );
                 if (key === "cgst") return (
                   <React.Fragment key={key}>
                     <th className={`${thClasses} w-[4%]`}>CGST%</th>
@@ -168,6 +175,12 @@ export function ProfessionalTemplate({ invoice, printSet, gstSet, activeColor, n
                     if (key === "discountPercent") return <td key={key} className={numTd}>{d}%</td>;
                     if (key === "taxablePriceUnit") return <td key={key} className={numTd}>{formatAmt(rateAfterDisc / (1 + g/100), printSet)}</td>;
                     if (key === "taxableValue") return <td key={key} className={numTd}>{formatAmt(taxableVal, printSet)}</td>;
+                    if (key === "igst") return (
+                      <React.Fragment key={key}>
+                        <td className={`${textTd} font-mono text-slate-800 font-bold`}>{g}%</td>
+                        <td className={`${numTd} font-bold text-slate-900`}>{formatAmt(totalTax, printSet)}</td>
+                      </React.Fragment>
+                    );
                     if (key === "cgst") return (
                       <React.Fragment key={key}>
                         <td className={`${textTd} font-mono text-slate-400`}>{(g / 2)}%</td>

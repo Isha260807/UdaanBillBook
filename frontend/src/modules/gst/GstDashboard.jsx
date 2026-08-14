@@ -35,7 +35,10 @@ import api from "@/lib/api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const fmt = (n) => "₹" + (n || 0).toLocaleString("en-IN");
+const fmt = (n) => {
+  const num = Math.round((Number(n) || 0) * 100) / 100;
+  return "₹" + num.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+};
 
 export function GstDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -57,7 +60,7 @@ export function GstDashboard() {
   const [salesFilter, setSalesFilter] = useState({ date: "all", customer: "all", rate: "all" });
   const [purchaseFilter, setPurchaseFilter] = useState({ date: "all", supplier: "all" });
 
-  // Custom Editable GST Profile Settings (Persisted in DB settings where possible, or namespaced in localStorage)
+  // Custom Editable GST Profile Settings (Persisted in DB settings where possible)
   const [gstProfile, setGstProfile] = useState({
     gstin: "",
     businessName: "",
@@ -83,17 +86,18 @@ export function GstDashboard() {
       setParties(partiesRes.data || []);
       setSettings(settingsRes.data || null);
 
-      // Hydrate local GST Profile from settings or defaults
-      const bizGstin = settingsRes.data?.businessGstin || "07AQXPD2556K2ZB";
-      const bizName = settingsRes.data?.businessName || "Sharma Traders";
+      // Hydrate local GST Profile from DB settings & User profile
+      const bizGstin = settingsRes.data?.businessGstin || settingsRes.data?.gstSettings?.gstin || "";
+      const bizName = settingsRes.data?.businessName || "My Business";
+      const bizState = settingsRes.data?.businessAddress || "Indore";
       
       setGstProfile({
         gstin: bizGstin,
         businessName: bizName,
         legalName: settingsRes.data?.legalName || bizName,
-        pan: bizGstin ? bizGstin.slice(2, 12) : "",
+        pan: bizGstin && bizGstin.length >= 10 ? (bizGstin.length >= 12 ? bizGstin.slice(2, 12) : bizGstin) : "",
         regType: settingsRes.data?.gstSettings?.compositeScheme ? "Composition Scheme" : "Regular Scheme",
-        state: settingsRes.data?.businessAddress || "Delhi",
+        state: bizState,
         regDate: "2024-04-01",
         eWayBill: settingsRes.data?.txnSettings?.ewayBill || false,
         eInvoice: false
@@ -148,41 +152,72 @@ export function GstDashboard() {
     return matchingParty?.gstin || "N/A";
   };
 
-  // Helper: Dynamic CGST/SGST vs IGST calculator
-  const calculateGstSplit = (inv) => {
-    const totalGst = inv.gstAmount || 0;
+  // Helper: Calculate dynamic GST, Taxable, and Splits for an invoice
+  const processInvoiceGst = (inv) => {
+    let gstAmt = Number(inv.gstAmount) || 0;
+    let taxableAmt = Number(inv.taxableAmount) || 0;
+
+    if ((!gstAmt || !taxableAmt) && Array.isArray(inv.items) && inv.items.length > 0) {
+      let calcTaxable = 0;
+      let calcGst = 0;
+
+      inv.items.forEach((item) => {
+        const q = Number(item.qty) || 0;
+        const r = Number(item.rate) || 0;
+        const d = Number(item.discount) || 0;
+        const g = Number(item.gst) || 0;
+        const isExcl = item.taxType === "exclusive";
+        const rateAfterDisc = r * (1 - d / 100);
+        
+        let itemTaxable = 0;
+        let itemGst = 0;
+
+        if (isExcl) {
+          itemTaxable = q * rateAfterDisc;
+          itemGst = itemTaxable * (g / 100);
+        } else {
+          // Tax Inclusive
+          const totalLine = q * rateAfterDisc;
+          itemTaxable = totalLine / (1 + g / 100);
+          itemGst = totalLine - itemTaxable;
+        }
+
+        calcTaxable += itemTaxable;
+        calcGst += itemGst;
+      });
+
+      if (!gstAmt) gstAmt = calcGst;
+      if (!taxableAmt) taxableAmt = calcTaxable;
+    }
+
     const partyGstin = getPartyGstin(inv);
     const bizGstin = gstProfile.gstin;
-
-    // Compare state code prefix (first 2 digits of GSTIN)
     const isInterState = bizGstin && partyGstin && partyGstin !== "N/A" && bizGstin.slice(0, 2) !== partyGstin.slice(0, 2);
 
-    if (isInterState) {
-      return { cgst: 0, sgst: 0, igst: totalGst };
-    } else {
-      return { cgst: totalGst / 2, sgst: totalGst / 2, igst: 0 };
-    }
+    const splits = isInterState
+      ? { cgst: 0, sgst: 0, igst: gstAmt }
+      : { cgst: gstAmt / 2, sgst: gstAmt / 2, igst: 0 };
+
+    return {
+      ...inv,
+      gstAmount: Math.round(gstAmt * 100) / 100,
+      taxableAmount: Math.round(taxableAmt * 100) / 100,
+      partyGstin,
+      splits
+    };
   };
 
   // Invoices filtered by type
   const salesInvoices = useMemo(() => {
     return invoices
       .filter(i => i.type === "Sale")
-      .map(inv => ({
-        ...inv,
-        partyGstin: getPartyGstin(inv),
-        splits: calculateGstSplit(inv)
-      }));
+      .map(processInvoiceGst);
   }, [invoices, parties, gstProfile.gstin]);
 
   const purchaseInvoices = useMemo(() => {
     return invoices
       .filter(i => i.type === "Purchase")
-      .map(inv => ({
-        ...inv,
-        partyGstin: getPartyGstin(inv),
-        splits: calculateGstSplit(inv)
-      }));
+      .map(processInvoiceGst);
   }, [invoices, parties, gstProfile.gstin]);
 
   // Filtering lists
@@ -779,9 +814,9 @@ export function GstDashboard() {
                           <th className="p-3 font-semibold text-slate-600">Customer</th>
                           <th className="p-3 font-semibold text-slate-600">GSTIN</th>
                           <th className="p-3 font-semibold text-slate-600">Taxable Val</th>
-                          <th className="p-3 font-semibold text-slate-600">CGST (9%)</th>
-                          <th className="p-3 font-semibold text-slate-600">SGST (9%)</th>
-                          <th className="p-3 font-semibold text-slate-600">IGST (18%)</th>
+                          <th className="p-3 font-semibold text-slate-600">CGST</th>
+                          <th className="p-3 font-semibold text-slate-600">SGST</th>
+                          <th className="p-3 font-semibold text-slate-600">IGST</th>
                           <th className="p-3 font-semibold text-slate-600">Total GST</th>
                           <th className="p-3 font-semibold text-slate-600">Total Amount</th>
                         </tr>

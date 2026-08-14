@@ -1,8 +1,10 @@
 import React from "react";
 import Barcode from "react-barcode";
+import { getIsInterstate } from "../templateUtils.jsx";
 
 export function MinimalEWay({ invoice, printSet, gstSet, numberToWords }) {
   const { customer, lines, totals, meta, transportDetails = {}, shippingDetails = {} } = invoice;
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
   
   const getInvoiceSizeClass = (size, fallback) => {
     if (!size || size === "Medium") return fallback;
@@ -93,8 +95,14 @@ export function MinimalEWay({ invoice, printSet, gstSet, numberToWords }) {
             const rateAfterDisc = r * (1 - d / 100);
             const taxable = q * rateAfterDisc;
             
-            const cgst = g / 2;
-            const sgst = g / 2;
+            const cgst = isInterstate ? 0 : g / 2;
+            const sgst = isInterstate ? 0 : g / 2;
+            const igst = isInterstate ? g : 0;
+
+            const fmtRate = (val) => {
+              const n = Number(val) || 0;
+              return n % 1 === 0 ? String(n) : String(n);
+            };
 
             return (
               <tr key={idx} className="border-b border-black last:border-none">
@@ -102,7 +110,7 @@ export function MinimalEWay({ invoice, printSet, gstSet, numberToWords }) {
                 <td className="p-2 border-r border-black">{l.name || l.item || "-"}</td>
                 <td className="p-2 border-r border-black">{q} {l.unit || "NOS"}</td>
                 <td className="p-2 border-r border-black">{taxable.toFixed(2)}</td>
-                <td className="p-2">{cgst.toFixed(1)} + {sgst.toFixed(1)} + 0.0 + 0.0 + 0.0</td>
+                <td className="p-2">{fmtRate(cgst)} + {fmtRate(sgst)} + {fmtRate(igst)} + 0 + 0</td>
               </tr>
             );
           })}
@@ -129,13 +137,13 @@ export function MinimalEWay({ invoice, printSet, gstSet, numberToWords }) {
               <div className="border border-black p-1">{totals.taxableAmount.toFixed(2)}</div>
             </td>
             <td className="p-2 border-r border-black">
-              <div className="border border-black p-1">{(totals.gstAmount / 2).toFixed(2)}</div>
+              <div className="border border-black p-1">{(isInterstate ? 0 : totals.gstAmount / 2).toFixed(2)}</div>
             </td>
             <td className="p-2 border-r border-black">
-              <div className="border border-black p-1">{(totals.gstAmount / 2).toFixed(2)}</div>
+              <div className="border border-black p-1">{(isInterstate ? 0 : totals.gstAmount / 2).toFixed(2)}</div>
             </td>
             <td className="p-2 border-r border-black">
-              <div className="border border-black p-1">0.0</div>
+              <div className="border border-black p-1">{(isInterstate ? totals.gstAmount : 0).toFixed(2)}</div>
             </td>
             <td className="p-2 border-r border-black">
               <div className="border border-black p-1">0.0</div>

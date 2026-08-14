@@ -1,18 +1,33 @@
 const Settings = require('../models/Settings');
 const InvoiceTemplate = require('../models/InvoiceTemplate');
 
+const User = require('../models/User');
+
 // @desc    Get user settings
 // @route   GET /api/settings
 // @access  Private
 const getSettings = async (req, res) => {
   try {
     const ownerId = req.user.role === 'staff' ? req.user.ownerId : req.user.id;
+    const userDoc = await User.findById(ownerId).lean();
 
-    let settings = await Settings.findOne({ user: ownerId });
+    let settings = await Settings.findOne({ user: ownerId }).lean();
 
     // If settings don't exist for the user, create default ones
     if (!settings) {
-      settings = await Settings.create({ user: ownerId });
+      const created = await Settings.create({ user: ownerId });
+      settings = created.toObject();
+    }
+
+    // Fallback to User document profile fields if settings fields are empty
+    if (!settings.businessGstin) {
+      settings.businessGstin = settings.gstSettings?.gstin || userDoc?.gstin || '';
+    }
+    if (!settings.businessName) {
+      settings.businessName = userDoc?.businessName || userDoc?.name || '';
+    }
+    if (!settings.businessAddress) {
+      settings.businessAddress = userDoc?.businessAddress || '';
     }
 
     res.status(200).json(settings);

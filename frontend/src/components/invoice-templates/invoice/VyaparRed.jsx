@@ -1,9 +1,10 @@
 import React from "react";
-import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines } from "../templateUtils.jsx";
+import { getTemplateColumns, formatAmt, renderCommonFooter, getTransactionTitle, isPaymentRelevantForType, getBilledToHeading, getDocTypeDetailLines, getIsInterstate } from "../templateUtils.jsx";
 
 export function VyaparRedTemplate({ invoice, printSet, gstSet, activeColor, numberToWords, showUdaanLogo }) {
   const { customer, lines, totals, meta, paymentDetails } = invoice;
-  const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet);
+  const isInterstate = getIsInterstate(invoice, printSet, gstSet);
+  const { cols, colNames, activeColsInOrder } = getTemplateColumns(printSet, isInterstate);
 
   // Strictly use custom color for "Standard Plus" / "Vyapar Red" if configured in templateColors, otherwise default to signature Red/Maroon (#8d2b2b)
   const specificColor = printSet?.templateColors?.["Standard Plus"] || printSet?.templateColors?.["Vyapar Red"] || (activeColor?.raw && activeColor.raw !== "#0ea5e9" && (printSet?.themeName === "Standard Plus" || printSet?.themeName === "Vyapar Red") ? activeColor.raw : null);
@@ -141,6 +142,12 @@ export function VyaparRedTemplate({ invoice, printSet, gstSet, activeColor, numb
                     if (key === "discountPercent") return <th key={key} className={`${thClasses} text-right w-[5%]`}>{colNames.discountPercent || "Disc%"}</th>;
                     if (key === "taxablePriceUnit") return <th key={key} className={`${thClasses} text-right w-[8%]`}>{colNames.taxablePriceUnit || "Taxable"}</th>;
                     if (key === "taxableValue") return <th key={key} className={`${thClasses} text-right w-[9%]`}>Taxable Amt</th>;
+                    if (key === "igst") return (
+                      <React.Fragment key={key}>
+                        <th className={`${thClasses} w-[4%]`}>IGST%</th>
+                        <th className={`${thClasses} text-right w-[6%]`}>IGST Amt</th>
+                      </React.Fragment>
+                    );
                     if (key === "cgst") return (
                       <React.Fragment key={key}>
                         <th className={`${thClasses} w-[4%]`}>CGST%</th>
@@ -201,6 +208,12 @@ export function VyaparRedTemplate({ invoice, printSet, gstSet, activeColor, numb
                         if (key === "discountPercent") return <td key={key} className={numTd}>{d}%</td>;
                         if (key === "taxablePriceUnit") return <td key={key} className={numTd}>{formatAmt(rateAfterDisc / (1 + g/100), printSet)}</td>;
                         if (key === "taxableValue") return <td key={key} className={numTd}>{formatAmt(taxableVal, printSet)}</td>;
+                        if (key === "igst") return (
+                          <React.Fragment key={key}>
+                            <td className={`${textTd} font-mono text-red-900 font-bold`}>{g}%</td>
+                            <td className={`${numTd} font-bold text-red-950`}>{formatAmt(totalTax, printSet)}</td>
+                          </React.Fragment>
+                        );
                         if (key === "cgst") return (
                           <React.Fragment key={key}>
                             <td className={`${textTd} font-mono text-slate-400`}>{(g / 2)}%</td>

@@ -2508,26 +2508,39 @@ export default function NewSale() {
                       </div>
                     </div>
 
-                    {/* Row 4: GST Rate % & Tax Type (2 fields) */}
+                    {/* Row 4: GST / IGST Rate % & Tax Type (2 fields) */}
                     {(gstSet.enableGst || (txnSet.taxOnRate && gstSet.enableGst)) && (
                       <div className="grid grid-cols-12 gap-3 items-end">
                         {gstSet.enableGst && (
                           <div className={txnSet.taxOnRate ? "col-span-6" : "col-span-12"}>
-                            <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">GST Rate %</Label>
-                            <button
-                              type="button"
-                              onClick={() => setTaxPickerLineIndex(i)}
-                              className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-left font-medium text-slate-800 flex items-center justify-between hover:bg-slate-50 transition-colors"
-                            >
-                              <span className="truncate">
-                                {(() => {
-                                  const currentGst = Number(l.gst ?? 18);
-                                  const match = (gstSet?.taxRates || []).find((r) => Number(r.value) === currentGst);
-                                  return match ? match.name : `GST@${currentGst}%`;
-                                })()}
-                              </span>
-                              <span className="text-[10px] text-slate-400 ml-1">▼</span>
-                            </button>
+                            {(() => {
+                              const sellerCode = (sellerGstin || "").slice(0, 2);
+                              const customerCode = (billedToGstin || "").slice(0, 2);
+                              const isInterstateBill = (sellerCode && customerCode && sellerCode.length === 2 && customerCode.length === 2 && sellerCode !== customerCode) || (placeOfSupply && sellerAddress && sellerAddress.length > 2 && placeOfSupply.length > 2 && !sellerAddress.toLowerCase().includes(placeOfSupply.toLowerCase()));
+                              
+                              const currentGst = Number(l.gst ?? 18);
+                              const match = (gstSet?.taxRates || []).find((r) => Number(r.value) === currentGst);
+                              let taxName = l.selectedTaxName || (match ? match.name : `GST@${currentGst}%`);
+                              if (isInterstateBill && taxName.toUpperCase().startsWith("GST@")) {
+                                taxName = taxName.replace(/^GST@/i, "IGST@");
+                              }
+
+                              return (
+                                <>
+                                  <Label className="text-[11px] font-semibold text-slate-600 mb-1 block">
+                                    {isInterstateBill ? "IGST Rate %" : "GST Rate %"}
+                                  </Label>
+                                  <button
+                                    type="button"
+                                    onClick={() => setTaxPickerLineIndex(i)}
+                                    className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs text-left font-medium text-slate-800 flex items-center justify-between hover:bg-slate-50 transition-colors"
+                                  >
+                                    <span className="truncate">{taxName}</span>
+                                    <span className="text-[10px] text-slate-400 ml-1">▼</span>
+                                  </button>
+                                </>
+                              );
+                            })()}
                           </div>
                         )}
 
@@ -3532,21 +3545,34 @@ export default function NewSale() {
                 </div>
                 {gstSet.enableGst && (
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">GST Rate %</Label>
-                    <button
-                      type="button"
-                      onClick={() => setTaxPickerLineIndex(editingItemIndex)}
-                      className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-left font-semibold text-slate-800 flex items-center justify-between"
-                    >
-                      <span>
-                        {(() => {
-                          const currentGst = Number(lines[editingItemIndex]?.gst ?? 18);
-                          const match = (gstSet?.taxRates || []).find((r) => Number(r.value) === currentGst);
-                          return match ? match.name : `GST@${currentGst}%`;
-                        })()}
-                      </span>
-                      <span className="text-xs text-slate-400">▼</span>
-                    </button>
+                    {(() => {
+                      const sellerCode = (sellerGstin || "").slice(0, 2);
+                      const customerCode = (billedToGstin || "").slice(0, 2);
+                      const isInterstateBill = (sellerCode && customerCode && sellerCode.length === 2 && customerCode.length === 2 && sellerCode !== customerCode) || (placeOfSupply && sellerAddress && sellerAddress.length > 2 && placeOfSupply.length > 2 && !sellerAddress.toLowerCase().includes(placeOfSupply.toLowerCase()));
+                      
+                      const currentGst = Number(lines[editingItemIndex]?.gst ?? 18);
+                      const match = (gstSet?.taxRates || []).find((r) => Number(r.value) === currentGst);
+                      let taxName = lines[editingItemIndex]?.selectedTaxName || (match ? match.name : `GST@${currentGst}%`);
+                      if (isInterstateBill && taxName.toUpperCase().startsWith("GST@")) {
+                        taxName = taxName.replace(/^GST@/i, "IGST@");
+                      }
+
+                      return (
+                        <>
+                          <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                            {isInterstateBill ? "IGST Rate %" : "GST Rate %"}
+                          </Label>
+                          <button
+                            type="button"
+                            onClick={() => setTaxPickerLineIndex(editingItemIndex)}
+                            className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-left font-semibold text-slate-800 flex items-center justify-between"
+                          >
+                            <span>{taxName}</span>
+                            <span className="text-xs text-slate-400">▼</span>
+                          </button>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
@@ -3735,7 +3761,28 @@ export default function NewSale() {
             <div className="overflow-y-auto divide-y divide-slate-100 p-2">
               {(() => {
                 const currentGst = Number(lines[taxPickerLineIndex]?.gst ?? 18);
-                const list = Array.isArray(gstSet?.taxRates) ? gstSet.taxRates : [];
+                const rawList = Array.isArray(gstSet?.taxRates) && gstSet.taxRates.length > 0 ? gstSet.taxRates : [
+                  { id: "r1", name: "GST@0%", value: 0 },
+                  { id: "r2", name: "GST@0.25%", value: 0.25 },
+                  { id: "r3", name: "GST@3%", value: 3 },
+                  { id: "r4", name: "GST@5%", value: 5 },
+                  { id: "r5", name: "GST@12%", value: 12 },
+                  { id: "r6", name: "GST@18%", value: 18 },
+                  { id: "r7", name: "GST@28%", value: 28 },
+                  { id: "r8", name: "GST@40%", value: 40 }
+                ];
+
+                const sellerCode = (sellerGstin || "").slice(0, 2);
+                const customerCode = (billedToGstin || "").slice(0, 2);
+                const isInterstateBill = (sellerCode && customerCode && sellerCode.length === 2 && customerCode.length === 2 && sellerCode !== customerCode) || (placeOfSupply && sellerAddress && sellerAddress.length > 2 && placeOfSupply.length > 2 && !sellerAddress.toLowerCase().includes(placeOfSupply.toLowerCase()));
+
+                const list = rawList.map(item => {
+                  const itemName = item.name || `GST@${item.value}%`;
+                  if (isInterstateBill && itemName.toUpperCase().startsWith("GST@")) {
+                    return { ...item, displayName: itemName.replace(/^GST@/i, "IGST@") };
+                  }
+                  return { ...item, displayName: itemName };
+                });
 
                 if (list.length === 0) {
                   return (
@@ -3755,13 +3802,13 @@ export default function NewSale() {
                       type="button"
                       onClick={() => {
                         updateLine(taxPickerLineIndex, 'gst', Number(item.value));
-                        setLines(prev => prev.map((l, i) => i === taxPickerLineIndex ? { ...l, selectedTaxId: item.id, selectedTaxName: item.name } : l));
+                        setLines(prev => prev.map((l, i) => i === taxPickerLineIndex ? { ...l, selectedTaxId: item.id, selectedTaxName: item.displayName || item.name } : l));
                         setTaxPickerLineIndex(null);
                       }}
                       className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 text-left transition-colors group"
                     >
                       <span className={`text-sm ${isSelected ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
-                        {item.name || `GST@${item.value}%`}
+                        {item.displayName || item.name || `GST@${item.value}%`}
                       </span>
                       <div className="flex items-center gap-3">
                         <span className={`text-xs ${isSelected ? 'font-bold text-slate-900' : 'text-slate-500'}`}>
