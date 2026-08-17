@@ -114,18 +114,18 @@ const reportCategories = [
 function ReportRow({ report, handleAction }) {
   const Icon = report.icon;
   return (
-    <div className="group flex items-center gap-3 rounded-xl px-3 py-3 transition-all duration-200 hover:bg-muted/40 hover:shadow-sm">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/50 group-hover:bg-background transition-colors">
-        <Icon className="h-4 w-4 text-muted-foreground" />
+    <div className="group flex items-center gap-2 sm:gap-3 rounded-lg sm:rounded-xl px-1.5 py-2.5 sm:px-3 sm:py-3 transition-all duration-200 hover:bg-muted/40 hover:shadow-sm">
+      <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-muted/50 group-hover:bg-background transition-colors">
+        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-foreground truncate">{report.name}</p>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <p className="text-xs sm:text-sm font-semibold text-foreground truncate">{report.name}</p>
           {report.premium && (
-            <Crown className="h-3.5 w-3.5 text-amber-500 fill-amber-500 shrink-0" />
+            <Crown className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-amber-500 fill-amber-500 shrink-0" />
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">{report.description}</p>
+        <p className="text-[10px] sm:text-[11px] text-muted-foreground leading-tight mt-0.5 line-clamp-1">{report.description}</p>
       </div>
       <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <Button
@@ -170,7 +170,7 @@ function ReportRow({ report, handleAction }) {
         <Button
           size="icon"
           variant="ghost"
-          className="h-7 w-7 rounded-lg"
+          className="h-6 w-6 rounded-md"
           onClick={(e) => {
             e.stopPropagation();
             handleAction(report.name, "View");
@@ -182,7 +182,7 @@ function ReportRow({ report, handleAction }) {
         <Button
           size="icon"
           variant="ghost"
-          className="h-7 w-7 rounded-lg"
+          className="h-6 w-6 rounded-md"
           onClick={(e) => {
             e.stopPropagation();
             handleAction(report.name, "PDF");
@@ -210,21 +210,21 @@ function ReportCategorySection({ category, isExpanded, onToggle, searchQuery, ha
   if (searchQuery && filteredReports.length === 0) return null;
 
   return (
-    <Card className={`border shadow-[var(--shadow-card)] transition-all duration-300 overflow-hidden ${category.borderColor}`}>
+    <Card className={`bg-transparent md:bg-white border-0 md:border md:shadow-sm shadow-none transition-all duration-300 overflow-hidden ${category.borderColor}`}>
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-muted/20 transition-colors"
+        className="w-full flex items-center gap-2 sm:gap-3 px-0 md:px-5 py-3 md:py-4 text-left hover:bg-muted/20 transition-colors"
       >
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${category.bgColor}`}>
-          <Icon className={`h-5 w-5 ${category.color}`} />
+        <div className={`flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl shrink-0 ${category.bgColor}`}>
+          <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${category.color}`} />
         </div>
-        <div className="flex-1">
-          <p className="text-sm font-bold text-foreground">{category.title}</p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">
+        <div className="flex-1 min-w-0">
+          <p className="text-xs sm:text-sm font-bold text-foreground truncate">{category.title}</p>
+          <p className="text-[10px] sm:text-[11px] text-muted-foreground mt-0.5 truncate">
             {filteredReports.length} report{filteredReports.length !== 1 ? "s" : ""} available
           </p>
         </div>
-        <Badge variant="secondary" className="rounded-full text-[10px] font-bold mr-2">
+        <Badge variant="secondary" className="rounded-full text-[9px] sm:text-[10px] font-bold mr-1 md:mr-2">
           {filteredReports.length}
         </Badge>
         {isExpanded ? (
@@ -235,8 +235,8 @@ function ReportCategorySection({ category, isExpanded, onToggle, searchQuery, ha
       </button>
 
       {isExpanded && (
-        <div className="px-3 pb-3 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
-          <Separator className="mb-2" />
+        <div className="px-0 md:px-3 pb-3 space-y-0.5 animate-in slide-in-from-top-2 duration-200">
+          <Separator className="mb-2 hidden md:block" />
           {filteredReports.map((report) => (
             <ReportRow key={report.name} report={report} handleAction={handleAction} />
           ))}
@@ -678,46 +678,46 @@ export function ReportsDashboard() {
   if (loading) return <div className="p-8 text-center text-muted-foreground animate-pulse">Loading Report aggregates...</div>;
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-20 md:pb-12">
       <PageHeader
         title="Reports"
         subtitle={`${totalReports} reports across ${reportCategories.length} categories — Generate, view & export`}
         actions={
-          <>
+          <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2">
             <Button
               variant="outline"
-              className="rounded-xl text-xs"
+              size="sm"
+              className="flex-1 sm:flex-none px-2 rounded-xl h-8 text-[11px] sm:px-4 sm:h-9 sm:text-xs"
               onClick={() => setShowInsights(!showInsights)}
             >
-              <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
-              {showInsights ? "Hide" : "Show"} Quick Insights
+              <BarChart3 className="mr-1 h-3.5 w-3.5 text-emerald-600" />
+              {showInsights ? "Hide" : "Show"} Insights
             </Button>
-            <Button className="rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white" onClick={toggleExpandAll}>
-              <FileText className="mr-1.5 h-3.5 w-3.5" />
-              {isAllExpanded ? "Collapse All" : "Expand All"}
+            <Button size="sm" className="flex-1 sm:flex-none px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 h-8 text-[11px] sm:px-4 sm:h-9 sm:text-xs text-white" onClick={toggleExpandAll}>
+              <FileText className="mr-1 h-3.5 w-3.5" />
+              {isAllExpanded ? "Collapse" : "Expand"} All
             </Button>
-          </>
+          </div>
         }
       />
 
-      {/* ── Summary Stat Cards ─────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 animate-in fade-in duration-200">
         {[
-          { label: "Sales Report", value: fmt(salesVal), icon: TrendingUp, tint: "bg-primary-soft text-primary", trend: "Live Sales" },
-          { label: "Purchase Report", value: fmt(purchaseVal), icon: ShoppingCart, tint: "bg-blue-50 text-blue-600", trend: "Live Purchases" },
-          { label: "Profit / Loss", value: fmt(profitVal), icon: Receipt, tint: "bg-success-soft text-success", trend: "Live P&L" },
-          { label: "GST Payable", value: fmt(gstPayableVal), icon: PieIcon, tint: "bg-accent-soft text-accent-foreground", trend: "Live Offset Balance" },
+          { label: "Sales Report", value: fmt(salesVal), icon: TrendingUp, tint: "bg-primary-soft text-primary", trend: "Sales" },
+          { label: "Purchase Report", value: fmt(purchaseVal), icon: ShoppingCart, tint: "bg-blue-50 text-blue-600", trend: "Purchases" },
+          { label: "Profit / Loss", value: fmt(profitVal), icon: Receipt, tint: "bg-success-soft text-success", trend: "P&L" },
+          { label: "GST Payable", value: fmt(gstPayableVal), icon: PieIcon, tint: "bg-accent-soft text-accent-foreground", trend: "GST" },
         ].map((r) => (
           <Card key={r.label} className="border-0 shadow-[var(--shadow-card)] transition-all duration-200 hover:-translate-y-1 hover:shadow-md">
-            <CardContent className="p-5">
+            <CardContent className="p-3 sm:p-5">
               <div className="flex items-center justify-between">
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${r.tint}`}>
-                  <r.icon className="h-5 w-5" />
+                <div className={`flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-lg sm:rounded-xl ${r.tint}`}>
+                  <r.icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
                 </div>
-                <Badge variant="secondary" className="rounded-full text-[10px]">{r.trend}</Badge>
+                <Badge variant="secondary" className="rounded-full text-[9px] sm:text-[10px] px-1.5 py-0">{r.trend}</Badge>
               </div>
-              <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">{r.label}</p>
-              <p className="mt-1 text-lg sm:text-2xl font-bold">{r.value}</p>
+              <p className="mt-3.5 sm:mt-4 text-[10px] sm:text-xs font-medium uppercase tracking-wide text-muted-foreground truncate">{r.label}</p>
+              <p className="mt-0.5 sm:mt-1 text-base sm:text-2xl font-bold truncate">{r.value}</p>
             </CardContent>
           </Card>
         ))}
@@ -788,23 +788,23 @@ export function ReportsDashboard() {
       )}
 
       {/* ── Search & Filter Bar ────────────────────────────────────── */}
-      <Card className="border-0 shadow-[var(--shadow-card)]">
-        <CardContent className="py-3 px-4">
+      <Card className="bg-transparent md:bg-white border-0 md:border md:shadow-sm shadow-none rounded-xl">
+        <CardContent className="py-0 md:py-3 px-0 md:px-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search reports... (e.g. GSTR, stock, profit)"
+                placeholder={typeof window !== "undefined" && window.innerWidth < 640 ? "Search reports..." : "Search reports... (e.g. GSTR, stock, profit)"}
                 className="pl-9 h-10 rounded-xl text-sm"
               />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between sm:justify-end gap-2">
               <Button
                 variant="ghost"
                 size="sm"
-                className="rounded-lg text-xs text-muted-foreground"
+                className="rounded-lg text-xs text-muted-foreground px-2"
                 onClick={collapseAll}
               >
                 Collapse All
@@ -812,7 +812,7 @@ export function ReportsDashboard() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="rounded-lg text-xs text-muted-foreground"
+                className="rounded-lg text-xs text-muted-foreground px-2"
                 onClick={expandAll}
               >
                 Expand All
