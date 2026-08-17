@@ -111,7 +111,7 @@ export default function UserTickets() {
   );
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto px-4 py-6 pb-20 md:pb-6">
+    <div className="space-y-6 max-w-5xl mx-auto px-0 sm:px-4 py-6 pb-20 md:pb-6">
       <PageHeader
         title="Support Helpdesk"
         subtitle="Raise tickets for query assistance and view status."
