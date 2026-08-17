@@ -577,7 +577,7 @@ export function GstDashboard() {
             <button
               key={nav.id}
               onClick={() => handleTabChange(nav.id)}
-              className={`flex items-center gap-2 lg:gap-3 px-3 py-2 lg:py-2.5 rounded-xl text-left text-xs font-semibold transition-all shrink-0 whitespace-nowrap lg:w-full ${
+              className={`flex items-center gap-2 lg:gap-3 px-2 lg:px-3 py-1.5 lg:py-2.5 rounded-lg lg:rounded-xl text-left text-xs font-semibold transition-all shrink-0 whitespace-nowrap lg:w-full ${
                 activeTab === nav.id 
                   ? "bg-emerald-50 text-emerald-700 shadow-sm" 
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -647,7 +647,7 @@ export function GstDashboard() {
               )}
 
               {/* KPIs Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
                 {[
                   { label: "Output GST (Liability)", val: gstStats.outputGst, desc: "Collected from sales", style: "border-t-primary" },
                   { label: "Input Tax Credit (ITC)", val: gstStats.inputGst, desc: "Paid on purchases", style: "border-t-success text-success" },
@@ -655,7 +655,7 @@ export function GstDashboard() {
                   { label: "Pending Returns", val: gstStats.pendingReturns, desc: "Returns due this period", style: "border-t-blue-500", rawVal: true }
                 ].map((k, idx) => (
                   <Card key={idx} className={`border-0 border-t-4 shadow-sm rounded-xl ${k.style}`}>
-                    <CardContent className="p-3 sm:p-4">
+                    <CardContent className="p-2.5 sm:p-4">
                       <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">{k.label}</p>
                       <p className="text-base sm:text-2xl font-black mt-1 sm:mt-2 truncate">
                         {k.rawVal ? k.val : fmt(k.val)}
