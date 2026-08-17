@@ -727,7 +727,7 @@ export function AccountingDashboard() {
       doc.setFontSize(10);
       doc.setTextColor(70);
       const bankEntries = combinedEntries.filter(e => e.mode === bankName);
-      doc.text(`Generated On: ${new Date().toLocaleDateString('en-IN')} | Current Balance: ${fmt(currentBalance)} | Total Entries: ${bankEntries.length}`, 14, 26);
+      doc.text(`Generated On: ${new Date().toLocaleDateString('en-IN')} | Current Balance: Rs. ${(currentBalance || 0).toLocaleString('en-IN')} | Total Entries: ${bankEntries.length}`, 14, 26);
 
       const rows = bankEntries.map((e, idx) => [
         idx + 1,
