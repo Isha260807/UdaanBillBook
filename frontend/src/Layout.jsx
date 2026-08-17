@@ -270,7 +270,7 @@ export default function Layout() {
             <AppSidebar />
             <SidebarInset className="flex min-w-0 flex-1 flex-col pb-16 md:pb-0">
               <AppTopbar />
-              <main className="flex-1 min-w-0 p-4 md:p-6 lg:p-8">
+              <main className="flex-1 min-w-0 px-4 pb-4 pt-20 md:p-6 lg:p-8">
                 <Outlet />
               </main>
               <MobileBottomNav />

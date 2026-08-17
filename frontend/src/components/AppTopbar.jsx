@@ -81,7 +81,7 @@ export function AppTopbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-md px-3 md:px-6 shadow-sm">
+      <header className="fixed top-0 left-0 right-0 md:sticky z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-md px-3 md:px-6 shadow-sm">
         
         {/* Mobile Left: Logo & Business Name */}
         <div className="flex items-center gap-2 md:hidden">
