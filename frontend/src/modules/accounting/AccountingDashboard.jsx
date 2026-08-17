@@ -717,6 +717,46 @@ export function AccountingDashboard() {
     }
   };
 
+  const handleDownloadBankStatement = (bankName, currentBalance) => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.setTextColor(16, 185, 129);
+      doc.text(`${bankName} Bank Account Statement`, 14, 18);
+
+      doc.setFontSize(10);
+      doc.setTextColor(70);
+      const bankEntries = combinedEntries.filter(e => e.mode === bankName);
+      doc.text(`Generated On: ${new Date().toLocaleDateString('en-IN')} | Current Balance: ${fmt(currentBalance)} | Total Entries: ${bankEntries.length}`, 14, 26);
+
+      const rows = bankEntries.map((e, idx) => [
+        idx + 1,
+        e.date,
+        e.voucher || "-",
+        e.party || "-",
+        e.type || "-",
+        e.debit ? `Rs. ${e.debit.toLocaleString('en-IN')}` : "-",
+        e.credit ? `Rs. ${e.credit.toLocaleString('en-IN')}` : "-"
+      ]);
+
+      autoTable(doc, {
+        startY: 32,
+        head: [["#", "Date", "Voucher No", "Party", "Type", "Debit (Rs.)", "Credit (Rs.)"]],
+        body: rows.length > 0 ? rows : [["-", "-", "-", "No records found", "-", "-", "-"]],
+        theme: "grid",
+        headStyles: { fillColor: [16, 185, 129] },
+        styles: { fontSize: 8 }
+      });
+
+      const fileDate = new Date().toISOString().split("T")[0];
+      doc.save(`${bankName}_Statement_${fileDate}.pdf`);
+      toast.success(`${bankName} statement PDF downloaded successfully!`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to export bank statement PDF");
+    }
+  };
+
   if (loading || !accountingData) return <div className="p-8 text-center text-muted-foreground">Loading ERP Accounting data...</div>;
 
   return (
