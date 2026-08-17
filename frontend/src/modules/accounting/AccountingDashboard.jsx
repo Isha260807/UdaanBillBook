@@ -750,7 +750,7 @@ export function AccountingDashboard() {
 
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Side Sub-Navigation */}
-        <div className="w-full lg:w-64 bg-white rounded-2xl p-2 sm:p-3 border shadow-sm shrink-0 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-1 lg:space-y-1 [&::-webkit-scrollbar]:hidden">
+        <div className="w-full lg:w-64 bg-transparent lg:bg-white rounded-2xl p-0 lg:p-3 border-0 lg:border shadow-none lg:shadow-sm shrink-0 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-1 lg:space-y-1 [&::-webkit-scrollbar]:hidden">
           <p className="hidden lg:block text-[10px] font-bold text-slate-400 uppercase px-3 mb-2 tracking-wider">Accounting Books</p>
           {[
             { id: "overview", label: "Overview Dashboard", icon: Wallet },
