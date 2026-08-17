@@ -63,6 +63,7 @@ export function UserManagement() {
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   // Dialog states
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -74,8 +75,9 @@ export function UserManagement() {
   // --- Derived ---
   const filteredUsers = staffList.filter(
     (u) =>
-      u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()),
+      (roleFilter === "all" || u.role.toLowerCase() === roleFilter.toLowerCase()) &&
+      (u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase())),
   );
   const activeCount = staffList.filter((u) => u.status === "Active").length;
 
@@ -289,9 +291,26 @@ export function UserManagement() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon" className="rounded-xl h-9 w-9 shrink-0" onClick={handleFilter} title="Filter">
-              <Filter className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" className={`rounded-xl h-9 w-9 shrink-0 ${roleFilter !== "all" ? "bg-emerald-50 border-emerald-300 text-emerald-700" : ""}`} title="Filter by Role">
+                  <Filter className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                <DropdownMenuLabel className="text-xs">Filter by Role</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className={`text-xs cursor-pointer font-semibold ${roleFilter === "all" ? "text-emerald-700 bg-emerald-50/50" : ""}`} onClick={() => setRoleFilter("all")}>
+                  All Roles
+                </DropdownMenuItem>
+                <DropdownMenuItem className={`text-xs cursor-pointer font-semibold ${roleFilter === "admin" ? "text-emerald-700 bg-emerald-50/50" : ""}`} onClick={() => setRoleFilter("admin")}>
+                  Admin
+                </DropdownMenuItem>
+                <DropdownMenuItem className={`text-xs cursor-pointer font-semibold ${roleFilter === "staff" ? "text-emerald-700 bg-emerald-50/50" : ""}`} onClick={() => setRoleFilter("staff")}>
+                  Staff
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent className="p-0 md:p-6">
