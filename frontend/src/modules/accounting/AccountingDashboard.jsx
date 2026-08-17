@@ -971,39 +971,39 @@ export function AccountingDashboard() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-slate-50 border-b">
-                        <th className="p-3 font-semibold text-slate-600">Date</th>
-                        <th className="p-3 font-semibold text-slate-600">Voucher No</th>
-                        <th className="p-3 font-semibold text-slate-600">Type</th>
-                        <th className="p-3 font-semibold text-slate-600">Party Name</th>
-                        <th className="p-3 font-semibold text-slate-600 font-emerald-600">Debit (IN)</th>
-                        <th className="p-3 font-semibold text-slate-600 text-red-600">Credit (OUT)</th>
-                        <th className="p-3 font-semibold text-slate-600">Running Bal</th>
-                        <th className="p-3 font-semibold text-slate-600">Mode</th>
-                        <th className="p-3 font-semibold text-slate-600">Created By</th>
-                        <th className="p-3 font-semibold text-slate-600 text-right pr-4">Actions</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[65px] sm:w-auto">Date</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[80px] sm:w-auto">Voucher No</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[55px] sm:w-auto">Type</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[60px] sm:w-auto truncate">Party Name</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 text-emerald-600">Debit (IN)</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 text-red-600">Credit (OUT)</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600">Running Bal</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600">Mode</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600">Created By</th>
+                        <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 text-right pr-2 sm:pr-4">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y">
                       {filteredEntries.map((item) => (
                         <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                          <td className="p-3">{item.date} <span className="text-[10px] text-muted-foreground block">{item.createdTime}</span></td>
-                          <td className="p-3 font-mono font-semibold">{item.voucher}</td>
-                          <td className="p-3">
-                            <Badge variant="outline" className={item.debit > 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}>
+                          <td className="p-1.5 py-2.5 sm:p-3 max-w-[65px] truncate">{item.date} <span className="text-[9px] text-muted-foreground block truncate">{item.createdTime}</span></td>
+                          <td className="p-1.5 py-2.5 sm:p-3 font-mono font-semibold max-w-[80px] truncate">{item.voucher}</td>
+                          <td className="p-1.5 py-2.5 sm:p-3 max-w-[55px]">
+                            <Badge variant="outline" className={`px-1 text-[9px] sm:text-xs ${item.debit > 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
                               {item.type}
                             </Badge>
                           </td>
-                          <td className="p-3 font-medium">{item.party}</td>
-                          <td className="p-3 text-emerald-600 font-bold">{item.debit > 0 ? fmt(item.debit) : "—"}</td>
-                          <td className="p-3 text-red-600 font-bold">{item.credit > 0 ? fmt(item.credit) : "—"}</td>
-                          <td className="p-3 font-bold text-slate-800">{fmt(item.runningBalance)}</td>
-                          <td className="p-3">
+                          <td className="p-1.5 py-2.5 sm:p-3 font-medium max-w-[60px] truncate">{item.party}</td>
+                          <td className="p-1.5 py-2.5 sm:p-3 text-emerald-600 font-bold">{item.debit > 0 ? fmt(item.debit) : "—"}</td>
+                          <td className="p-1.5 py-2.5 sm:p-3 text-red-600 font-bold">{item.credit > 0 ? fmt(item.credit) : "—"}</td>
+                          <td className="p-1.5 py-2.5 sm:p-3 font-bold text-slate-800">{fmt(item.runningBalance)}</td>
+                          <td className="p-1.5 py-2.5 sm:p-3">
                             <Badge variant="secondary" className="rounded-full text-[10px]">
                               {item.mode}
                             </Badge>
                           </td>
-                          <td className="p-3 text-muted-foreground">{item.createdBy}</td>
-                          <td className="p-3 text-right pr-4">
+                          <td className="p-1.5 py-2.5 sm:p-3 text-muted-foreground">{item.createdBy}</td>
+                          <td className="p-1.5 py-2.5 sm:p-3 text-right pr-2 sm:pr-4">
                             <div className="flex justify-end gap-1.5">
                               <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-slate-800" title="Print statement" onClick={() => window.print()}>
                                 <Printer className="h-3 w-3" />
@@ -1069,25 +1069,25 @@ export function AccountingDashboard() {
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="bg-slate-50 border-b">
-                          <th className="p-3 font-semibold text-slate-600">Date</th>
-                          <th className="p-3 font-semibold text-slate-600">Voucher No</th>
-                          <th className="p-3 font-semibold text-slate-600">Party</th>
-                          <th className="p-3 font-semibold text-slate-600">Description</th>
-                          <th className="p-3 font-semibold text-slate-600 text-emerald-600">Cash In (Dr)</th>
-                          <th className="p-3 font-semibold text-slate-600 text-red-600">Cash Out (Cr)</th>
-                          <th className="p-3 font-semibold text-slate-600">Balance</th>
+                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[65px] sm:w-auto">Date</th>
+                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[80px] sm:w-auto">Voucher No</th>
+                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[60px] sm:w-auto truncate">Party</th>
+                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[80px] sm:w-auto truncate">Description</th>
+                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 text-emerald-600">Cash In (Dr)</th>
+                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 text-red-600">Cash Out (Cr)</th>
+                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600">Balance</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
                         {combinedEntries.filter(e => e.mode === "Cash").map((item) => (
                           <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="p-3">{item.date}</td>
-                            <td className="p-3 font-mono font-semibold">{item.voucher}</td>
-                            <td className="p-3 font-medium">{item.party}</td>
-                            <td className="p-3 text-muted-foreground">{item.description}</td>
-                            <td className="p-3 text-emerald-600 font-bold">{item.debit > 0 ? fmt(item.debit) : "—"}</td>
-                            <td className="p-3 text-red-600 font-bold">{item.credit > 0 ? fmt(item.credit) : "—"}</td>
-                            <td className="p-3 font-bold text-slate-800">{fmt(item.runningBalance)}</td>
+                            <td className="p-1.5 py-2.5 sm:p-3 max-w-[65px] truncate">{item.date}</td>
+                            <td className="p-1.5 py-2.5 sm:p-3 font-mono font-semibold max-w-[80px] truncate">{item.voucher}</td>
+                            <td className="p-1.5 py-2.5 sm:p-3 font-medium max-w-[60px] truncate">{item.party}</td>
+                            <td className="p-1.5 py-2.5 sm:p-3 text-muted-foreground max-w-[80px] truncate">{item.description}</td>
+                            <td className="p-1.5 py-2.5 sm:p-3 text-emerald-600 font-bold">{item.debit > 0 ? fmt(item.debit) : "—"}</td>
+                            <td className="p-1.5 py-2.5 sm:p-3 text-red-600 font-bold">{item.credit > 0 ? fmt(item.credit) : "—"}</td>
+                            <td className="p-1.5 py-2.5 sm:p-3 font-bold text-slate-800">{fmt(item.runningBalance)}</td>
                           </tr>
                         ))}
                       </tbody>
