@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Plus, Search, FileDown, Share2, Filter, ReceiptText, Eye, Trash2, X
+  Plus, Search, FileDown, Share2, Filter, ReceiptText, Eye, Trash2, X, ArrowLeft
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -295,28 +295,29 @@ export function BillingDashboard() {
     <div className="space-y-6">
       <PageHeader
         title={<span className="hidden sm:inline">Billing & Invoices</span>}
-        actions={
-          <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2">
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2 rounded-xl h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={handleExportPdf}>
-              <FileDown className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Export
-            </Button>
-            {!isViewer && (
-              <>
-                <Button asChild size="sm" className="flex-1 sm:flex-none px-2 rounded-xl bg-red-500 hover:bg-red-600 h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm">
-                  <Link to={`${rolePrefix}/sale/new`}>
-                    <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Sale
-                  </Link>
-                </Button>
-                <Button asChild size="sm" className="flex-1 sm:flex-none px-2 rounded-xl bg-blue-600 hover:bg-blue-700 h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm">
-                  <Link to={`${rolePrefix}/purchase/new`}>
-                    <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Purchase
-                  </Link>
-                </Button>
-              </>
-            )}
-          </div>
-        }
       />
+
+      {/* Action buttons — left-aligned with cards, responsive grid/flex to fit single line */}
+      <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2">
+        {!isViewer && (
+          <>
+            <Button asChild size="sm" className="flex-1 sm:flex-none px-1.5 sm:px-4 rounded-xl bg-red-500 hover:bg-red-600 h-8.5 sm:h-9 text-[11px] sm:text-sm font-semibold transition-all">
+              <Link to={`${rolePrefix}/sale/new`} className="flex items-center justify-center">
+                <Plus className="mr-0.5 sm:mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> Sale
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="flex-1 sm:flex-none px-1.5 sm:px-4 rounded-xl bg-blue-600 hover:bg-blue-700 h-8.5 sm:h-9 text-[11px] sm:text-sm font-semibold transition-all">
+              <Link to={`${rolePrefix}/purchase/new`} className="flex items-center justify-center">
+                <Plus className="mr-0.5 sm:mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> Purchase
+              </Link>
+            </Button>
+          </>
+        )}
+        <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1.5 sm:px-4 rounded-xl h-8.5 sm:h-9 text-[11px] sm:text-sm font-semibold transition-all" onClick={handleExportPdf}>
+          <FileDown className="mr-0.5 sm:mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" /> Export
+        </Button>
+      </div>
+
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {[
@@ -337,6 +338,7 @@ export function BillingDashboard() {
           </Card>
         ))}
       </div>
+
 
       {/* Search & Invoice List without outer Card wrapper */}
       <div className="space-y-4">
@@ -410,7 +412,108 @@ export function BillingDashboard() {
             </div>
           </div>
 
-          <div className="overflow-x-auto bg-white rounded-2xl border border-slate-200/80 shadow-sm">
+          {/* ── Mobile card list (hidden on sm+) ── */}
+          <div className="sm:hidden space-y-3">
+            {filtered.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-8 text-center text-sm text-muted-foreground">
+                No invoices found.
+              </div>
+            ) : filtered.map((inv) => (
+              <div key={inv._id || inv.id} className="bg-white rounded-2xl border border-slate-100/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] px-4 py-3.5 flex items-center justify-between gap-3">
+                {/* Left: Invoice number + type badge */}
+                <div className="flex flex-col gap-1 min-w-[60px] shrink-0">
+                  {(() => {
+                    const idText = inv.invoiceNumber || inv.id || "";
+                    const hyphenIndex = idText.indexOf("-");
+                    if (hyphenIndex !== -1) {
+                      return (
+                        <div className="flex flex-col">
+                          <span className="text-[13px] font-bold text-slate-900 leading-none">{idText.substring(0, hyphenIndex + 1)}</span>
+                          <span className="text-[13px] font-bold text-slate-900 leading-tight">{idText.substring(hyphenIndex + 1)}</span>
+                        </div>
+                      );
+                    }
+                    return <span className="text-[13px] font-bold text-slate-900 leading-tight">{idText}</span>;
+                  })()}
+                  <Badge variant="outline" className={`w-fit rounded-full text-[10px] px-2 py-0.5 leading-none ${inv.type === 'Sale' ? 'border-red-200 bg-red-50 text-red-600' : 'border-blue-200 bg-blue-50 text-blue-600'}`}>
+                    {inv.type || 'Sale'}
+                  </Badge>
+                </div>
+
+                {/* Middle: Party + Amount */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold text-slate-800 leading-tight mb-1">{inv.partyName || inv.party}</p>
+                  <p className="text-[13px] font-bold text-slate-900 leading-none">{fmt(inv.grandTotal || inv.amount)}</p>
+                </div>
+
+
+                {/* Right: Status + Payment mode */}
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  {/* Status badge dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="cursor-pointer focus:outline-none">
+                        <Badge variant="outline" className={`rounded-full text-[10px] px-2 py-0.5 leading-none ${statusStyles[inv.status]} hover:opacity-80 transition-opacity`}>
+                          {inv.status} ▾
+                        </Badge>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36 rounded-xl">
+                      {['Paid', 'Unpaid', 'Partial'].map((s) => (
+                        <DropdownMenuItem
+                          key={s}
+                          onClick={() => openStatusModal(inv, s)}
+                          className={`cursor-pointer text-xs font-medium ${inv.status === s ? 'bg-slate-100 font-bold' : ''}`}
+                        >
+                          <Badge variant="outline" className={`rounded-full mr-2 ${statusStyles[s]}`}>{s}</Badge>
+                          {inv.status === s && '✓'}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  {/* Payment mode */}
+                  {inv.status === "Unpaid" ? (
+                    <span className="text-[11px] text-muted-foreground mr-1">—</span>
+                  ) : (
+                    <Badge variant="outline" className="rounded-full bg-slate-100 border-slate-200 text-[10px] text-slate-700 font-semibold px-2 py-0.5 leading-none mr-0.5">
+                      {inv.paymentMethod || "Cash"}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Far Right: Actions (Vertically stacked) */}
+                <div className="flex flex-col gap-1 shrink-0 justify-center ml-1">
+                  <button
+                    className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                    onClick={() => previewOne(inv)}
+                    title="View"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-200/80 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 transition-colors"
+                    onClick={() => shareWA(inv)}
+                    title="Share"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-200/80 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                    onClick={() => deleteOne(inv)}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+
+
+          {/* ── Desktop table (hidden on mobile) ── */}
+          <div className="hidden sm:block overflow-x-auto bg-white rounded-2xl border border-slate-200/80 shadow-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-b">
@@ -449,14 +552,12 @@ export function BillingDashboard() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" className="w-36 rounded-xl">
                           {['Paid', 'Unpaid', 'Partial'].map((s) => (
-                            <DropdownMenuItem 
-                              key={s} 
-                              onClick={() => openStatusModal(inv, s)} 
+                            <DropdownMenuItem
+                              key={s}
+                              onClick={() => openStatusModal(inv, s)}
                               className={`cursor-pointer text-xs font-medium ${inv.status === s ? 'bg-slate-100 font-bold' : ''}`}
                             >
-                              <Badge variant="outline" className={`rounded-full mr-2 ${statusStyles[s]}`}>
-                                {s}
-                              </Badge>
+                              <Badge variant="outline" className={`rounded-full mr-2 ${statusStyles[s]}`}>{s}</Badge>
                               {inv.status === s && '✓'}
                             </DropdownMenuItem>
                           ))}
@@ -474,40 +575,16 @@ export function BillingDashboard() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100" 
-                          onClick={() => previewOne(inv)}
-                          title="Preview PDF"
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100" onClick={() => previewOne(inv)} title="Preview PDF">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100" 
-                          onClick={() => downloadOne(inv)}
-                          title="Download PDF"
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100" onClick={() => downloadOne(inv)} title="Download PDF">
                           <FileDown className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-emerald-600 hover:text-emerald-700 rounded-lg hover:bg-emerald-50" 
-                          onClick={() => shareWA(inv)}
-                          title="Share WhatsApp"
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-600 hover:text-emerald-700 rounded-lg hover:bg-emerald-50" onClick={() => shareWA(inv)} title="Share WhatsApp">
                           <Share2 className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-red-500 hover:text-red-600 rounded-lg hover:bg-red-50" 
-                          onClick={() => deleteOne(inv)}
-                          title="Delete Invoice"
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 rounded-lg hover:bg-red-50" onClick={() => deleteOne(inv)} title="Delete Invoice">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -518,6 +595,8 @@ export function BillingDashboard() {
             </Table>
           </div>
         </div>
+
+
 
 
       {/* ====== Status Update Modal ====== */}
@@ -645,29 +724,52 @@ export function BillingDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* ====== Invoice Template Preview Modal ====== */}
+      {/* ====== Invoice Template Preview ====== */}
       <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-6">
-          <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
-            <div>
-              <DialogTitle className="text-lg font-bold">
+        <DialogContent className="fixed inset-0 z-50 left-0 top-0 translate-x-0 translate-y-0 w-full max-w-none h-full max-h-screen p-0 bg-slate-50 border-0 rounded-none flex flex-col overflow-y-auto [&>button]:hidden duration-0">
+          <style>{`
+            @media (max-width: 640px) {
+              .invoice-mobile-scale {
+                zoom: 0.44;
+                -moz-transform: scale(0.44);
+                -moz-transform-origin: top center;
+                width: 720px !important;
+                min-width: 720px !important;
+                margin: 0 auto;
+              }
+            }
+          `}</style>
+
+          {/* Full Screen Header */}
+          <div className="flex items-center justify-between bg-white border-b px-3 sm:px-6 py-2.5 sm:py-4 sticky top-0 z-10 gap-1.5 sm:gap-2 shrink-0 shadow-sm">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+              <button 
+                onClick={() => setPreviewModalOpen(false)}
+                className="p-1 hover:bg-slate-100 rounded-full transition-colors shrink-0"
+              >
+                <ArrowLeft className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-slate-800" />
+              </button>
+              <span className="text-[11px] sm:text-base font-bold text-slate-900 leading-tight">
                 Invoice Preview — {selectedPreviewInv?.invoiceNumber}
-              </DialogTitle>
-              <DialogDescription className="sr-only">Invoice details preview and PDF export</DialogDescription>
+              </span>
             </div>
             {selectedPreviewInv && (
               <Button 
                 size="sm" 
                 onClick={() => printInvoiceHtml()} 
-                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium px-4 mr-6"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-medium px-2 sm:px-4 h-7.5 sm:h-9 text-[10px] sm:text-sm shrink-0"
               >
-                <FileDown className="mr-1.5 h-4 w-4" /> Print / Save PDF
+                <FileDown className="mr-0.5 sm:mr-1.5 h-3 w-3 sm:h-4 sm:w-4" /> Print PDF
               </Button>
             )}
-          </DialogHeader>
-          <div className="pt-4 flex justify-center bg-slate-100 p-4 rounded-xl overflow-x-auto">
+          </div>
+
+
+          {/* Preview Canvas Area */}
+          <div className="flex-1 py-4 sm:py-6 flex justify-center bg-slate-50 p-3 sm:p-6 overflow-y-auto w-full">
+
             {selectedPreviewInv && (
-              <div id="invoice-print-area" className="w-full max-w-3xl bg-white p-4 rounded-xl shadow-sm">
+              <div id="invoice-print-area" className="invoice-mobile-scale w-full max-w-3xl bg-white p-4 rounded-2xl sm:rounded-xl shadow-sm border border-slate-100/80 sm:border-0">
                 <InvoiceTemplateRenderer 
                   invoice={selectedPreviewInv} 
                   templateName={selectedPreviewInv.invoiceTemplate || selectedPreviewInv.templateName || "GST Boxed"} 
@@ -696,6 +798,8 @@ export function BillingDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+
 
       {/* Hidden Offscreen Container for Instant 100% Exact PDF Download */}
       {selectedPreviewInv && !previewModalOpen && (

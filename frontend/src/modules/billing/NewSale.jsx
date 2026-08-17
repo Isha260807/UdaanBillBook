@@ -1090,7 +1090,7 @@ export default function NewSale() {
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT COLUMN: Billing Creator Form */}
         <div className={`w-full md:w-1/2 lg:w-5/12 flex flex-col h-full bg-white md:bg-slate-50 overflow-y-auto border-r custom-scrollbar ${activePane === 'preview' ? 'hidden md:flex' : 'flex'}`}>
-          <div className="p-3 md:p-4 space-y-3 md:space-y-4 pb-24 bg-white md:bg-transparent">
+          <div className="p-3 md:p-4 space-y-3 md:space-y-4 pb-28 md:pb-4 bg-white md:bg-transparent">
 
             {isEwayMode ? (
               <>
@@ -3707,7 +3707,7 @@ export default function NewSale() {
       </Dialog>
 
       {/* Floating Bottom Action bar */}
-      <div className="sticky bottom-0 shrink-0 bg-white border-t p-1.5 md:p-4 flex flex-col md:flex-row gap-1.5 md:gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:justify-center items-center z-10">
+      <div className="fixed md:sticky bottom-0 left-0 right-0 md:left-auto md:right-auto md:shrink-0 bg-white border-t p-2 md:p-4 flex flex-col md:flex-row gap-1.5 md:gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:justify-center items-center z-20 w-full md:w-auto">
         <div className="flex bg-slate-100 p-0.5 md:p-1 rounded-full border border-slate-200 self-stretch md:self-auto shrink-0 mb-0.5 md:mb-0 overflow-x-auto custom-scrollbar">
           <button
             className={`flex-1 md:w-28 px-3 py-1.5 md:px-4 md:py-2 rounded-full text-xs md:text-sm font-medium transition-colors whitespace-nowrap ${!isEwayMode && !isThermalMode ? 'bg-white shadow-sm text-slate-800 font-bold' : 'text-slate-500 hover:text-slate-700'}`}

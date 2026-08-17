@@ -218,21 +218,21 @@ export function InventoryDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 w-full">
       <PageHeader
         title="Inventory"
         actions={
-          <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2">
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1.5 sm:px-4 rounded-xl h-8 text-[10px] sm:h-9 sm:text-sm" onClick={() => setIsBulkOpen(true)}>
-              <Upload className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Bulk
+          <div className="flex w-full flex-nowrap items-center gap-1 sm:gap-2">
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1 sm:px-4 rounded-lg h-8 text-[9.5px] font-semibold sm:h-9 sm:text-sm" onClick={() => setIsBulkOpen(true)}>
+              <Upload className="mr-0.5 h-3 w-3 sm:h-4 sm:w-4" /> Bulk
             </Button>
             {!isViewer && (
               <>
-                <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1.5 sm:px-4 rounded-xl border-blue-200 text-blue-700 hover:bg-blue-50 h-8 text-[10px] sm:h-9 sm:text-sm" onClick={() => setIsAddCatOpen(true)}>
-                  <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Category
+                <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1 sm:px-4 rounded-lg border-blue-200 text-blue-700 hover:bg-blue-50 h-8 text-[9.5px] font-semibold sm:h-9 sm:text-sm" onClick={() => setIsAddCatOpen(true)}>
+                  <Plus className="mr-0.5 h-3 w-3 sm:h-4 sm:w-4" /> Category
                 </Button>
-                <Button size="sm" className="flex-1 sm:flex-none px-1.5 sm:px-4 rounded-xl h-8 text-[10px] sm:h-9 sm:text-sm" onClick={() => setOpen(true)}>
-                  <Plus className="mr-1 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Product
+                <Button size="sm" className="flex-1 sm:flex-none px-1 sm:px-4 rounded-lg h-8 text-[9.5px] font-semibold sm:h-9 sm:text-sm" onClick={() => setOpen(true)}>
+                  <Plus className="mr-0.5 h-3 w-3 sm:h-4 sm:w-4" /> Product
                 </Button>
               </>
             )}
@@ -413,8 +413,8 @@ export function InventoryDashboard() {
         </Card>
       </div>
 
-      <Card className="border-0 shadow-[var(--shadow-card)]">
-        <CardContent className="p-4 md:p-6">
+      <Card className="bg-transparent md:bg-white border-0 md:border md:shadow-sm shadow-none min-w-0 w-full overflow-hidden">
+        <CardContent className="p-0 md:p-6">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Tabs value={cat} onValueChange={setCat} className="hidden sm:block w-full overflow-x-auto">
               <TabsList className="rounded-xl inline-flex min-w-max">
@@ -451,16 +451,16 @@ export function InventoryDashboard() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead className="hidden sm:table-cell">SKU</TableHead>
-                  <TableHead className="hidden md:table-cell">Category</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="w-[180px]">Stock</TableHead>
-                  {!isViewer && <TableHead className="w-[50px] text-center">Actions</TableHead>}
+                  <TableHead className="px-1 sm:px-4 py-2">Product</TableHead>
+                  <TableHead className="hidden sm:table-cell px-1 sm:px-4 py-2">SKU</TableHead>
+                  <TableHead className="hidden md:table-cell px-1 sm:px-4 py-2">Category</TableHead>
+                  <TableHead className="text-right px-1 sm:px-4 py-2">Price</TableHead>
+                  <TableHead className="w-[85px] sm:w-[180px] px-1 sm:px-4 py-2">Stock</TableHead>
+                  {!isViewer && <TableHead className="w-[40px] sm:w-[50px] text-center px-1 sm:px-4 py-2">Actions</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -470,48 +470,43 @@ export function InventoryDashboard() {
                   const pct = Math.min(100, (p.stock / (p.min * 3)) * 100);
                   return (
                     <TableRow key={p.sku} className={isOutOfStock ? "opacity-60" : ""}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold ${isOutOfStock ? "bg-destructive/10 text-destructive" : "bg-secondary"}`}>
-                            {p.name[0]}
-                          </div>
-                          <div>
-                            <p className="font-semibold">{p.name}</p>
-                            <p className="text-xs text-muted-foreground sm:hidden">{p.sku}</p>
-                          </div>
+                      <TableCell className="px-1 py-2 sm:px-4">
+                        <div className="min-w-0 max-w-[95px] sm:max-w-none">
+                          <p className="font-semibold text-xs sm:text-sm truncate">{p.name}</p>
+                          <p className="text-[10px] text-muted-foreground sm:hidden">{p.sku}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden text-muted-foreground sm:table-cell">{p.sku}</TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="hidden text-muted-foreground sm:table-cell px-1 sm:px-4 py-2">{p.sku}</TableCell>
+                      <TableCell className="hidden md:table-cell px-1 sm:px-4 py-2">
                         <Badge variant="secondary" className="rounded-full">{p.cat}</Badge>
                       </TableCell>
-                      <TableCell className="text-right font-semibold">{fmt(p.price)}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-medium">{p.stock} units</span>
+                      <TableCell className="text-right font-semibold px-1 sm:px-4 py-2 text-xs sm:text-sm">{fmt(p.price)}</TableCell>
+                      <TableCell className="px-1 py-2 sm:px-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                            <span className="font-medium whitespace-nowrap">{p.stock} units</span>
                             {isOutOfStock ? (
-                              <Badge variant="outline" className="border-gray-400/30 bg-gray-100 text-[10px] text-gray-600">
-                                Out of Stock
+                              <Badge variant="outline" className="border-gray-400/30 bg-gray-100 text-[8px] sm:text-[10px] text-gray-600 px-1 py-0 h-3.5 sm:h-4">
+                                Out
                               </Badge>
                             ) : low ? (
-                              <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-[10px] text-destructive">
+                              <Badge variant="outline" className="border-destructive/30 bg-destructive/10 text-[8px] sm:text-[10px] text-destructive px-1 py-0 h-3.5 sm:h-4">
                                 Low
                               </Badge>
                             ) : null}
                           </div>
                           <Progress
                             value={pct}
-                            className={`h-1.5 ${isOutOfStock ? "[&>div]:bg-gray-400" : low ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"}`}
+                            className={`h-1 ${isOutOfStock ? "[&>div]:bg-gray-400" : low ? "[&>div]:bg-destructive" : "[&>div]:bg-primary"}`}
                           />
                         </div>
                       </TableCell>
                       {!isViewer && (
-                        <TableCell className="text-center">
+                        <TableCell className="text-center px-1 sm:px-4 py-2">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-secondary">
-                                <MoreVertical className="h-4 w-4" />
+                              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-secondary">
+                                <MoreVertical className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-52 rounded-xl">

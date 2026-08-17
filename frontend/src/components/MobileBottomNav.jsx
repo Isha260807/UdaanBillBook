@@ -13,6 +13,9 @@ const navItems = [
 export function MobileBottomNav() {
   const location = useLocation();
   const path = location.pathname;
+
+  if (path.endsWith('/sale/new') || path.endsWith('/purchase/new')) return null;
+
   const { toggleSidebar, openMobile } = useSidebar();
   const { user } = useMockAuth();
 

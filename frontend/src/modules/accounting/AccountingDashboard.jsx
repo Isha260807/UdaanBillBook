@@ -720,7 +720,7 @@ export function AccountingDashboard() {
   if (loading || !accountingData) return <div className="p-8 text-center text-muted-foreground">Loading ERP Accounting data...</div>;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-0">
       <PageHeader
         title="ERP Accounting & Khata"
         subtitle="Vyapar-grade multi-book accounting, ledgers, statements and financial reports."

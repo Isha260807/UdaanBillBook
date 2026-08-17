@@ -550,10 +550,12 @@ export function AddPartyDialog({
               <Input id="paname" value={f.name} onChange={(e) => set("name", e.target.value)} className="h-10 rounded-xl" />
             </div>
 
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {partySettings.phone && (
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <Label htmlFor="paphone">Mobile</Label>
+                <div className="space-y-1">
+                  <div className="h-5 flex items-center">
+                    <Label htmlFor="paphone" className="text-xs">Mobile</Label>
+                  </div>
                   <Input
                     id="paphone" inputMode="numeric" maxLength={10}
                     value={f.phone}
@@ -563,13 +565,13 @@ export function AddPartyDialog({
                 </div>
               )}
               {partySettings.partyType && (
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <Label className="whitespace-nowrap">Type</Label>
+                <div className="space-y-1">
+                  <div className="h-5 flex items-center justify-between gap-1">
+                    <Label className="text-xs whitespace-nowrap">Type</Label>
                     <button
                       type="button"
                       onClick={() => setShowAddType(true)}
-                      className="text-[11px] text-blue-600 hover:underline font-semibold whitespace-nowrap"
+                      className="text-[10px] text-blue-600 hover:underline font-semibold whitespace-nowrap leading-none"
                     >
                       + Add Type
                     </button>
@@ -580,7 +582,7 @@ export function AddPartyDialog({
                       set("balanceType", v === "Supplier" ? "To Pay" : "To Receive");
                     }
                   }}>
-                    <SelectTrigger className="h-10 rounded-xl w-full"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-10 rounded-xl w-full text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {partyTypes.map((t) => (
                         <SelectItem key={t._id || t.name} value={t.name}>{t.name}</SelectItem>
@@ -592,9 +594,11 @@ export function AddPartyDialog({
             </div>
 
             {partySettings.openingBalance && (
-              <div className="flex gap-3">
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <Label htmlFor="paopen">Opening balance (₹)</Label>
+              <div className="grid gap-3" style={{ gridTemplateColumns: "2fr 3fr" }}>
+                <div className="space-y-1">
+                  <div className="h-5 flex items-center">
+                    <Label htmlFor="paopen" className="text-xs">Opening (₹)</Label>
+                  </div>
                   <Input 
                     id="paopen" 
                     type="number" 
@@ -605,8 +609,10 @@ export function AddPartyDialog({
                     placeholder="0" 
                   />
                 </div>
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <Label>Balance Type</Label>
+                <div className="space-y-1">
+                  <div className="h-5 flex items-center">
+                    <Label className="text-xs">Balance Type</Label>
+                  </div>
                   <Select 
                     value={f.balanceType || (f.type === "Supplier" ? "To Pay" : "To Receive")} 
                     onValueChange={(v) => set("balanceType", v)}
@@ -626,6 +632,9 @@ export function AddPartyDialog({
                 </div>
               </div>
             )}
+
+
+
 
             {partySettings.gstin && (
               <div className="space-y-1.5">
