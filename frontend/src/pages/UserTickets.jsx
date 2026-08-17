@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Ticket, Clock, AlertCircle, CheckCircle2, Search, Plus, X, Send } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { PageHeader } from "@/components/PageHeader";
 
 const priorityStyles = {
   Critical: "bg-rose-500/10 text-rose-600 border-rose-200 dark:border-rose-900/30 dark:text-rose-400",
@@ -110,23 +111,19 @@ export default function UserTickets() {
   );
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Ticket className="h-6 w-6 text-primary" />
-            Support Helpdesk
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Raise tickets for query assistance and view status.</p>
-        </div>
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="flex items-center justify-center gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 text-sm font-semibold transition-all shadow-sm shrink-0 self-start sm:self-center"
-        >
-          <Plus className="h-4 w-4" /> Raise Ticket
-        </button>
-      </div>
+    <div className="space-y-6 max-w-5xl mx-auto px-4 py-6 pb-20 md:pb-6">
+      <PageHeader
+        title="Support Helpdesk"
+        subtitle="Raise tickets for query assistance and view status."
+        actions={
+          <button 
+            onClick={() => setIsOpen(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-1.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2.5 text-sm font-semibold transition-all shadow-sm shrink-0"
+          >
+            <Plus className="h-4 w-4" /> Raise Ticket
+          </button>
+        }
+      />
 
       {/* Search Bar */}
       <div className="relative max-w-md">
@@ -151,22 +148,22 @@ export default function UserTickets() {
           <p className="text-xs text-muted-foreground mt-1">If you need help or have any issues, raise a ticket above.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-3">
           {filtered.map(t => (
-            <div key={t.id || t._id} className="rounded-2xl border border-border/60 p-5 bg-card hover:border-primary/30 transition-all flex flex-col md:flex-row md:items-start justify-between gap-4 shadow-sm">
-              <div className="space-y-2 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <code className="text-xs text-muted-foreground font-mono">{t.id || t._id}</code>
-                  <span className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${priorityStyles[t.priority] || ""}`}>
+            <div key={t.id || t._id} className="rounded-2xl border border-border/60 p-4 sm:p-5 bg-card hover:border-primary/30 transition-all flex flex-col md:flex-row md:items-start justify-between gap-3 shadow-sm min-w-0">
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <code className="text-[10px] sm:text-xs text-muted-foreground font-mono truncate max-w-[100px] sm:max-w-none bg-slate-50 dark:bg-slate-900 px-1.5 py-0.5 rounded-md" title={t.id || t._id}>{t.id || t._id}</code>
+                  <span className={`inline-flex rounded-full border px-2 py-0.5 text-[9px] sm:text-[10px] font-bold ${priorityStyles[t.priority] || ""}`}>
                     {t.priority}
                   </span>
-                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${statusStyles[t.status] || ""}`}>
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-[9px] sm:text-[10px] font-semibold ${statusStyles[t.status] || ""}`}>
                     {t.status}
                   </span>
                 </div>
-                <h3 className="text-base font-semibold text-foreground">{t.subject}</h3>
-                <p className="text-sm text-muted-foreground line-clamp-2">{t.description}</p>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground leading-snug break-words">{t.subject}</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 break-words">{t.description}</p>
+                <div className="flex flex-row items-center gap-x-4 gap-y-1 flex-wrap text-[11px] sm:text-xs text-muted-foreground pt-1">
                   <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Raised: {new Date(t.createdAt).toLocaleDateString()}</span>
                   <span>Assignee: {t.assignee}</span>
                 </div>
@@ -223,17 +220,10 @@ export default function UserTickets() {
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  className="rounded-xl px-4 py-2.5 text-sm font-semibold text-muted-foreground hover:bg-muted transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Cancel
-                </button>
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  className="rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground px-5 py-2.5 text-sm font-semibold transition-colors flex items-center gap-1.5"
+                  className="w-full sm:w-auto justify-center rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground px-5 py-2.5 text-sm font-semibold transition-colors flex items-center gap-1.5"
                 >
                   <Send className="h-3.5 w-3.5" /> Submit Ticket
                 </button>
