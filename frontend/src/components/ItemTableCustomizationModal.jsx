@@ -149,8 +149,8 @@ export function ItemTableCustomizationModal({ isOpen, onClose, settings, updateS
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 sm:p-0">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl flex flex-col max-h-[95vh]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-0 sm:p-4">
+      <div className="bg-white rounded-none sm:rounded-lg shadow-xl w-full max-w-6xl flex flex-col h-screen max-h-screen sm:h-auto sm:max-h-[95vh]">
         
         {/* Header */}
         <div className="flex justify-between items-center p-4 shrink-0">
@@ -304,7 +304,7 @@ export function ItemTableCustomizationModal({ isOpen, onClose, settings, updateS
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t flex justify-end shrink-0 bg-slate-50 rounded-b-lg">
+        <div className="p-4 border-t flex justify-end shrink-0 bg-slate-50 rounded-b-none sm:rounded-b-lg">
           <button 
             onClick={handleSave}
             className="w-full sm:w-auto justify-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm text-sm"
