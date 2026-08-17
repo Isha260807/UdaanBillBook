@@ -908,8 +908,8 @@ export function AccountingDashboard() {
 
           {/* 2. GENERAL LEDGER */}
           {activeTab === "ledger" && (
-            <Card className="border shadow-sm bg-white rounded-2xl">
-              <CardHeader className="border-b">
+            <Card className="bg-transparent md:bg-white border-0 md:border md:shadow-sm shadow-none rounded-2xl">
+              <CardHeader className="border-b-0 md:border-b p-0 md:p-6 pb-3">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div>
                     <CardTitle className="text-base">General Ledger Accounts</CardTitle>
