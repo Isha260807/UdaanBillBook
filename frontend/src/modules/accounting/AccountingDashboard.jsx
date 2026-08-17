@@ -741,7 +741,7 @@ export function AccountingDashboard() {
         <Search className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
         <Input 
           type="text" 
-          placeholder="Global Accounting Search (Search invoices, voucher numbers, parties, descriptions, amounts...)"
+          placeholder={typeof window !== "undefined" && window.innerWidth < 640 ? "Search invoices, vouchers, parties..." : "Global Accounting Search (Search invoices, voucher numbers, parties, descriptions, amounts...)"}
           className="pl-10 h-11 bg-white border border-slate-200 shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-emerald-500"
           value={globalSearch}
           onChange={(e) => setGlobalSearch(e.target.value)}
