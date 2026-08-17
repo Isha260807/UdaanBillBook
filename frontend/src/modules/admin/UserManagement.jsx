@@ -247,31 +247,31 @@ export function UserManagement() {
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <Card className="border-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md min-w-0">
           <CardHeader className="p-3 pb-1">
-            <CardTitle className="text-[10px] sm:text-sm font-semibold text-muted-foreground truncate">Total Staff</CardTitle>
+            <CardTitle className="text-[10px] sm:text-sm font-semibold text-muted-foreground leading-tight">Total Staff</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
-            <div className="text-base sm:text-2xl font-black mt-0.5 sm:mt-1 truncate">{staffList.length}</div>
-            <p className="text-[9px] sm:text-xs text-muted-foreground truncate">
+            <div className="text-base sm:text-2xl font-black mt-0.5 sm:mt-1">{staffList.length}</div>
+            <p className="text-[9.5px] sm:text-xs text-muted-foreground leading-tight mt-0.5 break-words">
               {staffList.filter((u) => u.role === "Admin").length} admins · {staffList.filter((u) => u.role === "Staff").length} staff
             </p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md min-w-0">
           <CardHeader className="p-3 pb-1">
-            <CardTitle className="text-[10px] sm:text-sm font-semibold text-muted-foreground truncate">Active Now</CardTitle>
+            <CardTitle className="text-[10px] sm:text-sm font-semibold text-muted-foreground leading-tight">Active Now</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
-            <div className="text-base sm:text-2xl font-black mt-0.5 sm:mt-1 truncate">{activeCount}</div>
-            <p className="text-[9px] sm:text-xs text-muted-foreground truncate">Currently active</p>
+            <div className="text-base sm:text-2xl font-black mt-0.5 sm:mt-1">{activeCount}</div>
+            <p className="text-[9.5px] sm:text-xs text-muted-foreground leading-tight mt-0.5 break-words">Currently active</p>
           </CardContent>
         </Card>
         <Card className="border-0 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-md min-w-0">
           <CardHeader className="p-3 pb-1">
-            <CardTitle className="text-[10px] sm:text-sm font-semibold text-muted-foreground truncate">Inactive</CardTitle>
+            <CardTitle className="text-[10px] sm:text-sm font-semibold text-muted-foreground leading-tight">Inactive</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0">
-            <div className="text-base sm:text-2xl font-black mt-0.5 sm:mt-1 truncate">{staffList.length - activeCount}</div>
-            <p className="text-[9px] sm:text-xs text-muted-foreground truncate">Deactivated accounts</p>
+            <div className="text-base sm:text-2xl font-black mt-0.5 sm:mt-1">{staffList.length - activeCount}</div>
+            <p className="text-[9.5px] sm:text-xs text-muted-foreground leading-tight mt-0.5 break-words">Deactivated accounts</p>
           </CardContent>
         </Card>
       </div>
