@@ -832,7 +832,7 @@ export function AccountingDashboard() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-semibold">ERP Quick Actions</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-4 md:grid-cols-8 gap-3">
+                <CardContent className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-8 gap-3">
                   {[
                     { label: "Cash In", tab: "receipts" },
                     { label: "Cash Out", tab: "payments" },
