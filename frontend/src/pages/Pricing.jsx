@@ -54,17 +54,17 @@ export default function Pricing() {
   }
 
   return (
-    <div className="space-y-6 pb-10">
-      <div className="text-center max-w-2xl mx-auto space-y-4 pt-6">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+    <div className="space-y-6 pb-20 md:pb-10">
+      <div className="text-center max-w-2xl mx-auto space-y-2 sm:space-y-4 pt-4 sm:pt-6 px-4">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight sm:text-4xl">
           Simple, transparent pricing
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-xs sm:text-sm text-muted-foreground sm:text-lg">
           Choose the perfect plan for your business needs. Upgrade anytime to unlock more powerful features.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 pt-4 sm:pt-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {pricingPlans.map((plan) => (
           <Card 
             key={plan.name} 
@@ -78,35 +78,35 @@ export default function Pricing() {
               </div>
             )}
             
-            <CardHeader>
-              <CardTitle className="text-2xl flex items-center justify-between">
+            <CardHeader className="p-4 sm:p-6">
+              <CardTitle className="text-xl sm:text-2xl flex items-center justify-between">
                 {plan.name}
                 {(currentPlan || "").toLowerCase() === (plan.name || "").toLowerCase() && (
-                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80">
+                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100/80 text-[10px] sm:text-xs">
                     Current Plan
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription>{plan.description || `Perfect for ${plan.name} pricing needs`}</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">{plan.description || `Perfect for ${plan.name} pricing needs`}</CardDescription>
               
-              <div className="mt-4 flex items-baseline text-4xl font-extrabold">
+              <div className="mt-2.5 sm:mt-4 flex items-baseline text-3xl sm:text-4xl font-extrabold">
                 ₹{plan.price}
-                <span className="ml-1 text-xl font-medium text-muted-foreground">/mo</span>
+                <span className="ml-1 text-lg sm:text-xl font-medium text-muted-foreground">/mo</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Billed annually at ₹{plan.price * 12}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">Billed annually at ₹{plan.price * 12}</p>
               
-              <div className="flex items-center gap-2 mt-4 text-sm font-medium text-muted-foreground bg-muted/50 w-fit px-3 py-1.5 rounded-full">
+              <div className="flex items-center gap-1.5 sm:gap-2 mt-3 sm:mt-4 text-xs sm:text-sm font-semibold text-muted-foreground bg-muted/60 w-fit px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full">
                 {getPlatformIcon(plan.platforms)}
                 {plan.platforms || "Mobile + Desktop"}
               </div>
             </CardHeader>
             
-            <CardContent className="flex-1">
-              <ul className="space-y-3">
+            <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0 flex-1">
+              <ul className="space-y-2 sm:space-y-3">
                 {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-sm">
-                    <Check className="w-5 h-5 text-primary shrink-0" />
-                    <span className="text-foreground">
+                  <li key={idx} className="flex items-start gap-2 sm:gap-3 text-xs sm:text-sm">
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-foreground text-xs sm:text-sm">
                       {feature}
                     </span>
                   </li>
@@ -114,9 +114,9 @@ export default function Pricing() {
               </ul>
             </CardContent>
             
-            <CardFooter>
+            <CardFooter className="p-4 pt-0 sm:p-6">
               <Button 
-                className={`w-full h-11 text-base rounded-xl ${
+                className={`w-full h-9 sm:h-11 text-xs sm:text-base rounded-xl ${
                   (currentPlan || "").toLowerCase() === (plan.name || "").toLowerCase() 
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-md" 
                     : ""
