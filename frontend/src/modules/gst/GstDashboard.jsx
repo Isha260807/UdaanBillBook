@@ -515,20 +515,20 @@ export function GstDashboard() {
   const hasNoGstData = invoices.length === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-0">
       <PageHeader
         title="ERP GST & Taxation"
         subtitle="Manage business GSTIN returns, Input Tax Credit registers, and tax liabilities dynamically."
         actions={
-          <div className="flex gap-2">
-            <Button variant="outline" className="rounded-xl border-slate-200" onClick={() => setIsGstCalculatorOpen(true)}>
-              <Calculator className="mr-1.5 h-3.5 w-3.5 text-emerald-600" /> GST Calculator
+          <div className="flex w-full flex-nowrap items-center gap-1 sm:gap-2">
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1 rounded-xl border-slate-200 h-8 text-[9.5px] font-semibold sm:px-4 sm:h-9 sm:text-sm" onClick={() => setIsGstCalculatorOpen(true)}>
+              <Calculator className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-4 sm:w-4 text-emerald-600" /> GST Calc
             </Button>
-            <Button variant="outline" className="rounded-xl border-slate-200" onClick={fetchData}>
-              <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Sync Data
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1 rounded-xl border-slate-200 h-8 text-[9.5px] font-semibold sm:px-4 sm:h-9 sm:text-sm" onClick={fetchData}>
+              <RefreshCw className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-4 sm:w-4" /> Sync
             </Button>
-            <Button className="rounded-xl bg-emerald-600 hover:bg-emerald-700" onClick={exportGstrSummaryPdf}>
-              <Download className="mr-1.5 h-3.5 w-3.5" /> GSTR Summary
+            <Button size="sm" className="flex-1 sm:flex-none px-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 h-8 text-[9.5px] font-semibold sm:px-4 sm:h-9 sm:text-sm" onClick={exportGstrSummaryPdf}>
+              <Download className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-4 sm:w-4" /> Summary
             </Button>
           </div>
         }
@@ -557,7 +557,7 @@ export function GstDashboard() {
         <Search className="absolute left-4 top-3.5 h-4 w-4 text-muted-foreground pointer-events-none" />
         <Input 
           type="text" 
-          placeholder="Global GST Search (Search invoices, customers, suppliers, GSTINs...)"
+          placeholder={typeof window !== "undefined" && window.innerWidth < 640 ? "Search GST invoices, GSTINs..." : "Global GST Search (Search invoices, customers, suppliers, GSTINs...)"}
           className="pl-10 h-11 bg-white border border-slate-200 shadow-sm rounded-xl focus-visible:ring-1 focus-visible:ring-emerald-500"
           value={globalSearch}
           onChange={(e) => setGlobalSearch(e.target.value)}
@@ -567,8 +567,8 @@ export function GstDashboard() {
       {/* Sub-Navigation Tabs */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Side Sub-Navigation */}
-        <div className="w-full lg:w-64 bg-white rounded-2xl p-3 border shadow-sm shrink-0 space-y-1">
-          <p className="text-[10px] font-bold text-slate-400 uppercase px-3 mb-2 tracking-wider">GST Books</p>
+        <div className="w-full lg:w-64 bg-transparent lg:bg-white rounded-2xl p-0 lg:p-3 border-0 lg:border shadow-none lg:shadow-sm shrink-0 flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-1 lg:space-y-1 [&::-webkit-scrollbar]:hidden">
+          <p className="hidden lg:block text-[10px] font-bold text-slate-400 uppercase px-3 mb-2 tracking-wider">GST Books</p>
           {[
             { id: "overview", label: "GST Overview", icon: PieChart },
             { id: "salesGst", label: "Sales GST Register", icon: ArrowUpRight },
@@ -577,7 +577,7 @@ export function GstDashboard() {
             <button
               key={nav.id}
               onClick={() => handleTabChange(nav.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 lg:gap-3 px-3 py-2 lg:py-2.5 rounded-xl text-left text-xs font-semibold transition-all shrink-0 whitespace-nowrap lg:w-full ${
                 activeTab === nav.id 
                   ? "bg-emerald-50 text-emerald-700 shadow-sm" 
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -585,7 +585,7 @@ export function GstDashboard() {
             >
               <nav.icon className={`h-4 w-4 ${activeTab === nav.id ? "text-emerald-600" : "text-slate-400"}`} />
               {nav.label}
-              {activeTab === nav.id && <ChevronRight className="ml-auto h-3 w-3" />}
+              {activeTab === nav.id && <ChevronRight className="ml-auto h-3 w-3 hidden lg:block" />}
             </button>
           ))}
         </div>
@@ -655,19 +655,19 @@ export function GstDashboard() {
                   { label: "Pending Returns", val: gstStats.pendingReturns, desc: "Returns due this period", style: "border-t-blue-500", rawVal: true }
                 ].map((k, idx) => (
                   <Card key={idx} className={`border-0 border-t-4 shadow-sm rounded-xl ${k.style}`}>
-                    <CardContent className="p-4">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{k.label}</p>
-                      <p className="text-2xl font-black mt-2">
+                    <CardContent className="p-3 sm:p-4">
+                      <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">{k.label}</p>
+                      <p className="text-base sm:text-2xl font-black mt-1 sm:mt-2 truncate">
                         {k.rawVal ? k.val : fmt(k.val)}
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">{k.desc}</p>
+                      <p className="text-[9px] sm:text-[10px] text-muted-foreground mt-1 truncate">{k.desc}</p>
                     </CardContent>
                   </Card>
                 ))}
               </div>
 
               {/* Monthly Stats Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
                   { label: "GST Collected", val: gstStats.outputGst, color: "text-emerald-600" },
                   { label: "GST Paid", val: gstStats.inputGst, color: "text-red-500" },
@@ -675,13 +675,13 @@ export function GstDashboard() {
                   { label: "Monthly Purchase", val: gstStats.monthlyPurchase, color: "text-slate-800" }
                 ].map((s, idx) => (
                   <Card key={idx} className="border shadow-sm bg-white rounded-xl">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-muted-foreground">{s.label}</p>
-                        <p className={`text-lg font-bold mt-1 ${s.color}`}>{fmt(s.val)}</p>
+                    <CardContent className="p-3 sm:p-4 flex items-center justify-between min-w-0">
+                      <div className="min-w-0">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground truncate">{s.label}</p>
+                        <p className={`text-sm sm:text-lg font-bold mt-1 ${s.color} truncate`}>{fmt(s.val)}</p>
                       </div>
-                      <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center">
-                        <TrendingUp className="h-4 w-4 text-slate-400" />
+                      <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
+                        <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
                       </div>
                     </CardContent>
                   </Card>
@@ -766,8 +766,8 @@ export function GstDashboard() {
 
           {/* 2. SALES GST REGISTER */}
           {activeTab === "salesGst" && (
-            <Card className="border shadow-sm bg-white rounded-2xl">
-              <CardHeader className="border-b">
+            <Card className="bg-transparent md:bg-white border-0 md:border md:shadow-sm shadow-none rounded-2xl">
+              <CardHeader className="border-b-0 md:border-b p-0 md:p-6 pb-3">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div>
                     <CardTitle className="text-base">Sales GST Register (Output Tax)</CardTitle>
@@ -783,7 +783,7 @@ export function GstDashboard() {
                   <select 
                     value={salesFilter.date}
                     onChange={(e) => setSalesFilter({ ...salesFilter, date: e.target.value })}
-                    className="h-8 rounded-lg border text-xs bg-slate-50 px-2"
+                    className="h-8 rounded-lg border text-[10.5px] sm:text-xs bg-slate-50 px-1.5 sm:px-2 focus:outline-none w-full"
                   >
                     <option value="all">All Dates</option>
                     <option value="today">Today</option>
@@ -792,7 +792,7 @@ export function GstDashboard() {
                   <select 
                     value={salesFilter.customer}
                     onChange={(e) => setSalesFilter({ ...salesFilter, customer: e.target.value })}
-                    className="h-8 rounded-lg border text-xs bg-slate-50 px-2"
+                    className="h-8 rounded-lg border text-[10.5px] sm:text-xs bg-slate-50 px-1.5 sm:px-2 focus:outline-none w-full"
                   >
                     <option value="all">All Customers</option>
                     {Array.from(new Set(salesInvoices.map(i => i.partyName))).map(name => (
@@ -878,8 +878,8 @@ export function GstDashboard() {
 
           {/* 3. PURCHASE GST (ITC) */}
           {activeTab === "purchaseGst" && (
-            <Card className="border shadow-sm bg-white rounded-2xl">
-              <CardHeader className="border-b">
+            <Card className="bg-transparent md:bg-white border-0 md:border md:shadow-sm shadow-none rounded-2xl">
+              <CardHeader className="border-b-0 md:border-b p-0 md:p-6 pb-3">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div>
                     <CardTitle className="text-base">Purchase GST Register (Input Tax Credit)</CardTitle>
@@ -895,7 +895,7 @@ export function GstDashboard() {
                   <select 
                     value={purchaseFilter.date}
                     onChange={(e) => setPurchaseFilter({ ...purchaseFilter, date: e.target.value })}
-                    className="h-8 rounded-lg border text-xs bg-slate-50 px-2"
+                    className="h-8 rounded-lg border text-[10.5px] sm:text-xs bg-slate-50 px-1.5 sm:px-2 focus:outline-none w-full"
                   >
                     <option value="all">All Dates</option>
                     <option value="today">Today</option>
@@ -904,7 +904,7 @@ export function GstDashboard() {
                   <select 
                     value={purchaseFilter.supplier}
                     onChange={(e) => setPurchaseFilter({ ...purchaseFilter, supplier: e.target.value })}
-                    className="h-8 rounded-lg border text-xs bg-slate-50 px-2"
+                    className="h-8 rounded-lg border text-[10.5px] sm:text-xs bg-slate-50 px-1.5 sm:px-2 focus:outline-none w-full"
                   >
                     <option value="all">All Suppliers</option>
                     {Array.from(new Set(purchaseInvoices.map(i => i.partyName))).map(name => (
