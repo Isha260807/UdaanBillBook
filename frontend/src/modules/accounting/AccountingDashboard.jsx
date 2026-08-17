@@ -1712,11 +1712,8 @@ export function AccountingDashboard() {
               />
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0 pt-2">
-              <Button type="button" variant="ghost" onClick={() => setIsBankModalOpen(false)} className="rounded-xl">
-                Cancel
-              </Button>
-              <Button type="submit" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 font-semibold px-5">
+            <DialogFooter className="pt-2">
+              <Button type="submit" className="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 font-semibold h-10">
                 Add Bank Account
               </Button>
             </DialogFooter>
