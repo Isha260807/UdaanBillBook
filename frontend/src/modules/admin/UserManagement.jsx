@@ -289,8 +289,8 @@ export function UserManagement() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="sm" className="rounded-xl text-xs h-9 px-3 shrink-0" onClick={handleFilter}>
-              <Filter className="mr-1.5 h-3.5 w-3.5" /> Filter
+            <Button variant="outline" size="icon" className="rounded-xl h-9 w-9 shrink-0" onClick={handleFilter} title="Filter">
+              <Filter className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
