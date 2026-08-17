@@ -1069,25 +1069,25 @@ export function AccountingDashboard() {
                     <table className="w-full text-left border-collapse text-xs">
                       <thead>
                         <tr className="bg-slate-50 border-b">
-                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[55px] sm:w-auto text-[10px] sm:text-xs">Date</th>
-                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[65px] sm:w-auto text-[10px] sm:text-xs">Voucher No</th>
-                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[50px] sm:w-auto text-[10px] sm:text-xs">Party</th>
-                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[65px] sm:w-auto text-[10px] sm:text-xs">Description</th>
-                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 text-emerald-600 w-[75px] sm:w-auto text-[10px] sm:text-xs">Cash In (Dr)</th>
-                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 text-red-600 w-[75px] sm:w-auto text-[10px] sm:text-xs">Cash Out (Cr)</th>
-                          <th className="p-1.5 py-2.5 sm:p-3 font-semibold text-slate-600 w-[70px] sm:w-auto text-[10px] sm:text-xs">Balance</th>
+                          <th className="p-3 font-semibold text-slate-600">Date</th>
+                          <th className="p-3 font-semibold text-slate-600">Voucher No</th>
+                          <th className="p-3 font-semibold text-slate-600">Party</th>
+                          <th className="p-3 font-semibold text-slate-600">Description</th>
+                          <th className="p-3 font-semibold text-slate-600 text-emerald-600">Cash In (Dr)</th>
+                          <th className="p-3 font-semibold text-slate-600 text-red-600">Cash Out (Cr)</th>
+                          <th className="p-3 font-semibold text-slate-600">Balance</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
                         {combinedEntries.filter(e => e.mode === "Cash").map((item) => (
                           <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                            <td className="p-1.5 py-2.5 sm:p-3 max-w-[55px] sm:max-w-none truncate">{item.date}</td>
-                            <td className="p-1.5 py-2.5 sm:p-3 font-mono font-semibold max-w-[65px] sm:max-w-none truncate">{item.voucher}</td>
-                            <td className="p-1.5 py-2.5 sm:p-3 font-medium max-w-[50px] sm:max-w-none truncate">{item.party}</td>
-                            <td className="p-1.5 py-2.5 sm:p-3 text-muted-foreground max-w-[65px] sm:max-w-none truncate">{item.description}</td>
-                            <td className="p-1.5 py-2.5 sm:p-3 text-emerald-600 font-bold w-[75px] sm:w-auto whitespace-nowrap">{item.debit > 0 ? fmt(item.debit) : "—"}</td>
-                            <td className="p-1.5 py-2.5 sm:p-3 text-red-600 font-bold w-[75px] sm:w-auto whitespace-nowrap">{item.credit > 0 ? fmt(item.credit) : "—"}</td>
-                            <td className="p-1.5 py-2.5 sm:p-3 font-bold text-slate-800 w-[70px] sm:w-auto whitespace-nowrap">{fmt(item.runningBalance)}</td>
+                            <td className="p-3">{item.date}</td>
+                            <td className="p-3 font-mono font-semibold">{item.voucher}</td>
+                            <td className="p-3 font-medium">{item.party}</td>
+                            <td className="p-3 text-muted-foreground">{item.description}</td>
+                            <td className="p-3 text-emerald-600 font-bold">{item.debit > 0 ? fmt(item.debit) : "—"}</td>
+                            <td className="p-3 text-red-600 font-bold">{item.credit > 0 ? fmt(item.credit) : "—"}</td>
+                            <td className="p-3 font-bold text-slate-800">{fmt(item.runningBalance)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1104,13 +1104,13 @@ export function AccountingDashboard() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {Object.entries(bankBalances).map(([bName, bBal]) => (
                   <Card key={bName} className="border border-slate-100 shadow-sm border-l-4 border-l-emerald-600 bg-white rounded-xl relative">
-                    <CardContent className="p-5">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700">
-                          <Building2 className="h-5 w-5" />
+                    <CardContent className="p-3 sm:p-5">
+                      <div className="flex justify-between items-start mb-1.5 sm:mb-2">
+                        <div className="p-1.5 sm:p-2 rounded-lg bg-emerald-50 text-emerald-700">
+                          <Building2 className="h-4 w-4 sm:h-5 sm:w-5" />
                         </div>
                         <div className="flex items-center gap-1">
-                          <Badge variant="secondary" className="rounded-full text-[9px]">Active</Badge>
+                          <Badge variant="secondary" className="rounded-full text-[9px] px-1.5 py-0">Active</Badge>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -1122,14 +1122,14 @@ export function AccountingDashboard() {
                           </Button>
                         </div>
                       </div>
-                      <p className="text-sm font-bold">{bName} Bank Account</p>
-                      <p className="text-2xl font-black text-slate-800 mt-2">{fmt(bBal)}</p>
-                      <div className="mt-4 flex gap-2">
-                        <Button variant="outline" size="sm" className="flex-1 text-[11px] h-8 rounded-lg" onClick={() => handleDownloadBankStatement(bName, bBal)}>Statement</Button>
+                      <p className="text-xs sm:text-sm font-bold">{bName} Bank Account</p>
+                      <p className="text-lg sm:text-2xl font-black text-slate-800 mt-1 sm:mt-2">{fmt(bBal)}</p>
+                      <div className="mt-3 flex gap-1.5">
+                        <Button variant="outline" size="sm" className="flex-1 text-[10px] sm:text-[11px] h-7 sm:h-8 rounded-lg px-1" onClick={() => handleDownloadBankStatement(bName, bBal)}>Statement</Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          className="flex-1 text-[11px] h-8 rounded-lg" 
+                          className="flex-1 text-[10px] sm:text-[11px] h-7 sm:h-8 rounded-lg px-1" 
                           onClick={() => {
                             setContraForm({ from: bName, to: "Cash", amount: "", description: "" });
                             setActiveTab("contra");
