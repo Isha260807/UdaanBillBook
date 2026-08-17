@@ -54,7 +54,7 @@ export function ChangeTransactionNamesModal({ isOpen, onClose, settings, updateS
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 sm:p-0">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b shrink-0">
@@ -85,7 +85,7 @@ export function ChangeTransactionNamesModal({ isOpen, onClose, settings, updateS
         <div className="p-4 border-t flex justify-end shrink-0 bg-slate-50 rounded-b-lg">
           <button 
             onClick={handleSave}
-            className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded shadow-sm text-sm"
+            className="w-full sm:w-auto justify-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm text-sm"
           >
             DONE
           </button>

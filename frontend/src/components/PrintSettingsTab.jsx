@@ -83,7 +83,6 @@ export function PrintSettingsTab({ settings, updateSettings, isMobile }) {
         {!!checked && (
           <div className="relative flex-1 max-w-[320px] flex items-center gap-2 pl-8 mt-1.5">
             <div className="relative flex-1">
-              <Label className="absolute -top-2 left-2 bg-white px-1 text-[11px] text-slate-500 z-10">{label}</Label>
               <Input 
                 type={inputType}
                 value={value} 

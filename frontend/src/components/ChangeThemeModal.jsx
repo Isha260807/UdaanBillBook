@@ -2,8 +2,16 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, LayoutTemplate, Palette, Sparkles, FileText, Truck } from "lucide-react";
+import { Check, LayoutTemplate, Palette, Sparkles, FileText, Truck, ChevronDown } from "lucide-react";
 import { InvoiceTemplateRenderer } from "@/components/invoice-templates/InvoiceTemplateRenderer";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { TEMPLATES } from "@/components/invoice-templates/registry";
 import { toast } from "sonner";
 
@@ -72,6 +80,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
   const [selectedColor, setSelectedColor] = useState(currentColor);
   const [templateColors, setTemplateColors] = useState(savedTemplateColors);
   const [activeTab, setActiveTab] = useState("INVOICE");
+  const [selectedThemes, setSelectedThemes] = useState([currentTheme]);
 
   useEffect(() => {
     if (isOpen) {
@@ -84,6 +93,9 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
       setSelectedTheme(theme);
       setSelectedColor(color);
       setTemplateColors(colorsMap);
+
+      const enabled = settings?.printSettings?.enabledTemplates || [theme];
+      setSelectedThemes(enabled);
 
       if (Object.keys(TEMPLATES.EWAY || {}).includes(theme)) {
         setActiveTab("EWAY");
@@ -100,6 +112,24 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
     setSelectedTheme(tmplKey);
     const colorForTmpl = templateColors[tmplKey] || DEFAULT_TEMPLATE_COLORS[tmplKey] || "#0ea5e9";
     setSelectedColor(colorForTmpl);
+  };
+
+  const handleToggleTheme = (tmplKey) => {
+    setSelectedThemes(prev => {
+      let next;
+      if (prev.includes(tmplKey)) {
+        if (prev.length <= 1) return prev;
+        next = prev.filter(t => t !== tmplKey);
+      } else {
+        next = [...prev, tmplKey];
+      }
+      if (next.includes(tmplKey)) {
+        handleSelectTemplate(tmplKey);
+      } else if (next.length > 0) {
+        handleSelectTemplate(next[next.length - 1]);
+      }
+      return next;
+    });
   };
 
   const handleSelectColor = (hex) => {
@@ -121,9 +151,10 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
       invoiceTemplate: selectedTheme,
       themeColor: selectedColor,
       activeColor: selectedColor,
-      templateColors: updatedMap
+      templateColors: updatedMap,
+      enabledTemplates: selectedThemes
     });
-    toast.success(`Template updated to ${selectedTheme}`);
+    toast.success(`Active templates updated`);
     onClose();
   };
 
@@ -155,16 +186,20 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="fixed left-0 top-0 translate-x-0 translate-y-0 lg:left-[50%] lg:top-[50%] lg:translate-x-[-50%] lg:translate-y-[-50%] w-screen max-w-none lg:max-w-5xl h-screen max-h-none lg:h-[88vh] flex flex-col p-0 overflow-hidden rounded-none lg:rounded-2xl bg-card border-0 lg:border shadow-none lg:shadow-2xl">
+      <DialogContent 
+        className={typeof window !== "undefined" && window.innerWidth < 1024 
+          ? "fixed !left-0 !top-0 !translate-x-0 !translate-y-0 !w-screen !max-w-none !h-screen !max-h-none flex flex-col p-0 overflow-hidden !rounded-none !border-0 bg-card shadow-none" 
+          : "max-w-5xl h-[88vh] flex flex-col p-0 overflow-hidden rounded-2xl bg-card border shadow-2xl"}
+      >
         {/* Header */}
-        <DialogHeader className="p-4 border-b bg-muted/20 flex flex-row items-center justify-between shrink-0">
+        <DialogHeader className="p-3 sm:p-4 border-b bg-muted/20 flex flex-row items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-primary/10 text-primary">
-              <Sparkles className="h-5 w-5" />
+            <div className="p-1.5 rounded-xl bg-primary/10 text-primary hidden sm:flex">
+              <Sparkles className="h-4.5 w-4.5" />
             </div>
             <div>
-              <DialogTitle className="text-lg font-bold text-foreground">Transaction Theme & Templates</DialogTitle>
-              <p className="text-xs text-muted-foreground">Select layout templates for Invoice and E-Way Bill</p>
+              <DialogTitle className="text-sm sm:text-lg font-bold text-foreground">Transaction Theme & Templates</DialogTitle>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Select layout templates for Invoice and E-Way Bill</p>
             </div>
           </div>
         </DialogHeader>
@@ -178,27 +213,33 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
               <button
                 type="button"
                 onClick={() => setActiveTab("INVOICE")}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                className={`flex-1 py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
                   activeTab === "INVOICE"
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
-                <FileText className="h-3.5 w-3.5" />
-                Invoice Templates ({invoiceTemplateKeys.length})
+                <FileText className="h-3.5 w-3.5 hidden sm:inline-block" />
+                <span>
+                  <span className="hidden sm:inline">Invoice Templates</span>
+                  <span className="inline sm:hidden">Invoice</span> ({invoiceTemplateKeys.length})
+                </span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("EWAY")}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                className={`flex-1 py-2 px-2 sm:px-3 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
                   activeTab === "EWAY"
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                 }`}
               >
-                <Truck className="h-3.5 w-3.5" />
-                E-Way Bill ({ewayTemplateKeys.length})
+                <Truck className="h-3.5 w-3.5 hidden sm:inline-block" />
+                <span>
+                  <span className="hidden sm:inline">E-Way Bill Templates</span>
+                  <span className="inline sm:hidden">E-Way Bill</span> ({ewayTemplateKeys.length})
+                </span>
               </button>
             </div>
 
@@ -270,31 +311,54 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
                   </div>
 
                   <div className="space-y-2">
-                    {(activeTab === "INVOICE" ? invoiceTemplateKeys : ewayTemplateKeys).map((tmplKey) => {
-                      const isSelected = selectedTheme === tmplKey;
-                      const desc = INVOICE_DESCRIPTIONS[tmplKey] || EWAY_DESCRIPTIONS[tmplKey] || "Standard template format";
-                      return (
-                        <div
-                          key={tmplKey}
-                          onClick={() => handleSelectTemplate(tmplKey)}
-                          className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
-                            isSelected 
-                              ? "bg-primary/5 border-primary shadow-sm ring-1 ring-primary/30" 
-                              : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/80"
-                          }`}
-                        >
-                          <div className="space-y-0.5">
-                            <p className={`text-xs font-bold ${isSelected ? "text-primary" : "text-slate-800"}`}>{tmplKey}</p>
-                            <p className="text-[11px] text-muted-foreground">{desc}</p>
-                          </div>
-                          {isSelected && (
-                            <span className="h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0">
-                              <Check className="h-3 w-3" />
-                            </span>
-                          )}
-                        </div>
-                      );
-                    })}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="w-full justify-between rounded-xl h-10 px-3 bg-white border border-slate-200">
+                          <span className="truncate text-xs font-semibold text-slate-700">
+                            {selectedThemes.length === 0 
+                              ? "Select Templates" 
+                              : `${selectedThemes.length} Selected (${selectedThemes.slice(0, 2).map(t => t.split(" ")[0]).join(", ")}${selectedThemes.length > 2 ? "..." : ""})`}
+                          </span>
+                          <ChevronDown className="h-4 w-4 text-slate-500 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-72 max-h-[300px] overflow-y-auto rounded-xl z-[110]">
+                        <DropdownMenuLabel className="text-xs">Choose Templates</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {(activeTab === "INVOICE" ? invoiceTemplateKeys : ewayTemplateKeys).map((tmplKey) => {
+                          const isSelected = selectedThemes.includes(tmplKey);
+                          return (
+                            <DropdownMenuItem
+                              key={tmplKey}
+                              closeOnSelect={false}
+                              className="flex items-center justify-between py-2 px-3 cursor-pointer text-xs focus:bg-emerald-50 focus:text-slate-900"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleToggleTheme(tmplKey);
+                              }}
+                            >
+                              <div className="flex items-center gap-2 min-w-0 w-full">
+                                <div className={`h-4 w-4 border rounded flex items-center justify-center shrink-0 ${isSelected ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300 bg-white"}`}>
+                                  {isSelected && <Check className="h-3 w-3 stroke-[3.5px]" />}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-bold text-slate-800 truncate text-xs">{tmplKey}</p>
+                                  <p className="text-[10px] text-muted-foreground truncate">{INVOICE_DESCRIPTIONS[tmplKey] || EWAY_DESCRIPTIONS[tmplKey] || "Template design"}</p>
+                                </div>
+                              </div>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    {/* Show active preview template card below dropdown */}
+                    <div className="p-3 bg-white border border-slate-200/80 rounded-xl shadow-sm space-y-1">
+                      <p className="text-[9px] font-extrabold text-emerald-600 uppercase tracking-wider">Active Preview Template</p>
+                      <p className="text-xs font-bold text-slate-800">{selectedTheme}</p>
+                      <p className="text-[11px] text-muted-foreground leading-normal">{INVOICE_DESCRIPTIONS[selectedTheme] || EWAY_DESCRIPTIONS[selectedTheme] || "Standard template format"}</p>
+                    </div>
                   </div>
                 </div>
               </div>

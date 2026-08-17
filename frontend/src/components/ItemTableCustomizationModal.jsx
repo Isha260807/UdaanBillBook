@@ -135,7 +135,6 @@ export function ItemTableCustomizationModal({ isOpen, onClose, settings, updateS
           </Label>
           {inputLabel && (
             <div className="relative mt-1">
-              <Label className="absolute -top-2 left-2 bg-white px-1 text-[10px] text-slate-400 z-10">{inputLabel}</Label>
               <Input 
                 value={customName} 
                 onChange={(e) => handleNameUpdate(key, e.target.value)}
@@ -150,7 +149,7 @@ export function ItemTableCustomizationModal({ isOpen, onClose, settings, updateS
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 sm:p-0">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl flex flex-col max-h-[95vh]">
         
         {/* Header */}
@@ -308,7 +307,7 @@ export function ItemTableCustomizationModal({ isOpen, onClose, settings, updateS
         <div className="p-4 border-t flex justify-end shrink-0 bg-slate-50 rounded-b-lg">
           <button 
             onClick={handleSave}
-            className="px-6 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded shadow-sm text-sm"
+            className="w-full sm:w-auto justify-center px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm text-sm"
           >
             DONE
           </button>
