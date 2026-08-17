@@ -155,7 +155,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl h-[88vh] flex flex-col p-0 overflow-hidden rounded-2xl bg-card border shadow-2xl">
+      <DialogContent className="w-full max-w-full lg:max-w-5xl h-screen lg:h-[88vh] flex flex-col p-0 overflow-hidden rounded-none lg:rounded-2xl bg-card border-0 lg:border shadow-none lg:shadow-2xl">
         {/* Header */}
         <DialogHeader className="p-4 border-b bg-muted/20 flex flex-row items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
@@ -330,17 +330,14 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
         </div>
 
         {/* Footer */}
-        <DialogFooter className="p-3 border-t bg-white flex flex-row items-center justify-between shrink-0">
-          <div className="text-xs text-muted-foreground flex items-center gap-2 pl-2">
+        <DialogFooter className="p-3 border-t bg-white flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+          <div className="text-xs text-muted-foreground flex items-center gap-2 pl-2 self-start sm:self-center">
             <span>Selected Theme:</span>
             <span className="h-3.5 w-3.5 rounded-full border shadow-sm inline-block" style={{ backgroundColor: selectedColor }}></span>
             <span className="font-bold text-slate-700">{selectedTheme}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={onClose} className="rounded-xl text-xs h-9">
-              Cancel
-            </Button>
-            <Button onClick={handleApply} className="rounded-xl text-xs h-9 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button onClick={handleApply} className="w-full sm:w-auto rounded-xl text-xs h-9 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white">
               Apply Changes
             </Button>
           </div>
