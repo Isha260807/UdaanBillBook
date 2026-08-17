@@ -1011,16 +1011,19 @@ export default function NewSale() {
   return (
     <div className="min-h-[100vh] -mx-4 -mt-4 md:-mx-6 md:-mt-6 lg:-mx-8 lg:-mt-8 bg-slate-100 font-sans text-slate-900 flex flex-col">
       {/* Top App Bar */}
-      <div className="flex h-11 md:h-14 shrink-0 items-center justify-start sm:justify-between gap-1 sm:gap-4 bg-white px-1 sm:px-2 md:px-4 border-b">
-        <div className="flex items-center gap-1 shrink-0">
-          <button onClick={() => navigate(-1)} className="p-0.5 text-slate-800 hover:bg-slate-50 rounded-lg transition-colors shrink-0">
-            <ArrowLeft className="h-4 w-4 md:h-6 md:w-6" />
+      {/* Mobile: 2-row layout | Desktop: single row */}
+      <div className="shrink-0 bg-white border-b md:flex md:h-14 md:items-center md:justify-between md:gap-4 md:px-4 md:overflow-x-hidden">
+        {/* Row 1 (mobile) / Left side (desktop): Back + Dropdowns */}
+        <div className="flex h-10 sm:h-11 md:h-auto items-center gap-1 px-1.5 sm:px-2 md:px-0 min-w-0 md:flex-1">
+          <button onClick={() => navigate(-1)} className="p-0.5 text-slate-800 hover:bg-slate-50 rounded-md transition-colors shrink-0">
+            <ArrowLeft className="h-3.5 w-3.5 md:h-6 md:w-6" />
           </button>
-          <div className="flex items-center gap-1">
+          {/* Sale Invoice dropdown - flex-1 to match row 2 button width */}
+          <div className="flex-1 min-w-0">
             <span className="text-xs md:text-sm font-bold tracking-tight text-slate-800 uppercase hidden sm:inline">Type:</span>
             <Select value={docType} onValueChange={setDocType}>
-              <SelectTrigger className="h-7 sm:h-8 w-auto rounded-lg !text-[11px] sm:!text-xs !font-normal text-slate-700 bg-slate-50 border-slate-300 px-1.5 whitespace-nowrap">
-                <SelectValue placeholder="Select Type" />
+              <SelectTrigger style={{ fontSize: '9px' }} className="h-7 w-full rounded-md !font-normal text-slate-700 bg-slate-50 border-slate-300 px-2 whitespace-nowrap [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:opacity-60 [&>svg]:ml-0.5">
+                <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Sale">Sale Invoice</SelectItem>
@@ -1035,7 +1038,8 @@ export default function NewSale() {
             </Select>
           </div>
           {isThermalMode && (
-            <div className="flex items-center gap-1 ml-1 sm:ml-2">
+            /* Business dropdown - flex-1 to match row 2 button width */
+            <div className="flex-1 min-w-0">
               <span className="text-xs md:text-sm font-bold tracking-tight text-slate-800 uppercase hidden sm:inline">Business:</span>
               <Select
                 value={businessType}
@@ -1046,31 +1050,38 @@ export default function NewSale() {
                   );
                 }}
               >
-                <SelectTrigger className="h-7 sm:h-8 w-auto rounded-lg !text-[11px] sm:!text-xs !font-normal text-slate-700 bg-slate-50 border-slate-300 px-1.5 whitespace-nowrap">
-                  <SelectValue placeholder="Business Type" />
+                <SelectTrigger style={{ fontSize: '9px' }} className="h-7 w-full rounded-md !font-normal text-slate-700 bg-slate-50 border-slate-300 px-2 whitespace-nowrap [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:opacity-60 [&>svg]:ml-0.5">
+                  <SelectValue placeholder="Business" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="restaurant">Restaurant / Cafe</SelectItem>
-                  <SelectItem value="hotel">Hotel / Lodge</SelectItem>
-                  <SelectItem value="retail">Grocery / Retail</SelectItem>
+                  <SelectItem value="restaurant">Restaurant</SelectItem>
+                  <SelectItem value="hotel">Hotel</SelectItem>
+                  <SelectItem value="retail">Retail</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           )}
+          {/* Action buttons visible on desktop in the same row */}
+          <div className="hidden md:flex items-center gap-2 ml-auto shrink-0">
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-600 rounded-md p-0 shrink-0" onClick={() => printInvoiceHtml()} title="Print Invoice">
+              <Printer className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        {/* Row 2 (mobile only): Action Buttons - flex-1 on both to match row 1 dropdowns */}
+        <div className="flex md:hidden items-center gap-1 px-1.5 sm:px-2 py-1 border-t border-slate-100">
           <Button
             size="sm"
             variant="outline"
             onClick={() => setActivePane(activePane === "form" ? "preview" : "form")}
-            className="flex items-center gap-0.5 sm:gap-1 rounded-lg !text-[11px] md:!text-xs h-7 sm:h-8 px-1.5 sm:px-3 md:hidden !font-normal text-slate-700"
+            style={{ fontSize: '9px' }} className="flex flex-1 items-center justify-center gap-1 rounded-md h-7 px-2 !font-normal text-slate-700 border-slate-300"
           >
             <Eye className="h-3 w-3" />
-            <span className="hidden sm:inline">{activePane === "form" ? "View Preview" : "View Form"}</span>
-            <span className="sm:hidden">{activePane === "form" ? "Preview" : "Form"}</span>
+            <span>{activePane === "form" ? "Preview" : "Form"}</span>
           </Button>
-          <Button size="icon" variant="ghost" className="h-7 w-6 sm:h-9 sm:w-9 text-slate-600 rounded-lg p-0" onClick={() => printInvoiceHtml()} title="Print Invoice">
-            <Printer className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <Button size="sm" variant="outline" className="flex flex-1 items-center justify-center gap-1 h-7 px-2 text-slate-600 rounded-md border-slate-300" onClick={() => printInvoiceHtml()} title="Print Invoice" style={{ fontSize: '9px' }}>
+            <Printer className="h-3 w-3" />
+            <span>Print</span>
           </Button>
         </div>
       </div>
@@ -1079,12 +1090,12 @@ export default function NewSale() {
       <div className="flex-1 flex overflow-hidden">
         {/* LEFT COLUMN: Billing Creator Form */}
         <div className={`w-full md:w-1/2 lg:w-5/12 flex flex-col h-full bg-white md:bg-slate-50 overflow-y-auto border-r custom-scrollbar ${activePane === 'preview' ? 'hidden md:flex' : 'flex'}`}>
-          <div className="p-4 md:p-4 space-y-6 md:space-y-4 pb-24 bg-white md:bg-transparent">
+          <div className="p-3 md:p-4 space-y-3 md:space-y-4 pb-24 bg-white md:bg-transparent">
 
             {isEwayMode ? (
               <>
                 {/* 1. E-Way Bill Details */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">1. E-Way Bill Details</span>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
@@ -1109,7 +1120,7 @@ export default function NewSale() {
                 </div>
 
                 {/* 2. Address Details */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">2. Address Details</span>
                   <div className="space-y-3">
                     {/* From Section */}
@@ -1264,7 +1275,7 @@ export default function NewSale() {
                 </div>
 
                 {/* 4 & 5. Transporter & Vehicle Details */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">4 & 5. Transporter & Vehicle Details</span>
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
@@ -1351,7 +1362,7 @@ export default function NewSale() {
                 {businessType === "restaurant" ? (
                   <>
                     {/* 1. Restaurant Details */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Restaurant Details</span>
                       <div className="space-y-3">
                         <div className="space-y-1">
@@ -1410,7 +1421,7 @@ export default function NewSale() {
                     </div>
 
                     {/* 2. Invoice Details */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Invoice Details</span>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
@@ -1424,18 +1435,18 @@ export default function NewSale() {
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Date & Time *</Label>
-                          <div className="grid grid-cols-2 gap-1">
+                          <div className="flex gap-1">
                             <Input
                               type="date"
                               value={paymentDate}
                               onChange={(e) => setPaymentDate(e.target.value)}
-                              className="h-9 rounded-lg text-xs px-2"
+                              className="h-9 rounded-lg text-xs px-1.5 min-w-0 flex-1"
                             />
                             <Input
                               type="time"
                               value={paymentTime}
                               onChange={(e) => setPaymentTime(e.target.value)}
-                              className="h-9 rounded-lg text-xs px-2"
+                              className="h-9 rounded-lg text-xs px-1.5 min-w-0 w-[90px] shrink-0"
                             />
                           </div>
                         </div>
@@ -1509,7 +1520,7 @@ export default function NewSale() {
                     </div>
 
                     {/* 3. Customer */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Customer</span>
                       <div className="space-y-3">
                         <div className="space-y-1">
@@ -1549,7 +1560,7 @@ export default function NewSale() {
                 ) : businessType === "hotel" && isThermalMode ? (
                   <>
                     {/* 1. Hotel Details */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Hotel Details</span>
                       <div className="space-y-3">
                         <div className="space-y-1">
@@ -1580,7 +1591,7 @@ export default function NewSale() {
                     </div>
 
                     {/* 2. Booking Details */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Booking Details</span>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
@@ -1672,7 +1683,7 @@ export default function NewSale() {
                     </div>
 
                     {/* 3. Guest Details */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Guest Details</span>
                       <div className="space-y-1">
                         <Label className="text-xs">Guest Name *</Label>
@@ -1707,7 +1718,7 @@ export default function NewSale() {
                 ) : businessType === "retail" && isThermalMode ? (
                   <>
                     {/* 1. Shop Details */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Shop Details</span>
                       <div className="space-y-3">
                         <div className="space-y-1">
@@ -1742,7 +1753,7 @@ export default function NewSale() {
                     </div>
 
                     {/* 2. Invoice Details */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Invoice Details</span>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                         <div className="space-y-1">
@@ -1751,9 +1762,9 @@ export default function NewSale() {
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs">Date & Time *</Label>
-                          <div className="grid grid-cols-2 gap-1">
-                            <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="h-9 rounded-lg" />
-                            <Input type="time" value={paymentTime} onChange={(e) => setPaymentTime(e.target.value)} className="h-9 rounded-lg" />
+                          <div className="flex gap-1">
+                            <Input type="date" value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} className="h-9 rounded-lg text-xs px-1.5 min-w-0 flex-1" />
+                            <Input type="time" value={paymentTime} onChange={(e) => setPaymentTime(e.target.value)} className="h-9 rounded-lg text-xs px-1.5 min-w-0 w-[90px] shrink-0" />
                           </div>
                         </div>
                       </div>
@@ -1804,7 +1815,7 @@ export default function NewSale() {
                     </div>
 
                     {/* 3. Customer Details (Optional) */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Customer Details <span className="text-slate-300 font-normal normal-case">(optional)</span></span>
                       <div className="space-y-1">
                         <Label className="text-xs">Customer Name</Label>
@@ -1830,7 +1841,7 @@ export default function NewSale() {
                   <>
                     {/* Seller/Company Details Block */}
                     {(printSet.printCompanyName || printSet.printCompanyLogo || printSet.printAddress || printSet.printEmail || printSet.printPhone || printSet.printGstin) && (
-                      <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                      <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Seller Details (Your Info)</span>
                         <div className="space-y-3">
                           {printSet.printCompanyName && (
@@ -1937,7 +1948,7 @@ export default function NewSale() {
                     )}
 
                     {/* Bank Details Block */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Bank Details (On Invoice)</span>
                       </div>
@@ -1982,7 +1993,7 @@ export default function NewSale() {
                     </div>
 
                     {/* Customer Details Block */}
-                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                    <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                           {isPurchaseOrder ? "Vendor / Supplier Details" : "Billed To (Customer Details)"}
@@ -2049,7 +2060,7 @@ export default function NewSale() {
 
                 {/* Dynamic Document-Type Specific Details Card */}
                 {(isQuotation || isCreditDebitNote || isExportInvoice || isPurchaseOrder || isDeliveryChallan) && (
-                  <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3 bg-amber-50/40 md:bg-white">
+                  <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3 bg-amber-50/40 md:bg-white">
                     <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block">
                       {docType} Specific Details
                     </span>
@@ -2252,7 +2263,7 @@ export default function NewSale() {
 
                 {/* Transport & Additional Details Block (Hidden in Thermal & Restaurant mode) */}
                 {!isThermalMode && businessType !== "restaurant" && (
-                  <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                  <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Transport & Supply Details</span>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                       <div className="space-y-1">
@@ -2365,7 +2376,7 @@ export default function NewSale() {
             )}
 
             {/* Items List Block */}
-            <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-4">
+            <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-xs text-slate-800 uppercase tracking-wide">Item Details List</span>
                 <div className="flex gap-2">
@@ -2720,7 +2731,7 @@ export default function NewSale() {
             {isThermalMode && (
               <>
                 {/* Payment Block */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Payment Details</span>
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div className="space-y-1">
@@ -2762,7 +2773,7 @@ export default function NewSale() {
                 </div>
 
                 {/* UPI Block */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">UPI Details</span>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="space-y-1">
@@ -2810,7 +2821,7 @@ export default function NewSale() {
                 </div>
 
                 {/* Footer Block */}
-                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+                <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Footer & Notes</span>
                   <div className="space-y-3">
                     <div className="space-y-1">
@@ -2839,7 +2850,7 @@ export default function NewSale() {
 
             {/* Footer / Additional Details Card (Hidden in Thermal mode) */}
             {!isEwayMode && !isThermalMode && (printSet.printDescription || printSet.printTermsAndConditions || printSet.printAcknowledgement || printSet.printReceivedByDetails || printSet.printDeliveredByDetails || printSet.printSignatureText) && (
-              <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-3">
+              <div className="md:bg-white md:rounded-xl md:p-4 md:shadow-sm md:border border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-3">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Footer & T&C Details</span>
                 <div className="space-y-3">
                   {printSet.printDescription && (
@@ -3022,7 +3033,7 @@ export default function NewSale() {
 
             {/* Calculations & Payment Configuration (Hidden in Thermal Mode as custom Payment card is used) */}
             {!isEwayMode && !isThermalMode && printSet.paymentMode && isPaymentFieldRelevant && (
-              <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-6 md:pb-0 space-y-4">
+              <div className="md:bg-white md:rounded-xl md:shadow-sm md:border md:p-4 border-b border-slate-100 md:border-b-0 pb-3 md:pb-0 space-y-4">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Payment Setup</span>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
@@ -3448,66 +3459,66 @@ export default function NewSale() {
 
       {/* Mobile Item Details Modal */}
       <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-        <DialogContent className="max-w-md w-[95vw] bg-white p-5 max-h-[90vh] overflow-y-auto rounded-xl">
-          <DialogHeader className="mb-2">
-            <DialogTitle className="text-lg font-bold text-slate-800">Item Details</DialogTitle>
+        <DialogContent className="max-w-sm sm:max-w-md w-[92vw] bg-white p-4 max-h-[85vh] overflow-y-auto rounded-2xl border border-slate-100 shadow-xl">
+          <DialogHeader className="mb-1 border-b border-slate-100 pb-2.5">
+            <DialogTitle className="text-base font-bold text-slate-800">Item Details</DialogTitle>
           </DialogHeader>
 
           {editingItemIndex !== null && lines[editingItemIndex] && (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Item Name</Label>
-                <Input value={lines[editingItemIndex].name} onChange={(e) => updateLine(editingItemIndex, 'name', e.target.value)} placeholder="Product description" className="h-11 bg-slate-50 border-slate-200" />
+            <div className="space-y-2.5 pt-1">
+              <div className="space-y-1">
+                <Label className="text-[11px] font-semibold text-slate-600 block">Item Name</Label>
+                <Input value={lines[editingItemIndex].name} onChange={(e) => updateLine(editingItemIndex, 'name', e.target.value)} placeholder="Product description" className="h-9 bg-slate-50/80 border-slate-200 text-xs font-medium rounded-lg" />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Quantity</Label>
-                  <Input type="number" min={1} value={lines[editingItemIndex].qty} onChange={(e) => updateLine(editingItemIndex, 'qty', Number(e.target.value) || 0)} className="h-11 bg-slate-50 border-slate-200 text-center" />
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-slate-600 block">Quantity</Label>
+                  <Input type="number" min={1} value={lines[editingItemIndex].qty} onChange={(e) => updateLine(editingItemIndex, 'qty', Number(e.target.value) || 0)} className="h-9 bg-slate-50/80 border-slate-200 text-center text-xs font-medium rounded-lg" />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Price (₹)</Label>
-                  <Input type="number" min={0} value={lines[editingItemIndex].rate === 0 ? "" : lines[editingItemIndex].rate} onChange={(e) => updateLine(editingItemIndex, 'rate', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0.00" className="h-11 bg-slate-50 border-slate-200 text-right font-semibold" />
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-slate-600 block">Price (₹)</Label>
+                  <Input type="number" min={0} value={lines[editingItemIndex].rate === 0 ? "" : lines[editingItemIndex].rate} onChange={(e) => updateLine(editingItemIndex, 'rate', e.target.value === "" ? 0 : Number(e.target.value))} placeholder="0.00" className="h-9 bg-slate-50/80 border-slate-200 text-right text-xs font-semibold rounded-lg" />
                 </div>
               </div>
 
               {/* Unit Dropdown — always visible */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Unit</Label>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-slate-600 block">Unit</Label>
                   <select
                     value={lines[editingItemIndex].unit || "Pcs"}
                     onChange={(e) => updateLine(editingItemIndex, 'unit', e.target.value)}
-                    className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/80 px-1.5 text-[10.5px] font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                   >
-                    <option value="Bag">BAGS (Bag)</option>
-                    <option value="Btl">BOTTLES (Btl)</option>
-                    <option value="Box">BOX (Box)</option>
-                    <option value="Bdl">BUNDLES (Bdl)</option>
-                    <option value="Can">CANS (Can)</option>
-                    <option value="Ctn">CARTONS (Ctn)</option>
-                    <option value="Mtq">CUBIC METER (Mtq)</option>
-                    <option value="Day">DAY (Day)</option>
-                    <option value="Dzn">DOZENS (Dzn)</option>
-                    <option value="Gm">GRAMMES (Gm)</option>
-                    <option value="Hur">HOUR (Hur)</option>
-                    <option value="Kg">KILOGRAMS (Kg)</option>
-                    <option value="Kmt">KILOMETER (Kmt)</option>
-                    <option value="Ltr">LITRE (Ltr)</option>
-                    <option value="Mtr">METERS (Mtr)</option>
-                    <option value="Ml">MILILITRE (Ml)</option>
-                    <option value="Nos">NUMBERS (Nos)</option>
-                    <option value="Pac">PACKS (Pac)</option>
-                    <option value="Prs">PAIRS (Prs)</option>
-                    <option value="Pcs">PIECES (Pcs)</option>
-                    <option value="Qtl">QUINTAL (Qtl)</option>
-                    <option value="Rol">ROLLS (Rol)</option>
-                    <option value="Ser">SERVICE (Ser)</option>
-                    <option value="Set">SET (Set)</option>
-                    <option value="Sqf">SQUARE FEET (Sqf)</option>
-                    <option value="Sqm">SQUARE METERS (Sqm)</option>
-                    <option value="Tbs">TABLETS (Tbs)</option>
-                    <option value="Ton">TON / METRIC TON (Ton)</option>
+                    <option value="Pcs">Pcs (Pieces)</option>
+                    <option value="Bag">Bag (Bags)</option>
+                    <option value="Btl">Btl (Bottles)</option>
+                    <option value="Box">Box</option>
+                    <option value="Bdl">Bdl (Bundles)</option>
+                    <option value="Can">Can (Cans)</option>
+                    <option value="Ctn">Ctn (Cartons)</option>
+                    <option value="Mtq">Mtq (Cu. Meter)</option>
+                    <option value="Day">Day</option>
+                    <option value="Dzn">Dzn (Dozens)</option>
+                    <option value="Gm">Gm (Grammes)</option>
+                    <option value="Hur">Hur (Hour)</option>
+                    <option value="Kg">Kg (Kilograms)</option>
+                    <option value="Kmt">Kmt (Kilometer)</option>
+                    <option value="Ltr">Ltr (Litre)</option>
+                    <option value="Mtr">Mtr (Meters)</option>
+                    <option value="Ml">Ml (Mililitre)</option>
+                    <option value="Nos">Nos (Numbers)</option>
+                    <option value="Pac">Pac (Packs)</option>
+                    <option value="Prs">Prs (Pairs)</option>
+                    <option value="Qtl">Qtl (Quintal)</option>
+                    <option value="Rol">Rol (Rolls)</option>
+                    <option value="Ser">Ser (Service)</option>
+                    <option value="Set">Set</option>
+                    <option value="Sqf">Sqf (Sq. Feet)</option>
+                    <option value="Sqm">Sqm (Sq. Meters)</option>
+                    <option value="Tbs">Tbs (Tablets)</option>
+                    <option value="Ton">Ton (Metric Ton)</option>
                   </select>
                 </div>
                 {/* Dynamic Item Total */}
@@ -3528,23 +3539,23 @@ export default function NewSale() {
                     lineTotal = q * rateAfterDisc;
                   }
                   return (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Item Total</Label>
-                      <div className="h-11 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-end px-3">
-                        <span className="text-emerald-700 font-bold text-sm">₹ {lineTotal.toFixed(2)}</span>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-semibold text-slate-600 block">Item Total</Label>
+                      <div className="h-9 bg-emerald-50/80 border border-emerald-200/80 rounded-lg flex items-center justify-end px-2.5">
+                        <span className="text-emerald-700 font-extrabold text-[11px]">₹ {lineTotal.toFixed(2)}</span>
                       </div>
                     </div>
                   );
                 })()}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Discount %</Label>
-                  <Input type="number" min={0} max={100} value={lines[editingItemIndex].discount} onChange={(e) => updateLine(editingItemIndex, 'discount', Number(e.target.value) || 0)} className="h-11 bg-slate-50 border-slate-200 text-center" />
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-slate-600 block">Discount %</Label>
+                  <Input type="number" min={0} max={100} value={lines[editingItemIndex].discount} onChange={(e) => updateLine(editingItemIndex, 'discount', Number(e.target.value) || 0)} className="h-9 bg-slate-50/80 border-slate-200 text-center text-[11px] font-medium rounded-lg" />
                 </div>
                 {gstSet.enableGst && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {(() => {
                       const sellerCode = (sellerGstin || "").slice(0, 2);
                       const customerCode = (billedToGstin || "").slice(0, 2);
@@ -3559,16 +3570,16 @@ export default function NewSale() {
 
                       return (
                         <>
-                          <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                          <Label className="text-[11px] font-semibold text-slate-600 block">
                             {isInterstateBill ? "IGST Rate %" : "GST Rate %"}
                           </Label>
                           <button
                             type="button"
                             onClick={() => setTaxPickerLineIndex(editingItemIndex)}
-                            className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-left font-semibold text-slate-800 flex items-center justify-between"
+                            className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50/80 px-2 text-[10.5px] text-left font-semibold text-slate-800 flex items-center justify-between hover:bg-slate-100 transition-colors"
                           >
-                            <span>{taxName}</span>
-                            <span className="text-xs text-slate-400">▼</span>
+                            <span className="truncate">{taxName}</span>
+                            <span className="text-[9px] text-slate-400 ml-1">▼</span>
                           </button>
                         </>
                       );
@@ -3577,18 +3588,18 @@ export default function NewSale() {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">HSN/SAC</Label>
-                  <Input value={lines[editingItemIndex].hsnSac} onChange={(e) => updateLine(editingItemIndex, 'hsnSac', e.target.value)} placeholder="996601" className="h-11 bg-slate-50 border-slate-200" />
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold text-slate-600 block">HSN/SAC</Label>
+                  <Input value={lines[editingItemIndex].hsnSac} onChange={(e) => updateLine(editingItemIndex, 'hsnSac', e.target.value)} placeholder="996601" className="h-9 bg-slate-50/80 border-slate-200 text-[11px] font-mono rounded-lg" />
                 </div>
                 {txnSet.taxOnRate && gstSet.enableGst && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">Tax Type</Label>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">Tax Type</Label>
                     <select
                       value={lines[editingItemIndex].taxType || "inclusive"}
                       onChange={(e) => updateLine(editingItemIndex, 'taxType', e.target.value)}
-                      className="h-11 w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-700 focus:outline-none"
+                      className="h-9 w-full rounded-lg border border-emerald-200 bg-emerald-50 px-1.5 text-[10.5px] font-semibold text-emerald-700 focus:outline-none"
                     >
                       <option value="inclusive">Tax Inclusive</option>
                       <option value="exclusive">Tax Exclusive</option>
@@ -3598,97 +3609,97 @@ export default function NewSale() {
               </div>
 
               {/* Dynamic Additional Columns Enabled in Print Settings */}
-              <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+              <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
                 {cols.itemCode && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.itemCode || "Item Code"}</Label>
-                    <Input value={lines[editingItemIndex].itemCode || ""} onChange={(e) => updateLine(editingItemIndex, 'itemCode', e.target.value)} placeholder="Code" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.itemCode || "Item Code"}</Label>
+                    <Input value={lines[editingItemIndex].itemCode || ""} onChange={(e) => updateLine(editingItemIndex, 'itemCode', e.target.value)} placeholder="Code" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.batchNo && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.batchNo || "Batch No."}</Label>
-                    <Input value={lines[editingItemIndex].batchNo || ""} onChange={(e) => updateLine(editingItemIndex, 'batchNo', e.target.value)} placeholder="Batch" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.batchNo || "Batch No."}</Label>
+                    <Input value={lines[editingItemIndex].batchNo || ""} onChange={(e) => updateLine(editingItemIndex, 'batchNo', e.target.value)} placeholder="Batch" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.expDate && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.expDate || "Exp. Date"}</Label>
-                    <Input value={lines[editingItemIndex].expDate || ""} onChange={(e) => updateLine(editingItemIndex, 'expDate', e.target.value)} placeholder="MM/YY" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.expDate || "Exp. Date"}</Label>
+                    <Input value={lines[editingItemIndex].expDate || ""} onChange={(e) => updateLine(editingItemIndex, 'expDate', e.target.value)} placeholder="MM/YY" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.mfgDate && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.mfgDate || "Mfg. Date"}</Label>
-                    <Input value={lines[editingItemIndex].mfgDate || ""} onChange={(e) => updateLine(editingItemIndex, 'mfgDate', e.target.value)} placeholder="MM/YY" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.mfgDate || "Mfg. Date"}</Label>
+                    <Input value={lines[editingItemIndex].mfgDate || ""} onChange={(e) => updateLine(editingItemIndex, 'mfgDate', e.target.value)} placeholder="MM/YY" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.mrp && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.mrp || "MRP"}</Label>
-                    <Input type="number" value={lines[editingItemIndex].mrp || ""} onChange={(e) => updateLine(editingItemIndex, 'mrp', Number(e.target.value) || 0)} placeholder="MRP" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.mrp || "MRP"}</Label>
+                    <Input type="number" value={lines[editingItemIndex].mrp || ""} onChange={(e) => updateLine(editingItemIndex, 'mrp', Number(e.target.value) || 0)} placeholder="MRP" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.size && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.size || "Size"}</Label>
-                    <Input value={lines[editingItemIndex].size || ""} onChange={(e) => updateLine(editingItemIndex, 'size', e.target.value)} placeholder="Size" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.size || "Size"}</Label>
+                    <Input value={lines[editingItemIndex].size || ""} onChange={(e) => updateLine(editingItemIndex, 'size', e.target.value)} placeholder="Size" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.modelNo && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.modelNo || "Model No."}</Label>
-                    <Input value={lines[editingItemIndex].modelNo || ""} onChange={(e) => updateLine(editingItemIndex, 'modelNo', e.target.value)} placeholder="Model" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.modelNo || "Model No."}</Label>
+                    <Input value={lines[editingItemIndex].modelNo || ""} onChange={(e) => updateLine(editingItemIndex, 'modelNo', e.target.value)} placeholder="Model" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.count && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.count || "Count"}</Label>
-                    <Input type="number" value={lines[editingItemIndex].count || ""} onChange={(e) => updateLine(editingItemIndex, 'count', Number(e.target.value) || 0)} placeholder="Count" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.count || "Count"}</Label>
+                    <Input type="number" value={lines[editingItemIndex].count || ""} onChange={(e) => updateLine(editingItemIndex, 'count', Number(e.target.value) || 0)} placeholder="Count" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.colour && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.colour || "Colour"}</Label>
-                    <Input value={lines[editingItemIndex].colour || ""} onChange={(e) => updateLine(editingItemIndex, 'colour', e.target.value)} placeholder="Colour" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.colour || "Colour"}</Label>
+                    <Input value={lines[editingItemIndex].colour || ""} onChange={(e) => updateLine(editingItemIndex, 'colour', e.target.value)} placeholder="Colour" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.material && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.material || "Material"}</Label>
-                    <Input value={lines[editingItemIndex].material || ""} onChange={(e) => updateLine(editingItemIndex, 'material', e.target.value)} placeholder="Material" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.material || "Material"}</Label>
+                    <Input value={lines[editingItemIndex].material || ""} onChange={(e) => updateLine(editingItemIndex, 'material', e.target.value)} placeholder="Material" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.brand && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.brand || "Brand"}</Label>
-                    <Input value={lines[editingItemIndex].brand || ""} onChange={(e) => updateLine(editingItemIndex, 'brand', e.target.value)} placeholder="Brand" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.brand || "Brand"}</Label>
+                    <Input value={lines[editingItemIndex].brand || ""} onChange={(e) => updateLine(editingItemIndex, 'brand', e.target.value)} placeholder="Brand" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.serialNo && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.serialNo || "Serial No."}</Label>
-                    <Input value={lines[editingItemIndex].serialNo || ""} onChange={(e) => updateLine(editingItemIndex, 'serialNo', e.target.value)} placeholder="Serial" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.serialNo || "Serial No."}</Label>
+                    <Input value={lines[editingItemIndex].serialNo || ""} onChange={(e) => updateLine(editingItemIndex, 'serialNo', e.target.value)} placeholder="Serial" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.unit && (
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.unit || "Unit (Custom)"}</Label>
-                    <Input value={lines[editingItemIndex].unit || ""} onChange={(e) => updateLine(editingItemIndex, 'unit', e.target.value)} placeholder="Pcs/Kgs" className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.unit || "Unit (Custom)"}</Label>
+                    <Input value={lines[editingItemIndex].unit || ""} onChange={(e) => updateLine(editingItemIndex, 'unit', e.target.value)} placeholder="Pcs/Kgs" className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
                 {cols.description && (
-                  <div className="col-span-2 space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-600 uppercase tracking-wider">{colNames.description || "Description"}</Label>
-                    <Input value={lines[editingItemIndex].description || ""} onChange={(e) => updateLine(editingItemIndex, 'description', e.target.value)} placeholder="Item notes..." className="h-10 bg-slate-50 border-slate-200 text-xs" />
+                  <div className="col-span-2 space-y-1">
+                    <Label className="text-[11px] font-semibold text-slate-600 block">{colNames.description || "Description"}</Label>
+                    <Input value={lines[editingItemIndex].description || ""} onChange={(e) => updateLine(editingItemIndex, 'description', e.target.value)} placeholder="Item notes..." className="h-9 bg-slate-50/80 border-slate-200 text-xs rounded-lg" />
                   </div>
                 )}
               </div>
             </div>
           )}
 
-          <div className="mt-6">
-            <Button type="button" className="w-full h-11 text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md" onClick={() => setIsItemModalOpen(false)}>
+          <div className="mt-4 pt-1">
+            <Button type="button" className="w-full h-10 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all" onClick={() => setIsItemModalOpen(false)}>
               Save & Update Item
             </Button>
           </div>

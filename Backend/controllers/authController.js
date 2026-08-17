@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const { messaging } = require('../config/firebase');
+const notificationService = require('../services/notificationService');
 const Plan = require('../models/Plan');
 const Ticket = require('../models/Ticket');
 const PlatformSettings = require('../models/PlatformSettings');
@@ -123,7 +125,8 @@ const verifyOtp = async (req, res) => {
       // Platform Owner SuperAdmin (9876543210) gets 'admin' role; All public signups get 'vendor' role
       const isPlatformAdmin = phone === "9876543210";
       const userRole = isPlatformAdmin ? "admin" : "vendor";
-      const initialStatus = isPlatformAdmin ? "Active" : "Pending";
+      // All new vendors are auto-approved (Active). Admin only receives an info notification.
+      const initialStatus = "Active";
 
       user = await User.create({
         phone,
@@ -139,6 +142,26 @@ const verifyOtp = async (req, res) => {
         status: initialStatus,
         subscription: { plan: (isPlatformAdmin ? "Enterprise" : "Free"), status: "active" }
       });
+
+      // Inform admin about new vendor registration (best-effort, non-blocking)
+      if (!isPlatformAdmin) {
+        try {
+          const adminUser = await User.findOne({ role: 'admin' });
+          if (adminUser) {
+            const vendorName = user.name || user.businessName;
+            const vendorBusiness = user.businessName || '';
+            notificationService.sendNotificationToUser(adminUser._id.toString(), {
+              title: '🆕 New Vendor Registered',
+              body: `${vendorName} (${vendorBusiness}) — +91 ${phone} has joined Udaan BillBook.`,
+              data: {
+                type: 'new_vendor_registration',
+                id: user._id.toString(),
+                link: '/admin/users',
+              },
+            }).catch(() => {}); // fire-and-forget
+          }
+        } catch (_) { /* non-critical */ }
+      }
     } else if (mode === 'register') {
       // If user already exists but registering, update details
       user.name = name && name.trim() ? name.trim() : user.name;
@@ -771,6 +794,34 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// @desc    Upload KYC documents (PAN card & Aadhaar card) to Cloudinary
+// @route   POST /api/auth/upload-docs
+// @access  Private
+const uploadDocs = async (req, res) => {
+  try {
+    const updates = {};
+    if (req.files?.panCard?.[0]) {
+      updates.panCardUrl = req.files.panCard[0].path;
+    }
+    if (req.files?.aadhaarCard?.[0]) {
+      updates.aadhaarCardUrl = req.files.aadhaarCard[0].path;
+    }
+
+    if (!Object.keys(updates).length) {
+      return res.status(400).json({ message: 'No files uploaded.' });
+    }
+
+    const user = await User.findByIdAndUpdate(req.user._id, updates, { new: true });
+    res.json({
+      message: 'Documents uploaded successfully.',
+      panCardUrl: user.panCardUrl || null,
+      aadhaarCardUrl: user.aadhaarCardUrl || null,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   sendOtp,
   verifyOtp,
@@ -788,5 +839,6 @@ module.exports = {
   getPublicSettings,
   getRazorpayKey,
   createRazorpayOrder,
-  verifyRazorpayPayment
+  verifyRazorpayPayment,
+  uploadDocs
 };

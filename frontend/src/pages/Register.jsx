@@ -107,6 +107,8 @@ export default function Register() {
           gstNo: form.gstNo,
           aadhaarNo: form.aadhaarNo,
           panNo: form.panNo,
+          panCard: form.panCard || null,
+          aadhaarCard: form.aadhaarCard || null,
           returnUrl: location.state?.returnUrl
         }
       });

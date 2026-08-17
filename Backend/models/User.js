@@ -34,6 +34,12 @@ const userSchema = new mongoose.Schema({
   aadhaarNo: {
     type: String,
   },
+  panCardUrl: {
+    type: String,
+  },
+  aadhaarCardUrl: {
+    type: String,
+  },
   otp: {
     type: String,
   },

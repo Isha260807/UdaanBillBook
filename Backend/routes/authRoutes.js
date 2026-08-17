@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { sendOtp, verifyOtp, getMe, updateProfile, loginEmail, getStaff, addStaff, updateStaff, deleteStaff, getPlans, subscribeUser, getPublicSettings, getUserTickets, createUserTicket, getRazorpayKey, createRazorpayOrder, verifyRazorpayPayment } = require('../controllers/authController');
+const { sendOtp, verifyOtp, getMe, updateProfile, loginEmail, getStaff, addStaff, updateStaff, deleteStaff, getPlans, subscribeUser, getPublicSettings, getUserTickets, createUserTicket, getRazorpayKey, createRazorpayOrder, verifyRazorpayPayment, uploadDocs } = require('../controllers/authController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
+const { upload } = require('../config/cloudinary');
 
 router.post('/send-otp', sendOtp);
 router.post('/verify-otp', verifyOtp);
@@ -27,5 +28,8 @@ router.route('/staff')
 router.route('/staff/:id')
   .put(protect, restrictTo('admin', 'vendor'), updateStaff)
   .delete(protect, restrictTo('admin', 'vendor'), deleteStaff);
+
+// Upload KYC documents (PAN card / Aadhaar card images)
+router.post('/upload-docs', protect, upload.fields([{ name: 'panCard', maxCount: 1 }, { name: 'aadhaarCard', maxCount: 1 }]), uploadDocs);
 
 module.exports = router;

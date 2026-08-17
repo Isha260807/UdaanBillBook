@@ -13,38 +13,43 @@ const navItems = [
 export function MobileBottomNav() {
   const location = useLocation();
   const path = location.pathname;
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, openMobile } = useSidebar();
   const { user } = useMockAuth();
 
   const userRole = user?.role?.toLowerCase() || "user";
   const rolePrefix = (userRole === "staff" || userRole === "viewer") ? "/staff" : "/vendor";
 
   const getRoleUrl = (url) => {
-    if (url === "/") return "/";
+    if (url === "/") return `${rolePrefix}/dashboard`;
     return `${rolePrefix}${url}`;
   };
 
   const isActive = (url) => {
     const targetUrl = getRoleUrl(url);
-    return targetUrl === "/" ? path === "/" : path.startsWith(targetUrl);
+    if (url === "/") {
+      return path === "/" || path === `${rolePrefix}/dashboard` || path === `${rolePrefix}` || path === `${rolePrefix}/`;
+    }
+    return path.startsWith(targetUrl);
   };
 
   return (
-    <div className="md:hidden print:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-background/95 backdrop-blur-md border-t border-border/50 pb-safe pb-2 pt-2 px-1 shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
+    <div className="md:hidden print:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around bg-white/95 backdrop-blur-lg border-t border-slate-200/80 pb-safe pb-2 pt-2 px-1 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
       {navItems.map((item) => {
         const active = isActive(item.url);
         return (
           <Link
             key={item.title}
             to={getRoleUrl(item.url)}
-            className={`flex flex-col items-center justify-center gap-1 min-w-[64px] rounded-xl py-1 transition-colors ${
-              active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            className={`flex flex-col items-center justify-center gap-0.5 min-w-[60px] py-1 transition-all rounded-xl ${
+              active ? "text-emerald-600" : "text-slate-500 hover:text-slate-900"
             }`}
           >
-            <div className={`flex items-center justify-center p-1.5 rounded-xl transition-all duration-300 ${active ? "bg-primary-soft text-primary shadow-sm scale-110" : ""}`}>
-              <item.icon className={`h-5 w-5 ${active ? "fill-primary/20 stroke-[2.5px]" : "stroke-2"}`} />
+            <div className={`flex items-center justify-center px-3 py-1 rounded-full transition-all duration-200 ${
+              active ? "bg-emerald-100/90 text-emerald-600 font-bold scale-105 shadow-sm" : ""
+            }`}>
+              <item.icon className={`h-5 w-5 ${active ? "stroke-[2.5px] text-emerald-600" : "stroke-[1.75px] text-slate-500"}`} />
             </div>
-            <span className={`text-[10px] font-medium tracking-tight ${active ? "font-semibold" : ""}`}>
+            <span className={`text-[10px] tracking-tight ${active ? "font-extrabold text-emerald-600" : "font-medium text-slate-500"}`}>
               {item.title}
             </span>
           </Link>
@@ -52,13 +57,20 @@ export function MobileBottomNav() {
       })}
       
       <button
+        type="button"
         onClick={toggleSidebar}
-        className="flex flex-col items-center justify-center gap-1 min-w-[64px] rounded-xl py-1 text-muted-foreground hover:text-foreground transition-colors"
+        className={`flex flex-col items-center justify-center gap-0.5 min-w-[60px] py-1 transition-all rounded-xl ${
+          openMobile ? "text-emerald-600" : "text-slate-500 hover:text-slate-900"
+        }`}
       >
-        <div className="flex items-center justify-center p-1.5 rounded-xl transition-all duration-300">
-          <MoreHorizontal className="h-5 w-5 stroke-2" />
+        <div className={`flex items-center justify-center px-3 py-1 rounded-full transition-all duration-200 ${
+          openMobile ? "bg-emerald-100/90 text-emerald-600 font-bold scale-105 shadow-sm" : ""
+        }`}>
+          <MoreHorizontal className={`h-5 w-5 ${openMobile ? "stroke-[2.5px] text-emerald-600" : "stroke-[1.75px] text-slate-500"}`} />
         </div>
-        <span className="text-[10px] font-medium tracking-tight">More</span>
+        <span className={`text-[10px] tracking-tight ${openMobile ? "font-extrabold text-emerald-600" : "font-medium text-slate-500"}`}>
+          More
+        </span>
       </button>
     </div>
   );

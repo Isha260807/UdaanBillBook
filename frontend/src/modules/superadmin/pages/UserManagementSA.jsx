@@ -231,33 +231,12 @@ export function UserManagementSA() {
                       <button className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors" title="View Profile Details" onClick={() => setSelectedUser(u)}>
                         <Eye className="h-4 w-4" />
                       </button>
-                      {u.status === "Pending" ? (
-                        <>
-                          <button
-                            onClick={() => handleApproveVendor(u._id)}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1 transition-colors"
-                            title="Approve Registration"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Approve
-                          </button>
-                          <button
-                            onClick={() => handleRejectVendor(u._id)}
-                            className="px-2.5 py-1 rounded-lg bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 border border-rose-500/30 text-xs font-semibold flex items-center gap-1 transition-colors"
-                            title="Reject Registration"
-                          >
-                            <X className="h-3.5 w-3.5" /> Reject
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          {u.status !== "Banned" ? (
+                        {u.status !== "Banned" ? (
                             <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" title="Ban" onClick={() => handleToggleStatus(u)}><Ban className="h-3.5 w-3.5" /></button>
                           ) : (
                             <button className="rounded-lg p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors" title="Unban" onClick={() => handleToggleStatus(u)}><CheckCircle2 className="h-3.5 w-3.5" /></button>
                           )}
                           <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Delete" onClick={() => handleDeleteUser(u)}><Trash2 className="h-3.5 w-3.5" /></button>
-                        </>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -421,31 +400,56 @@ export function UserManagementSA() {
                   </button>
                 </div>
               </div>
+
+              {/* KYC Documents */}
+              <div className="mt-6 pt-6 border-t border-white/8 space-y-3">
+                <h4 className="text-sm font-bold text-white uppercase tracking-wider">KYC Documents</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* PAN Card */}
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">PAN Card</p>
+                    {selectedUser.panCardUrl ? (
+                      <a href={selectedUser.panCardUrl} target="_blank" rel="noopener noreferrer" className="block group">
+                        <img
+                          src={selectedUser.panCardUrl}
+                          alt="PAN Card"
+                          className="w-full h-36 object-cover rounded-xl border border-white/10 group-hover:border-emerald-500/50 transition-all"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1 text-center">Click to view full image</p>
+                      </a>
+                    ) : (
+                      <div className="w-full h-36 rounded-xl border border-dashed border-white/15 flex flex-col items-center justify-center gap-2 bg-white/3">
+                        <svg className="h-8 w-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <p className="text-[11px] text-slate-600 font-medium">Not Uploaded</p>
+                      </div>
+                    )}
+                  </div>
+                  {/* Aadhaar Card */}
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Aadhaar Card</p>
+                    {selectedUser.aadhaarCardUrl ? (
+                      <a href={selectedUser.aadhaarCardUrl} target="_blank" rel="noopener noreferrer" className="block group">
+                        <img
+                          src={selectedUser.aadhaarCardUrl}
+                          alt="Aadhaar Card"
+                          className="w-full h-36 object-cover rounded-xl border border-white/10 group-hover:border-emerald-500/50 transition-all"
+                        />
+                        <p className="text-[10px] text-slate-500 mt-1 text-center">Click to view full image</p>
+                      </a>
+                    ) : (
+                      <div className="w-full h-36 rounded-xl border border-dashed border-white/15 flex flex-col items-center justify-center gap-2 bg-white/3">
+                        <svg className="h-8 w-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <p className="text-[11px] text-slate-600 font-medium">Not Uploaded</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-white/8 flex items-center justify-between shrink-0 bg-slate-900/40">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={async () => {
-                    await handleApproveVendor(selectedUser._id);
-                    setSelectedUser(null);
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 shadow transition-all"
-                >
-                  <CheckCircle2 className="h-4 w-4" /> Approve Registration
-                </button>
-                <button
-                  onClick={async () => {
-                    await handleRejectVendor(selectedUser._id);
-                    setSelectedUser(null);
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all"
-                >
-                  <X className="h-4 w-4" /> Reject
-                </button>
-              </div>
-
+            <div className="px-6 py-4 border-t border-white/8 flex items-center justify-end shrink-0 bg-slate-900/40">
               <button 
                 onClick={() => setSelectedUser(null)}
                 className="rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 text-sm font-semibold transition-colors"

@@ -108,6 +108,18 @@ export default function VerifyOtp() {
         subscription: user.subscription
       });
 
+      // Upload KYC documents (PAN/Aadhaar images) if provided — fire-and-forget
+      if (search.mode === 'register' && (state.panCard || state.aadhaarCard)) {
+        try {
+          const formData = new FormData();
+          if (state.panCard) formData.append('panCard', state.panCard);
+          if (state.aadhaarCard) formData.append('aadhaarCard', state.aadhaarCard);
+          await api.post('/auth/upload-docs', formData, {
+            headers: { 'Content-Type': 'multipart/form-data', 'Authorization': `Bearer ${user.token}` }
+          });
+        } catch (_) { /* non-critical, images can be uploaded later */ }
+      }
+
       const redirectPath = (user.role?.toLowerCase() === "staff" || user.role?.toLowerCase() === "viewer") ? "/staff/dashboard" : (user.role?.toLowerCase() === "admin" ? "/admin" : "/vendor/dashboard");
       toast.success(user.role === "admin" ? "Admin access granted!" : search.mode === "register" ? "Account created!" : "Signed in successfully");
       
