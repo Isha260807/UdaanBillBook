@@ -1691,7 +1691,7 @@ export function AccountingDashboard() {
                 id="bank-name-input"
                 value={newBankName}
                 onChange={(e) => setNewBankName(e.target.value)}
-                placeholder="e.g. Axis Bank, PNB, Paytm Wallet"
+                placeholder="e.g. HDFC, SBI, Paytm"
                 className="h-10 rounded-xl text-sm"
               />
             </div>
