@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { useInvoices } from "@/contexts/InvoiceContext";
 import api from "@/lib/api";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 const fmt = (n) => "₹" + (n || 0).toLocaleString("en-IN");
 const pieColors = ["#10b981", "#3b82f6", "#f59e0b", "#94a3b8"];
@@ -179,18 +180,27 @@ function ReportRow({ report, handleAction }) {
         >
           <Eye className="h-3.5 w-3.5" />
         </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-6 w-6 rounded-md"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAction(report.name, "PDF");
-          }}
-          disabled={report.premium}
-        >
-          <Download className="h-3.5 w-3.5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6 rounded-md"
+              disabled={report.premium}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Download className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="rounded-xl w-36">
+            <DropdownMenuItem className="text-xs font-semibold py-2 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleAction(report.name, "PDF"); }}>
+              <FileText className="mr-2 h-3.5 w-3.5 text-red-500" /> Download PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-xs font-semibold py-2 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleAction(report.name, "Excel"); }}>
+              <FileSpreadsheet className="mr-2 h-3.5 w-3.5 text-emerald-600" /> Export Excel
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
