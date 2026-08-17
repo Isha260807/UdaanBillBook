@@ -846,12 +846,12 @@ export function AccountingDashboard() {
                     <button
                       key={idx}
                       onClick={() => a.action ? a.action() : setActiveTab(a.tab)}
-                      className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-100 transition-colors group cursor-pointer"
+                      className="flex flex-col items-center justify-center p-1 py-2 sm:p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-100 transition-colors group cursor-pointer min-w-0"
                     >
                       <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
                         <Plus className="h-4 w-4 text-emerald-600" />
                       </div>
-                      <span className="text-[10px] font-bold mt-2 text-center leading-tight">{a.label}</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold mt-1.5 sm:mt-2 text-center leading-tight break-words px-0.5 w-full">{a.label}</span>
                     </button>
                   ))}
                 </CardContent>
