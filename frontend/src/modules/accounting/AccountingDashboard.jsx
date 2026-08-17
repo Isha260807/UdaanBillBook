@@ -925,7 +925,7 @@ export function AccountingDashboard() {
                   <select 
                     value={ledgerFilter.dateRange} 
                     onChange={(e) => setLedgerFilter({...ledgerFilter, dateRange: e.target.value})}
-                    className="h-8 rounded-lg border text-xs bg-slate-50 px-2"
+                    className="h-8 rounded-lg border text-[10.5px] sm:text-xs bg-slate-50 px-1.5 sm:px-2 focus:outline-none w-full"
                   >
                     <option value="all">All Dates</option>
                     <option value="today">Today</option>
@@ -936,7 +936,7 @@ export function AccountingDashboard() {
                   <select 
                     value={ledgerFilter.mode} 
                     onChange={(e) => setLedgerFilter({...ledgerFilter, mode: e.target.value})}
-                    className="h-8 rounded-lg border text-xs bg-slate-50 px-2"
+                    className="h-8 rounded-lg border text-[10.5px] sm:text-xs bg-slate-50 px-1.5 sm:px-2 focus:outline-none w-full"
                   >
                     <option value="all">All Modes</option>
                     <option value="Cash">Cash Only</option>
@@ -946,7 +946,7 @@ export function AccountingDashboard() {
                   <select 
                     value={ledgerFilter.type} 
                     onChange={(e) => setLedgerFilter({...ledgerFilter, type: e.target.value})}
-                    className="h-8 rounded-lg border text-xs bg-slate-50 px-2"
+                    className="h-8 rounded-lg border text-[10.5px] sm:text-xs bg-slate-50 px-1.5 sm:px-2 focus:outline-none w-full"
                   >
                     <option value="all">All Transactions</option>
                     <option value="receipt">Receipts In</option>
@@ -957,7 +957,7 @@ export function AccountingDashboard() {
                   <select 
                     value={ledgerFilter.party} 
                     onChange={(e) => setLedgerFilter({...ledgerFilter, party: e.target.value})}
-                    className="h-8 rounded-lg border text-xs bg-slate-50 px-2"
+                    className="h-8 rounded-lg border text-[10.5px] sm:text-xs bg-slate-50 px-1.5 sm:px-2 focus:outline-none w-full"
                   >
                     <option value="all">All Parties</option>
                     {Array.from(new Set(combinedEntries.map(e => e.party))).map(pName => (
