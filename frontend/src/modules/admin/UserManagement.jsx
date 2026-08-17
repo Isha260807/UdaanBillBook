@@ -192,9 +192,14 @@ export function UserManagement() {
         title="Staff Management"
         subtitle="Manage your business staff, roles and permissions."
         actions={
-          <Button className="rounded-xl" onClick={() => setAddDialogOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" /> Add New Staff
-          </Button>
+          <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2 sm:w-auto">
+            <Button className="flex-1 sm:flex-none rounded-xl h-9 text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => setAddDialogOpen(true)}>
+              <UserPlus className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" /> Add Staff
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none rounded-xl h-9 text-xs sm:text-sm font-semibold border-slate-200" onClick={handleExport}>
+              <FileDown className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4 text-emerald-600" /> Export
+            </Button>
+          </div>
         }
       />
 
@@ -274,24 +279,19 @@ export function UserManagement() {
       {/* ---- Staff Table ---- */}
       <Card className="bg-transparent md:bg-white border-0 md:border md:shadow-sm shadow-none rounded-2xl">
         <CardHeader className="p-0 md:p-6 pb-3 md:pb-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex items-center gap-2 md:gap-4 w-full">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground animate-pulse" />
               <Input
                 placeholder="Search staff..."
-                className="pl-9 rounded-xl text-sm"
+                className="pl-9 rounded-xl text-sm h-9 bg-white"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2 justify-end">
-              <Button variant="outline" size="sm" className="rounded-xl text-xs flex-1 sm:flex-none h-8 px-3" onClick={handleFilter}>
-                <Filter className="mr-1 h-3.5 w-3.5" /> Filter
-              </Button>
-              <Button variant="outline" size="sm" className="rounded-xl text-xs flex-1 sm:flex-none h-8 px-3" onClick={handleExport}>
-                <FileDown className="mr-1 h-3.5 w-3.5" /> Export
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" className="rounded-xl text-xs h-9 px-3 shrink-0" onClick={handleFilter}>
+              <Filter className="mr-1.5 h-3.5 w-3.5" /> Filter
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0 md:p-6">
