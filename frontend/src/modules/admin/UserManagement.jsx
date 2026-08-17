@@ -187,7 +187,7 @@ export function UserManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 md:pb-0">
       <PageHeader
         title="Staff Management"
         subtitle="Manage your business staff, roles and permissions."
@@ -272,29 +272,29 @@ export function UserManagement() {
       </div>
 
       {/* ---- Staff Table ---- */}
-      <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <Card className="bg-transparent md:bg-white border-0 md:border md:shadow-sm shadow-none rounded-2xl">
+        <CardHeader className="p-0 md:p-6 pb-3 md:pb-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground animate-pulse" />
               <Input
                 placeholder="Search staff..."
-                className="pl-9 rounded-xl"
+                className="pl-9 rounded-xl text-sm"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="rounded-xl" onClick={handleFilter}>
+            <div className="flex items-center gap-2 justify-end">
+              <Button variant="outline" size="sm" className="rounded-xl text-xs flex-1 sm:flex-none h-8 px-3" onClick={handleFilter}>
                 <Filter className="mr-1 h-3.5 w-3.5" /> Filter
               </Button>
-              <Button variant="outline" size="sm" className="rounded-xl" onClick={handleExport}>
+              <Button variant="outline" size="sm" className="rounded-xl text-xs flex-1 sm:flex-none h-8 px-3" onClick={handleExport}>
                 <FileDown className="mr-1 h-3.5 w-3.5" /> Export
               </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 md:p-6">
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
