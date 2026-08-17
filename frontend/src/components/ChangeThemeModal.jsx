@@ -155,7 +155,7 @@ export function ChangeThemeModal({ isOpen, onClose, settings, updateSettings }) 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full max-w-full lg:max-w-5xl h-screen lg:h-[88vh] flex flex-col p-0 overflow-hidden rounded-none lg:rounded-2xl bg-card border-0 lg:border shadow-none lg:shadow-2xl">
+      <DialogContent className="fixed left-0 top-0 translate-x-0 translate-y-0 lg:left-[50%] lg:top-[50%] lg:translate-x-[-50%] lg:translate-y-[-50%] w-screen max-w-none lg:max-w-5xl h-screen max-h-none lg:h-[88vh] flex flex-col p-0 overflow-hidden rounded-none lg:rounded-2xl bg-card border-0 lg:border shadow-none lg:shadow-2xl">
         {/* Header */}
         <DialogHeader className="p-4 border-b bg-muted/20 flex flex-row items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
