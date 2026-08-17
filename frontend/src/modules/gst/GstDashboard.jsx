@@ -520,15 +520,12 @@ export function GstDashboard() {
         title="ERP GST & Taxation"
         subtitle="Manage business GSTIN returns, Input Tax Credit registers, and tax liabilities dynamically."
         actions={
-          <div className="flex w-full flex-nowrap items-center gap-1 sm:gap-2">
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1 rounded-xl border-slate-200 h-8 text-[9.5px] font-semibold sm:px-4 sm:h-9 sm:text-sm" onClick={() => setIsGstCalculatorOpen(true)}>
-              <Calculator className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-4 sm:w-4 text-emerald-600" /> GST Calc
+          <div className="flex w-full flex-nowrap items-center gap-1.5 sm:gap-2">
+            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-2 rounded-xl border-slate-200 h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={fetchData} title="Sync Data">
+              <RefreshCw className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" /> Sync Data
             </Button>
-            <Button variant="outline" size="sm" className="flex-1 sm:flex-none px-1 rounded-xl border-slate-200 h-8 text-[9.5px] font-semibold sm:px-4 sm:h-9 sm:text-sm" onClick={fetchData}>
-              <RefreshCw className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-4 sm:w-4" /> Sync
-            </Button>
-            <Button size="sm" className="flex-1 sm:flex-none px-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 h-8 text-[9.5px] font-semibold sm:px-4 sm:h-9 sm:text-sm" onClick={exportGstrSummaryPdf}>
-              <Download className="mr-1 h-3 w-3 sm:mr-1.5 sm:h-4 sm:w-4" /> Summary
+            <Button size="sm" className="flex-1 sm:flex-none px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 h-8 text-[11px] sm:px-4 sm:h-9 sm:text-sm" onClick={exportGstrSummaryPdf} title="Download GSTR Summary">
+              <Download className="mr-1 h-3.5 w-3.5 sm:mr-1.5 sm:h-4 sm:w-4" /> GSTR Summary
             </Button>
           </div>
         }
