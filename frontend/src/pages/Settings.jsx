@@ -248,7 +248,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-20 md:pb-12">
       <PageHeader
         title="Settings"
         subtitle="Manage business parameters, tax structures, templates and options"
@@ -262,8 +262,8 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4 items-start">
         {/* Left Settings Sidebar */}
-        <Card className="border-0 shadow-[var(--shadow-card)] lg:col-span-1 p-2 bg-card">
-          <div className="flex flex-col space-y-1">
+        <Card className="bg-transparent lg:bg-card border-0 lg:shadow-[var(--shadow-card)] lg:col-span-1 p-0 lg:p-2 rounded-2xl shadow-none">
+          <div className="flex flex-row lg:flex-col overflow-x-auto lg:overflow-visible gap-2 lg:gap-1 lg:space-y-1 [&::-webkit-scrollbar]:hidden w-full">
             {tabs.map((t) => {
               const active = activeTab === t.id;
               return (
@@ -281,10 +281,10 @@ export default function Settings() {
                     setActiveTab(t.id);
                     setSearchParams({ tab: t.slug });
                   }}
-                  className={`flex items-center justify-between px-3 py-2.5 md:px-4 md:py-3 text-left text-xs font-medium md:font-bold rounded-xl transition-all ${
+                  className={`flex items-center justify-between gap-2 px-3.5 py-2 md:px-4 md:py-3 text-left text-xs font-semibold md:font-bold rounded-xl transition-all shrink-0 whitespace-nowrap lg:w-full ${
                     active
                       ? "bg-primary text-primary-foreground shadow-[var(--shadow-glow)]"
-                      : "text-foreground hover:bg-muted/50"
+                      : "text-foreground hover:bg-muted/50 bg-white border border-slate-200/80 md:bg-transparent md:border-0"
                   } ${(t.badge === "vip" && currentPlan !== PLANS.GOLD && currentPlan !== PLANS.ENTERPRISE) || (t.badge === "pro" && currentPlan === PLANS.FREE) ? "opacity-60" : ""}`}
                 >
                   <span>{t.label}</span>
