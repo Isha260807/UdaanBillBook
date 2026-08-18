@@ -20,7 +20,6 @@ const menuGroups = [
   {
     label: "Management",
     items: [
-      { title: "Businesses", url: "/admin/businesses", icon: Building2 },
       { title: "Subscriptions", url: "/admin/subscriptions", icon: CreditCard },
       { title: "Revenue", url: "/admin/revenue", icon: TrendingUp },
       { title: "Vendors", url: "/admin/users", icon: Users },
@@ -30,7 +29,6 @@ const menuGroups = [
   {
     label: "Operations",
     items: [
-      { title: "Security", url: "/admin/security", icon: ShieldAlert },
       { title: "Tickets", url: "/admin/tickets", icon: Ticket },
       { title: "Activity", url: "/admin/activity", icon: Activity },
     ],

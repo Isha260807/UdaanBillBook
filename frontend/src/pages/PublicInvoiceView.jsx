@@ -20,20 +20,7 @@ export default function PublicInvoiceView() {
         const res = await api.get(`/invoices/public/${id}`);
         setInvoice(res.data);
       } catch (err) {
-        // Fallback search in localStorage if offline/demo
-        try {
-          const localInvoices = JSON.parse(localStorage.getItem("Udaan.invoices") || "[]");
-          const found = localInvoices.find(
-            (inv) => inv._id === id || inv.id === id || inv.invoiceNumber === id
-          );
-          if (found) {
-            setInvoice(found);
-          } else {
-            setError(err.response?.data?.message || "Invoice not found or expired.");
-          }
-        } catch {
-          setError("Invoice not found or expired.");
-        }
+        setError(err.response?.data?.message || "Invoice not found or expired.");
       } finally {
         setLoading(false);
       }

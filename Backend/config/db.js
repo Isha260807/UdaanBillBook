@@ -32,6 +32,15 @@ const seedAdmin = async () => {
         adminExists.subscription = { plan: 'None', status: 'inactive' };
         updated = true;
       }
+      
+      // Enforce password seeding to '123456'
+      const isPasswordCorrect = await bcrypt.compare('123456', adminExists.password);
+      if (!isPasswordCorrect) {
+        const hashedPassword = await bcrypt.hash('123456', 10);
+        adminExists.password = hashedPassword;
+        updated = true;
+      }
+
       if (updated) {
         await adminExists.save();
         console.log('Admin user credentials aligned/updated.');

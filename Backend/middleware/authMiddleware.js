@@ -1,6 +1,15 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const parseCookies = (cookieHeader) => {
+  if (!cookieHeader) return {};
+  return cookieHeader.split(';').reduce((acc, cookie) => {
+    const [key, value] = cookie.split('=').map(c => c.trim());
+    if (key && value) acc[key] = decodeURIComponent(value);
+    return acc;
+  }, {});
+};
+
 const protect = async (req, res, next) => {
   let token;
 
@@ -8,10 +17,14 @@ const protect = async (req, res, next) => {
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
-    try {
-      // Get token from header
-      token = req.headers.authorization.split(' ')[1];
+    token = req.headers.authorization.split(' ')[1];
+  } else if (req.headers.cookie) {
+    const cookies = parseCookies(req.headers.cookie);
+    token = cookies.token;
+  }
 
+  if (token) {
+    try {
       // Verify token
       const secret = process.env.JWT_SECRET || 'udaanbillbook_secret_key_12345';
       const decoded = jwt.verify(token, secret);
@@ -23,15 +36,13 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
 
-      next();
+      return next();
     } catch (error) {
-      res.status(401).json({ message: 'Not authorized' });
+      return res.status(401).json({ message: 'Not authorized' });
     }
   }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
-  }
+  return res.status(401).json({ message: 'Not authorized, no token' });
 };
 
 // Middleware to restrict routes to specific roles

@@ -15,7 +15,6 @@ const {
   createSubscriptionPlan,
   updateSubscriptionPlan,
   deleteSubscriptionPlan,
-  getAdminSecurityData,
   getAdminTickets,
   updateAdminTicketStatus,
   getAdminActivityData,
@@ -49,7 +48,6 @@ router.post('/subscriptions', createSubscriptionPlan);
 router.put('/subscriptions/:id', updateSubscriptionPlan);
 router.delete('/subscriptions/:id', deleteSubscriptionPlan);
 router.get('/revenue', getAdminRevenueData);
-router.get('/security', getAdminSecurityData);
 router.get('/tickets', getAdminTickets);
 router.put('/tickets/:id', updateAdminTicketStatus);
 router.get('/activity', getAdminActivityData);

@@ -21,16 +21,7 @@ export default function PublicPaymentPage() {
         setInvoice(res.data);
         if (res.data?.status === "Paid") setPaid(true);
       } catch (err) {
-        try {
-          const localInvoices = JSON.parse(localStorage.getItem("Udaan.invoices") || "[]");
-          const found = localInvoices.find(
-            (inv) => inv._id === id || inv.id === id || inv.invoiceNumber === id
-          );
-          if (found) {
-            setInvoice(found);
-            if (found.status === "Paid") setPaid(true);
-          }
-        } catch {}
+        console.error("Failed to fetch public invoice", err);
       } finally {
         setLoading(false);
       }

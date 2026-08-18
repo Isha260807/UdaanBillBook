@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api', // Match the backend server URL
+  withCredentials: true
 });
 
 // Add a request interceptor to attach the JWT token
@@ -35,10 +36,12 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       console.error('API 401 Unauthorized error at:', error.config?.url, error.response?.data);
-      // Only clear session and reload if error is NOT from auth endpoints (/auth/me, /auth/login, etc.)
+      // Only clear session and reload if error is NOT from auth endpoints (/auth/me, /auth/verify-otp, /auth/login, etc.)
       const requestUrl = error.config?.url || '';
       if (!requestUrl.includes('/auth/me') && !requestUrl.includes('/auth/verify-otp') && !requestUrl.includes('/auth/login')) {
-        localStorage.removeItem('Udaan.auth');
+        const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+        const key = isAdminRoute ? 'Udaan.admin_auth' : 'Udaan.auth';
+        localStorage.removeItem(key);
         window.location.reload();
       }
     }

@@ -194,6 +194,14 @@ const verifyOtp = async (req, res) => {
 
     const responseSubscription = await getSubscriptionWithLogo(targetSub);
 
+    const token = generateToken(user._id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
     res.json({
       _id: user.id,
       name: user.name,
@@ -207,7 +215,7 @@ const verifyOtp = async (req, res) => {
       role: user.role,
       status: user.status || "Active",
       permissions: user.permissions || [],
-      token: generateToken(user._id),
+      token: token,
       subscription: responseSubscription,
     });
   } catch (error) {
@@ -345,6 +353,14 @@ const loginEmail = async (req, res) => {
 
     const responseSubscription = await getSubscriptionWithLogo(user.subscription);
 
+    const token = generateToken(user._id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    });
+
     res.status(200).json({
       _id: user.id,
       name: user.name,
@@ -352,7 +368,7 @@ const loginEmail = async (req, res) => {
       email: user.email,
       businessName: user.businessName,
       role: user.role,
-      token: generateToken(user._id),
+      token: token,
       subscription: responseSubscription,
     });
   } catch (error) {
@@ -572,18 +588,16 @@ const createUserTicket = async (req, res) => {
   }
 };
 
-module.exports = {
-  sendOtp,
-  verifyOtp,
-  getMe,
-  loginEmail,
-  getStaff,
-  addStaff,
-  updateStaff,
-  deleteStaff,
-  getPlans,
-  getUserTickets,
-  createUserTicket
+// @desc    Logout user and clear cookie
+// @route   POST /api/auth/logout
+// @access  Public
+const logoutUser = async (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  });
+  res.status(200).json({ message: 'Logged out successfully', success: true });
 };
 
 // @desc    Get public platform settings (e.g. business categories)
@@ -828,6 +842,7 @@ module.exports = {
   getMe,
   updateProfile,
   loginEmail,
+  logoutUser,
   getStaff,
   addStaff,
   updateStaff,

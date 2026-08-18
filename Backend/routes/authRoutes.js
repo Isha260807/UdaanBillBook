@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const { sendOtp, verifyOtp, getMe, updateProfile, loginEmail, getStaff, addStaff, updateStaff, deleteStaff, getPlans, subscribeUser, getPublicSettings, getUserTickets, createUserTicket, getRazorpayKey, createRazorpayOrder, verifyRazorpayPayment, uploadDocs } = require('../controllers/authController');
+const { sendOtp, verifyOtp, getMe, updateProfile, loginEmail, logoutUser, getStaff, addStaff, updateStaff, deleteStaff, getPlans, subscribeUser, getPublicSettings, getUserTickets, createUserTicket, getRazorpayKey, createRazorpayOrder, verifyRazorpayPayment, uploadDocs } = require('../controllers/authController');
 const { protect, restrictTo } = require('../middleware/authMiddleware');
 const { upload } = require('../config/cloudinary');
 
 router.post('/send-otp', sendOtp);
 router.post('/verify-otp', verifyOtp);
 router.post('/login-email', loginEmail);
+router.post('/logout', logoutUser);
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
 router.get('/plans', getPlans);

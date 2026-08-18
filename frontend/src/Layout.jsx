@@ -71,7 +71,7 @@ export default function Layout() {
     if (!hydrated) return;
     if (!isAuthenticated && !isPublic) {
       navigate("/login");
-    } else if (isAuthenticated && (pathname === "/login" || pathname === "/register" || pathname === "/verify-otp")) {
+    } else if (isAuthenticated && (pathname === "/login" || pathname === "/register" || pathname === "/verify-otp" || pathname === "/admin/login")) {
       const userObj = mockAuth.get();
       const redirectPath = (userObj?.role?.toLowerCase() === "staff" || userObj?.role?.toLowerCase() === "viewer") ? "/staff/dashboard" : (userObj?.role?.toLowerCase() === "admin" ? "/admin" : "/vendor/dashboard");
       navigate(redirectPath, { replace: true });

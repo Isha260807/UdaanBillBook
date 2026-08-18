@@ -1,5 +1,5 @@
-// Client-side auth store. Manages token and session state for the authenticated database user.
 import { useEffect, useState } from "react";
+import api from "./api";
 
 const KEY = "Udaan.auth";
 
@@ -27,16 +27,24 @@ export const mockAuth = {
   },
   signIn(user) {
     if (typeof window === "undefined") return;
+    // Omit token from user object before persisting to localStorage
+    const { token, ...safeUser } = user;
     const isSuperAdmin = user?.role?.toLowerCase() === "admin";
     if (isSuperAdmin) {
-      window.localStorage.setItem("Udaan.admin_auth", JSON.stringify(user));
+      window.localStorage.setItem("Udaan.admin_auth", JSON.stringify(safeUser));
     } else {
-      window.localStorage.setItem("Udaan.auth", JSON.stringify(user));
+      window.localStorage.setItem("Udaan.auth", JSON.stringify(safeUser));
     }
     listeners.forEach((l) => l());
   },
   signOut() {
     if (typeof window === "undefined") return;
+    
+    // Call backend to clear the HTTP-only cookie
+    api.post("/auth/logout").catch((err) => {
+      console.error("Failed to clear cookie on backend logout:", err);
+    });
+
     const isAdminRoute = window.location.pathname.startsWith("/admin");
     if (isAdminRoute) {
       window.localStorage.removeItem("Udaan.admin_auth");

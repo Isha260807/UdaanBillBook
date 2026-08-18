@@ -172,7 +172,7 @@ export function UserManagementSA() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/8">
-                {["User", "Business", "Plan", "Role", "Status", "Last Login", "Device", "Actions"].map(h => (
+                {["User", "Business", "Revenue", "Plan", "Role", "Status", "Last Login", "Device", "Actions"].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-500">{h}</th>
                 ))}
               </tr>
@@ -194,6 +194,9 @@ export function UserManagementSA() {
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-xs text-slate-300 cursor-pointer" onClick={() => setSelectedUser(u)}>{u.businessName || u.business || "N/A"}</td>
+                  <td className="px-4 py-3.5 text-xs font-semibold text-emerald-400">
+                    {u.role === "admin" || u.role === "staff" ? "-" : `₹${(u.revenue || 0).toLocaleString('en-IN')}`}
+                  </td>
                   <td className="px-4 py-3.5">
                     {u.role === "admin" || u.role === "staff" ? (
                       <span className="text-slate-500">-</span>
@@ -231,12 +234,12 @@ export function UserManagementSA() {
                       <button className="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-white/10 transition-colors" title="View Profile Details" onClick={() => setSelectedUser(u)}>
                         <Eye className="h-4 w-4" />
                       </button>
-                        {u.status !== "Banned" ? (
-                            <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" title="Ban" onClick={() => handleToggleStatus(u)}><Ban className="h-3.5 w-3.5" /></button>
-                          ) : (
-                            <button className="rounded-lg p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors" title="Unban" onClick={() => handleToggleStatus(u)}><CheckCircle2 className="h-3.5 w-3.5" /></button>
-                          )}
-                          <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Delete" onClick={() => handleDeleteUser(u)}><Trash2 className="h-3.5 w-3.5" /></button>
+                      {u.status !== "Banned" ? (
+                        <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" title="Ban" onClick={() => handleToggleStatus(u)}><Ban className="h-3.5 w-3.5" /></button>
+                      ) : (
+                        <button className="rounded-lg p-1.5 text-slate-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors" title="Unban" onClick={() => handleToggleStatus(u)}><CheckCircle2 className="h-3.5 w-3.5" /></button>
+                      )}
+                      <button className="rounded-lg p-1.5 text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 transition-colors" title="Delete" onClick={() => handleDeleteUser(u)}><Trash2 className="h-3.5 w-3.5" /></button>
                     </div>
                   </td>
                 </tr>
@@ -335,6 +338,11 @@ export function UserManagementSA() {
                 <div className="space-y-1 sm:col-span-2">
                   <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Business Address</p>
                   <p className="text-white font-medium">{selectedUser.businessAddress || "N/A"}</p>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Sales Revenue</p>
+                  <p className="text-emerald-400 font-bold text-base">₹{(selectedUser.revenue || 0).toLocaleString('en-IN')}</p>
                 </div>
 
                  <div className="space-y-1">

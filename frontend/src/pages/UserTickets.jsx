@@ -30,33 +30,11 @@ export default function UserTickets() {
   });
 
   const fetchTickets = async () => {
-    // 1. Get cached tickets from localStorage
-    let cached = [];
-    try {
-      const saved = localStorage.getItem("udaan_support_tickets");
-      if (saved) cached = JSON.parse(saved);
-    } catch (e) {
-      console.error(e);
-    }
-
     try {
       const res = await api.get("/auth/tickets");
-      const apiTickets = res.data || [];
-      
-      // Merge API tickets with cached tickets by id
-      const ticketMap = new Map();
-      cached.forEach(t => ticketMap.set(t.id || t._id, t));
-      apiTickets.forEach(t => ticketMap.set(t.id || t._id, t));
-
-      const merged = Array.from(ticketMap.values());
-      setTickets(merged);
-      localStorage.setItem("udaan_support_tickets", JSON.stringify(merged));
+      setTickets(res.data || []);
     } catch (error) {
-      if (cached.length > 0) {
-        setTickets(cached);
-      } else {
-        toast.error("Failed to load your support tickets");
-      }
+      toast.error("Failed to load your support tickets");
     } finally {
       setLoading(false);
     }
@@ -85,12 +63,8 @@ export default function UserTickets() {
       createdAt: new Date().toISOString()
     };
 
-    // Save locally immediately to guarantee instant persistence
+    // Save locally in component state immediately to guarantee instant UI update
     setTickets(prev => [newLocalTicket, ...prev]);
-    try {
-      const saved = JSON.parse(localStorage.getItem("udaan_support_tickets") || "[]");
-      localStorage.setItem("udaan_support_tickets", JSON.stringify([newLocalTicket, ...saved]));
-    } catch (err) {}
 
     try {
       await api.post("/auth/tickets", formData);

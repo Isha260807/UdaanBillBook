@@ -257,27 +257,42 @@ export function SuperAdminTopbar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-white/5" />
             {notifications.length > 0 ? (
-              notifications.map((n) => (
-                <DropdownMenuItem 
-                  key={n.id}
-                  className="flex items-center justify-between cursor-pointer group pr-2 py-2 focus:bg-white/5 focus:text-white text-slate-300"
-                  onClick={() => navigate(n.url)}
-                >
-                  <div className="flex flex-col items-start gap-0.5 flex-1 pr-2">
-                    <span className="text-xs font-semibold text-white">{n.title}</span>
-                    <span className="text-[11px] text-slate-400">{n.description}</span>
-                  </div>
-                  <button
-                    onClick={(e) => removeNotification(n.id, e)}
-                    className="opacity-0 group-hover:opacity-100 hover:bg-white/5 p-1 rounded transition-all text-slate-500 hover:text-slate-300"
+              <>
+                {notifications.map((n) => (
+                  <DropdownMenuItem 
+                    key={n.id}
+                    className="flex items-center justify-between cursor-pointer group pr-2 py-2 focus:bg-white/5 focus:text-white text-slate-300"
+                    onClick={() => navigate(n.url)}
                   >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                    <div className="flex flex-col items-start gap-0.5 flex-1 pr-2">
+                      <span className="text-xs font-semibold text-white">{n.title}</span>
+                      <span className="text-[11px] text-slate-400">{n.description}</span>
+                    </div>
+                    <button
+                      onClick={(e) => removeNotification(n.id, e)}
+                      className="opacity-0 group-hover:opacity-100 hover:bg-white/5 p-1 rounded transition-all text-slate-500 hover:text-slate-300"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem 
+                  className="text-center justify-center text-xs font-semibold text-emerald-400 cursor-pointer hover:bg-white/5 py-2.5 focus:bg-white/5 focus:text-emerald-400"
+                  onClick={() => navigate("/admin/notifications")}
+                >
+                  View All Notifications →
                 </DropdownMenuItem>
-              ))
+              </>
             ) : (
               <div className="py-6 text-center text-xs text-slate-500">
-                All caught up! 🎉
+                <p>All caught up! 🎉</p>
+                <button 
+                  onClick={() => navigate("/admin/notifications")}
+                  className="text-xs text-emerald-400 font-semibold hover:underline mt-2 inline-block"
+                >
+                  Go to Notifications Page
+                </button>
               </div>
             )}
           </DropdownMenuContent>

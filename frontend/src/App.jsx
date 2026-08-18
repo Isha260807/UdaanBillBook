@@ -34,10 +34,8 @@ import { useMockAuth } from "./lib/auth-store";
 // SuperAdmin imports
 import { SuperAdminLayout } from "./modules/superadmin/layouts/SuperAdminLayout";
 import { SADashboard } from "./modules/superadmin/pages/SADashboard";
-import { BusinessManagement } from "./modules/superadmin/pages/BusinessManagement";
 import { SubscriptionManager } from "./modules/superadmin/pages/SubscriptionManager";
 import { RevenueTransactions } from "./modules/superadmin/pages/RevenueTransactions";
-import { SecurityCenter } from "./modules/superadmin/pages/SecurityCenter";
 import { PlatformAnalytics } from "./modules/superadmin/pages/PlatformAnalytics";
 import { UserManagementSA } from "./modules/superadmin/pages/UserManagementSA";
 import { SupportTickets } from "./modules/superadmin/pages/SupportTickets";
@@ -119,6 +117,9 @@ function RootRedirect() {
   if (!user) return <Navigate to="/login" replace />;
   
   const role = user.role?.toLowerCase();
+  if (role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
   if (role === "staff" || role === "viewer") {
     return <Navigate to="/staff/dashboard" replace />;
   }
@@ -171,16 +172,15 @@ export default function App() {
         <Route element={<SuperAdminGuard><SuperAdminLayout /></SuperAdminGuard>}>
           <Route path="/admin" element={<SADashboard />} />
           <Route path="/admin/analytics" element={<PlatformAnalytics />} />
-          <Route path="/admin/businesses" element={<BusinessManagement />} />
           <Route path="/admin/subscriptions" element={<SubscriptionManager />} />
           <Route path="/admin/revenue" element={<RevenueTransactions />} />
           <Route path="/admin/users" element={<UserManagementSA />} />
-          <Route path="/admin/security" element={<SecurityCenter />} />
           <Route path="/admin/tickets" element={<SupportTickets />} />
           <Route path="/admin/activity" element={<ActivityLog />} />
           <Route path="/admin/settings" element={<SASettings />} />
           <Route path="/admin/categories" element={<BusinessCategories />} />
           <Route path="/admin/templates" element={<InvoiceTemplateManager />} />
+          <Route path="/admin/notifications" element={<NotificationsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

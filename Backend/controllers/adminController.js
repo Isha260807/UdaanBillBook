@@ -24,8 +24,21 @@ const generateToken = (id) => {
 // @access  Private
 const getAllUsers = async (req, res) => {
   try {
+    const allSales = await Invoice.find({ type: 'Sale' });
     const users = await User.find({}).sort({ createdAt: -1 });
-    res.status(200).json(users);
+
+    const usersWithBizInfo = users.map(u => {
+      const userInvoices = allSales.filter(inv => inv.user && inv.user.toString() === u._id.toString());
+      const rev = userInvoices.reduce((sum, inv) => sum + (inv.grandTotal || 0), 0);
+      return {
+        ...u.toObject(),
+        revenue: rev,
+        city: u.businessAddress || 'India',
+        businessType: u.businessType || 'Retail Shop'
+      };
+    });
+
+    res.status(200).json(usersWithBizInfo);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -67,7 +80,8 @@ const getAdminDashboardData = async (req, res) => {
     const totalSalesAmount = allSales.reduce((sum, inv) => sum + (inv.grandTotal || 0), 0);
     
     const allPayments = await Payment.find({ type: 'Payment In' });
-    const totalPaymentsAmount = allPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const subscriptionPayments = allPayments.filter(p => !p.party && p.description && /subscription|plan|upgrade/i.test(p.description));
+    const totalPaymentsAmount = subscriptionPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
 
     const monthlyRevenue = totalPaymentsAmount;
 
@@ -102,7 +116,7 @@ const getAdminDashboardData = async (req, res) => {
 
     const allExpenses = await Expense.find({});
 
-    allPayments.forEach(p => {
+    subscriptionPayments.forEach(p => {
       const pMonth = months[new Date(p.date || p.createdAt).getMonth()];
       const chartItem = last6Months.find(item => item.month === pMonth);
       if (chartItem) {
@@ -155,7 +169,7 @@ const getAdminDashboardData = async (req, res) => {
         })
     );
 
-    const transactions = allPayments.slice(0, 6).map((p, idx) => {
+    const transactions = subscriptionPayments.slice(0, 6).map((p, idx) => {
       const associatedUser = p.user ? allUsers.find(u => u._id.toString() === p.user.toString()) : null;
       return {
         id: p.referenceNumber || `TXN-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
@@ -564,11 +578,15 @@ const getAdminRevenueData = async (req, res) => {
     const allPayments = await Payment.find({}).sort({ date: -1 });
     const allUsers = await User.find({});
 
-    const totalRevenue = allPayments
-      .filter(p => p.type === 'Payment In' && p.status !== 'Failed')
-      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    const subscriptionPayments = allPayments.filter(p => 
+      p.type === 'Payment In' && 
+      p.status !== 'Failed' &&
+      !p.party && 
+      p.description && /subscription|plan|upgrade/i.test(p.description)
+    );
 
-    const totalTransactions = allPayments.length;
+    const totalRevenue = subscriptionPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalTransactions = subscriptionPayments.length;
     
     // Grouping by plans for chart
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -579,7 +597,7 @@ const getAdminRevenueData = async (req, res) => {
       last6Months.push({ month: months[idx], silver: 0, gold: 0, enterprise: 0 });
     }
 
-    allPayments.forEach(p => {
+    subscriptionPayments.forEach(p => {
       if (p.status === 'Failed') return;
       const pMonth = months[new Date(p.date).getMonth()];
       const chartItem = last6Months.find(item => item.month === pMonth);
@@ -596,11 +614,11 @@ const getAdminRevenueData = async (req, res) => {
       }
     });
 
-    const successfulCount = allPayments.filter(p => p.status !== 'Failed').length;
+    const successfulCount = subscriptionPayments.filter(p => p.status !== 'Failed').length;
     const successRate = totalTransactions ? Number(((successfulCount / totalTransactions) * 100).toFixed(1)) : 100;
 
     // Recent Transactions list
-    const transactionsList = allPayments.map((p, idx) => {
+    const transactionsList = subscriptionPayments.map((p, idx) => {
       const user = p.user ? allUsers.find(u => u._id.toString() === p.user.toString()) : null;
       return {
         id: p.referenceNumber || `TXN-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
@@ -625,58 +643,6 @@ const getAdminRevenueData = async (req, res) => {
   }
 };
 
-// @desc    Get Admin Security Center data (SuperAdmin only)
-// @route   GET /api/admin/security
-// @access  Private
-const getAdminSecurityData = async (req, res) => {
-  try {
-    const User = require('../models/User');
-    const allUsers = await User.find({}).sort({ updatedAt: -1 }).limit(10);
-    
-    const securityLogs = allUsers.map((u, idx) => {
-      let severity = 'info';
-      let event = 'User Session Initialized';
-      if (u.status === 'Banned') {
-        severity = 'critical';
-        event = 'Banned User Access Attempt blocked';
-      } else if (idx === 1) {
-        severity = 'warning';
-        event = 'Failed Login Attempt';
-      } else if (idx === 2) {
-        severity = 'warning';
-        event = 'Multiple Login Locations';
-      } else if (idx === 0 && u.role === 'admin') {
-        severity = 'info';
-        event = 'Admin Session Started';
-      }
-
-      const ip = `192.168.1.${(u._id.toString().charCodeAt(10) % 250) + 1}`;
-      const timeDiff = idx === 0 ? '5 min ago' : `${idx * 15} min ago`;
-
-      return {
-        id: u._id,
-        severity,
-        event,
-        user: u.email || u.phone,
-        ip,
-        device: idx % 2 === 0 ? 'Chrome / Windows' : 'Safari / macOS',
-        time: timeDiff
-      };
-    });
-
-    const criticalCount = securityLogs.filter(l => l.severity === 'critical').length;
-    const warningCount = securityLogs.filter(l => l.severity === 'warning').length;
-
-    res.status(200).json({
-      criticalCount,
-      warningCount,
-      activeSessions: allUsers.length * 7 + 12,
-      securityLogs
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
 
 // @desc    Get all support tickets (SuperAdmin only)
 // @route   GET /api/admin/tickets
@@ -1083,7 +1049,6 @@ module.exports = {
   createSubscriptionPlan,
   updateSubscriptionPlan,
   deleteSubscriptionPlan,
-  getAdminSecurityData,
   getAdminTickets,
   updateAdminTicketStatus,
   getAdminActivityData,
